@@ -11,10 +11,11 @@
  * driven by rising-edge input to pin 23, which is polled by the Idle Task. I would have liked for this trigger
  * to have been initiated by an interrupt, but interrupts in Arduino do not seem to play nicely with semaphores.
  * 
- * MyTask3 currently successfully raises a 5-Volt input test signal and almost successfully records an array of values
- * when measuring a signal. This functionality was tested with a 1 Hz sinusoidal signal captured every 1ms (hopefully
- * it will be possible to eventually have a faster capture rate). For some reason though, the thread runs into trouble
- * when trying to use a for loop to enter values into an array.
+ * MyTask3 currently successfully raises a 5-Volt input test signal and records an array of values when measuring
+ * a signal for one second. However, since it currently uses the delay() function, the data captured does not accurately
+ * capture a one-second period. This will be problematic when trying to use an output signal to determine a transfer
+ * function, so current future work involves investigating the use of a timer peripheral to take more precisely-timed
+ * measurements.
  */
 
 // Includes the RTOS and semaphores
@@ -33,15 +34,18 @@
 
 // The pin to signal a request to run Task 3
 #define TASK_3_COMMAND 23
-#define OUTPUT_SIGNAL A0
 
 // Pins used in Task 3
 #define TEST_SIGNAL 52
+#define OUTPUT_SIGNAL A0
 
 //Global semaphore variables
 SemaphoreHandle_t xSemaphore1;
 SemaphoreHandle_t xSemaphore2;
 SemaphoreHandle_t xSemaphore3;
+
+//Global variables to store output signal data in Task 3
+float voltages[1000];
 
 void setup()
 {
@@ -136,12 +140,11 @@ static void MyTask3(void* pvParameters)
       digitalWrite(TEST_SIGNAL, HIGH);
       int i;
       int voltagesSize = 1000;
-      int voltages[voltagesSize];
       for (i=0; i<voltagesSize; i++)
       {
-        voltages[i] = analogRead(OUTPUT_SIGNAL);
-        vTaskDelay(1/portTICK_PERIOD_MS);
-        Serial.println(i);
+        float voltage = analogRead(OUTPUT_SIGNAL)/204.6;
+        voltages[i] = voltage;
+        delay(1);
       }
       
       for (i=0; i<voltagesSize; i++)
