@@ -1,4 +1,3 @@
-
 void setup() {
   Serial.begin(9600);
   pinMode(13, OUTPUT);
@@ -6,11 +5,10 @@ void setup() {
 }
 
 void loop(){
-  Serial.println("Hello Pi, this is Arduino MEGA...");
   if(Serial.available()) 
   {
-    flash(Serial.pareInt());
-    Serial.flush(); 
+    flash(Serial.parseInt());
+    Serial.flush();
   }
   delay(1000);
 }
