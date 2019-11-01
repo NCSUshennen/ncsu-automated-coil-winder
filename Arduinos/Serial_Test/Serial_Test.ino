@@ -10,7 +10,6 @@ void loop(){
   {
     flash(Serial.parseInt());
     Serial.flush();
-    Serial.println("Hello Pi, this is Arduino MEGA...");
   }
   delay(1000);
 }
