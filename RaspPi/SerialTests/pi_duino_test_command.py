@@ -3,7 +3,7 @@
 
 import serial
 
-arduinoMegaPort = "/dev/ttyACM0"
+arduinoMegaPort = "/dev/ttyACM4"
 arduinoMegaRate = "9600"
 
 arduinoMegaSerial = serial.Serial(arduinoMegaPort,arduinoMegaRate)
@@ -23,6 +23,6 @@ while True:
             if n == "y":
                 arduinoMegaSerial.write(doPostWindingTest.encode())
             elif n == "n":
-                arduinoMegaSerial.write("Hello There!\n")
+                arduinoMegaSerial.write("Hello There!\n".encode())
             else:
                 print("Input error, please input 'y' or 'n'")

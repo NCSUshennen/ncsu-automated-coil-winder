@@ -16,10 +16,13 @@ from SensorReader import *
 def main():
     """Begin and run the coil winding program."""
     # --------------------- Variables --------------------- #
-    arduinoMegaPort = "/dev/ttyACM0"
+    arduinoMegaPort = "/dev/ttyACM7"
     arduinoMegaRate = "9600"
 
     arduinoReadyForCommand = "ready\n"
+
+    sensorValue = None
+    sensor = "getSensor1SensorValue\n"
 
     # ------------------- Declarations -------------------- #
 
@@ -29,9 +32,9 @@ def main():
 
     # ----------------------- Main ------------------------ #
     # TODO: instantiate other classes that will help run through post winding
-    sensorReader = SensorReader(arduinoMegaSerial)
-    # sensorValue = sensorReader.readSensor(sensor)
-    # print(sensorValue)
+    arduinoMegaSensorReader = SensorReader(arduinoMegaSerial)
+    sensorValue = arduinoMegaSensorReader.readSensor(sensor)
+    print("Sensor value: " + sensorValue)
 
 # do stuff in main
 main()
