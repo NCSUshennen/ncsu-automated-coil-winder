@@ -33,10 +33,30 @@ class SensorReader:
         arduinoReadyForCommand = "ready\n"
 
         # Wait for Arduino to be ready, then read sensor
+
+        self.serialConnection.write("doPostWindingTest\n".encode())
+        self.serialConnection.write("isArduinoReady\n".encode())
+
+        readyReceived = False
+        while not readyReceived:
+            if self.serialConnection.inWaiting() > 0:
+                inputValue = self.serialConnection.readline().decode()
+                print("in: " + inputValue)
+                if inputValue == arduinoReadyForCommand:
+                        # Give command to get sensor
+                        print("ReadyReceived\n")
+                        readyReceived = True
+                        self.serialConnection.write(sensor.encode())
+
+        print("out of while1\n")
         sensorRead = False
         while not sensorRead:
             if self.serialConnection.inWaiting() > 0:
-                inputValue = self.serialConnection.readline().decode()
-                if inputValue == arduinoReadyForCommand:
-                        sensorRead = True
-                        # TODO: store sensor values as float and return
+                print("GettingSensor\n")
+                sensorRead = True
+                sensorValue = self.serialConnection.readline.decode()
+
+        print("out of while2\n")
+        # sensorValue = self.serialConnection.readline().decode()
+        print("Value: " + sensorValue)
+        return sensorValue
