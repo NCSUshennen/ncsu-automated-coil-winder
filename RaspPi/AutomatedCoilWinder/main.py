@@ -16,7 +16,7 @@ from SensorReader import *
 def main():
     """Begin and run the coil winding program."""
     # --------------------- Variables --------------------- #
-    arduinoMegaPort = "/dev/ttyACM7"
+    arduinoMegaPort = "/dev/ttyACM0"
     arduinoMegaRate = "9600"
 
     arduinoReadyForCommand = "ready\n"
