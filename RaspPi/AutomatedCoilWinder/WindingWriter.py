@@ -49,13 +49,22 @@ class WindingWriter:
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth
 
-    def generatePath(self):
+    def generatePath(self, fileName):
         """Generate a path with the stored parameters
             and return True when complete
         """
         # --------------------- Variables --------------------- #
         # exampleParam = None
 
-        # TODO: Generate the path
+        # TODO (485): Generate a path from the given parameters
+
+        # TODO: Generate a basic square path for winding post
+        # Open the path file for writing
+        pathFile = open(fileName, "w")
+        pathFile.write( "Gcode command 1.\n")
+        pathFile.write("Gcode command 2.\n")
+
+        # Close opened path file
+        pathFile.close()
 
         return True

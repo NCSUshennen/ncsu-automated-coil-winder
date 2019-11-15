@@ -48,6 +48,7 @@ def main():
                                   ui.getWireGauge(),
                                   ui.getWireMaterial(),
                                   ui.getDistanceBetweenTeeth())
+    windingReader = WindingReader();
 
     # TODO:
     #   * Generate path
@@ -58,7 +59,7 @@ def main():
 
     # Generate path
     ui.displayMessage("\nGenerating the path")
-    # windingWriter.generatePath()
+    windingWriter.generatePath("pathFile.txt")
     # TODO: instantiate windingReader, giving it the file name of generated path
 
     # Zero machine with WindingReader -> function for zeroing w/ SensorReader
@@ -69,7 +70,7 @@ def main():
     # Send path with WindingReader
     ui.userStartWinding()
     ui.displayMessage("\nWinding")
-    # windingReader.sendPath()
+    windingReader.sendPath("pathFile.txt")
 
     # Post winding test with WindingTest()
     ui.userStartPostWindingTest()
