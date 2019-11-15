@@ -24,8 +24,9 @@ class WindingWriter:
 
     # --------------------- Functions --------------------- #
     def __init__(self, statorToothLength, statorToothHeight,
-                 statorToothWidth, statorLipRadius, numberWireLayers,
-                 wireGauge, wireMaterial, distanceBetweenTeeth):
+                 statorToothWidth, statorLipRadius, numberStatorTeeth,
+                 numberWireLayers, wireGauge, wireMaterial,
+                 distanceBetweenTeeth):
         """Construct a new WindingWriter
 
         Keyword arguments:

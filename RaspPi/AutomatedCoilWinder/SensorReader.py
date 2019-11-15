@@ -20,7 +20,7 @@ class SensorReader:
         """Construct a new sensor reader
 
         Keyword arguments:
-        arduinoSerial -- the serial connection to read from (default 0.0)
+        arduinoSerial -- the serial connection to read from
         """
         self.serialConnection = arduinoSerial
 
