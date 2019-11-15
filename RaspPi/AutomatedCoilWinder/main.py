@@ -21,6 +21,9 @@ def main():
 
     arduinoReadyForCommand = "ready\n"
 
+    sensorValue = None
+    sensor = "getSensor1SensorValue\n"
+
     # ------------------- Declarations -------------------- #
 
     # Create serial connection for arduinos
@@ -29,9 +32,9 @@ def main():
 
     # ----------------------- Main ------------------------ #
     # TODO: instantiate other classes that will help run through post winding
-    sensorReader = SensorReader(arduinoMegaSerial)
-    # sensorValue = sensorReader.readSensor(sensor)
-    # print(sensorValue)
+    arduinoMegaSensorReader = SensorReader(arduinoMegaSerial)
+    sensorValue = arduinoMegaSensorReader.readSensor(sensor)
+    print("Sensor value: " + sensorValue)
 
 # do stuff in main
 main()

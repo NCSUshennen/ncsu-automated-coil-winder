@@ -13,6 +13,7 @@
 class SensorReader:
     # --------------------- Variables --------------------- #
     serialConnection = None
+    arduinoReadyForCommand = "ready\n"
 
     # --------------------- Functions --------------------- #
     def __init__(self, arduinoSerial):
@@ -34,8 +35,9 @@ class SensorReader:
 
         # Wait for Arduino to be ready, then read sensor
 
-        self.serialConnection.write("doPostWindingTest\n".encode())
-        self.serialConnection.write("isArduinoReady\n".encode())
+        # self.serialConnection.write("doPostWindingTest\n".encode())
+        self.serialConnection.write(self.arduinoReadyForCommand.encode())
+        print("Asked if ready")
 
         readyReceived = False
         while not readyReceived:
@@ -57,6 +59,5 @@ class SensorReader:
                 sensorValue = self.serialConnection.readline.decode()
 
         print("out of while2\n")
-        # sensorValue = self.serialConnection.readline().decode()
         print("Value: " + sensorValue)
         return sensorValue
