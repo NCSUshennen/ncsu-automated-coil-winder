@@ -31,17 +31,55 @@ void serialEvent()
     // add it to the inputString:
     if (inChar == '\n')
     {
-      //End of the command, check to see if it corresponds to one of our chosen commands
-      if (inputString.equals("Hello There!"))
+      //End of the command, check to see if it corresponds to one of our chosen commands      
+      if (inputString.equals(SERIAL_TEST))
       {
         // Pretend to be General Grievous and print "General Kenobi!"
         // This is used as a sanity check to ensure serial data is read properly
         Serial.write("General Kenobi!\n");
       }
-      else if (inputString.equals("doPostWindingTest"))
+      else if (inputString.equals(READY_ASK))
+      {
+        askedForReady = true;
+      }
+      else if(inputString.equals(TASK_1_COMMAND_SIMPLE))
+      {
+        // Give a semaphore to Task 1
+        xSemaphoreGive(xSemaphore1);
+      }
+      else if (inputString.equals(TASK_2_COMMAND_ALL))
+      {
+        sensorNum = 0;
+        //Give a message to Task 2
+        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+        //Don't worry for now if the message buffer is full, just ignore this command
+      }
+      else if (inputString.equals(TASK_2_COMMAND_SENSOR1))
+      {
+        sensorNum = 1;
+        //Give a message to Task 2
+        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+        //Don't worry for now if the message buffer is full, just ignore this command
+      }
+      else if (inputString.equals(TASK_2_COMMAND_SENSOR2))
+      {
+        sensorNum = 2;
+        //Give a message to Task 2
+        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+        //Don't worry for now if the message buffer is full, just ignore this command
+      }
+      else if (inputString.equals(TASK_3_COMMAND))
       {
         // Give a semaphore to Task 3
         xSemaphoreGive(xSemaphore3);
+      }
+      else if (inputString.equals("0"))
+      {
+        digitalWrite(MOTOR_1_PLS, LOW);  
+      }
+      else if (inputString.equals("1"))
+      {
+        digitalWrite(MOTOR_1_PLS, HIGH);  
       }
       inputString = "";
     }

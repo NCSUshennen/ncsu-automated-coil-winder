@@ -23,6 +23,7 @@ static void MyTask3(void* pvParameters)
   { 
     if (xSemaphoreTake(xSemaphore3, portMAX_DELAY) == pdTRUE)
     {
+      task = 3;
       digitalWrite(TASK_1,LOW);
       digitalWrite(TASK_2,LOW); 
       digitalWrite(TASK_3,HIGH);
@@ -40,9 +41,10 @@ static void MyTask3(void* pvParameters)
       
       for (i=0; i<voltagesSize; i++)
       {
-        Serial.println(voltages[i]/204.6);  
+        Serial.println(ADCToVoltage(voltages[i]));  
       }
       digitalWrite(TEST_SIGNAL, LOW);
+      //Serial.write("ready\n");
     }
   }
 }
