@@ -14,7 +14,8 @@ import serial
 from UserInterface import *
 from WindingWriter import *
 from WindingReader import *
-from SensorReader import *
+from WindingTester import *
+# from SensorReader import *
 
 def main():
     """Begin and run the coil winding program."""
@@ -26,6 +27,16 @@ def main():
 
     sensorValue = None
     sensor = "getSensor1SensorValue\n"
+
+    statorToothLength = None
+    statorToothHeight = None
+    statorToothWidth = None
+    statorLipRadius = None
+    numberStatorTeeth = None
+    numberWireLayers = None
+    wireGauge = None
+    wireMaterial = None
+    distanceBetweenTeeth = None
 
     # ------------------- Declarations -------------------- #
 
@@ -39,16 +50,36 @@ def main():
     ui = UserInterface()
     ui.displayMessage("Starting program")
     ui.displayMessage("Please enter stator properties: ")
-    windingWriter = WindingWriter(ui.getStatorToothLength(),
-                                  ui.getStatorToothHeight(),
-                                  ui.getStatorToothWidth(),
-                                  ui.getStatorLipRadius(),
-                                  ui.getNumberStatorTeeth(),
-                                  ui.getNumberWireLayers(),
-                                  ui.getWireGauge(),
-                                  ui.getWireMaterial(),
-                                  ui.getDistanceBetweenTeeth())
+
+    statorToothLength = ui.getStatorToothLength()
+    statorToothHeight = ui.getStatorToothHeight()
+    statorToothWidth = ui.getStatorToothWidth()
+    statorLipRadius = ui.getStatorLipRadius()
+    numberStatorTeeth = ui.getNumberStatorTeeth()
+    numberWireLayers = ui.getNumberWireLayers()
+    wireGauge = ui.getWireGauge()
+    wireMaterial = ui.getWireMaterial()
+    distanceBetweenTeeth = ui.getDistanceBetweenTeeth()
+
+    windingWriter = WindingWriter(statorToothLength,
+                                  statorToothHeight,
+                                  statorToothWidth,
+                                  statorLipRadius,
+                                  numberStatorTeeth,
+                                  numberWireLayers,
+                                  wireGauge,
+                                  wireMaterial,
+                                  distanceBetweenTeeth)
     windingReader = WindingReader();
+    windingTester = WindingTester(statorToothLength,
+                                  statorToothHeight,
+                                  statorToothWidth,
+                                  statorLipRadius,
+                                  numberStatorTeeth,
+                                  numberWireLayers,
+                                  wireGauge,
+                                  wireMaterial,
+                                  distanceBetweenTeeth)
 
     # TODO:
     #   * Generate path
@@ -75,6 +106,7 @@ def main():
     # Post winding test with WindingTest()
     ui.userStartPostWindingTest()
     ui.displayMessage("\nStarting post-winding test")
+    windingTester.postWindingTest("postWindingTests.csv")
 
     ui.displayMessage("Program completed.")
 

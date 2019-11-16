@@ -11,6 +11,9 @@
 # Last modified: November 2019
 # ------------------------------------------------- #
 
+# imports
+import serial
+
 class WindingReader:
     # --------------------- Variables --------------------- #
     serialConnection = None
