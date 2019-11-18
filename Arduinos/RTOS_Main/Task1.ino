@@ -21,27 +21,34 @@ static void MyTask1(void* pvParameters)
       digitalWrite(TASK_3,LOW);
       digitalWrite(TASK_IDLE,LOW);
 
-      // Set up motor
-      vTaskDelay(1/portTICK_PERIOD_MS);
-      //digitalWrite(MOTOR_1_DIR, HIGH);
+      // G-Code Implementation Algorithm, to be implemented later this week
+      
+      // Commented out below is code to run a simple Spin Once algorithm
+      // Keep this in case of a catastrophic failure
+      
+      /*vTaskDelay(1/portTICK_PERIOD_MS);
+      //digitalWrite(MOTOR_X_DIR, HIGH);
       vTaskDelay(1/portTICK_PERIOD_MS);
       
-      // Spin 51200 steps
+      // Spin 51200 steps in the X and Y directions
       unsigned int i; // 65535 MAX
       for (i=0; i<51200; i++)
       {
-        digitalWrite(MOTOR_1_PLS, HIGH);
-        //vTaskDelay(1/portTICK_PERIOD_MS);
-        digitalWrite(MOTOR_1_PLS, LOW);
-        //vTaskDelay(1/portTICK_PERIOD_MS);
+        digitalWrite(MOTOR_X_PLS, HIGH);
+        vTaskDelay(1/portTICK_PERIOD_MS/2);
+        digitalWrite(MOTOR_X_PLS, LOW);
+        vTaskDelay(1/portTICK_PERIOD_MS/2);
+        digitalWrite(MOTOR_Y_PLS, HIGH);
+        vTaskDelay(1/portTICK_PERIOD_MS/2);
+        digitalWrite(MOTOR_Y_PLS, LOW);
+        vTaskDelay(1/portTICK_PERIOD_MS/2);
         //Serial.println(i);
       }
       
       // Disable motor
-      digitalWrite(MOTOR_1_ENA, LOW);
       vTaskDelay(1/portTICK_PERIOD_MS);
-      digitalWrite(MOTOR_1_DIR, LOW);
-      vTaskDelay(1/portTICK_PERIOD_MS);
+      digitalWrite(MOTOR_X_DIR, LOW);
+      vTaskDelay(1/portTICK_PERIOD_MS);*/
     }
   }
 }

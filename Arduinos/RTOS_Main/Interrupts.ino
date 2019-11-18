@@ -9,6 +9,20 @@
  * and possibly some abort functionality for safety.
  */
 
+ISR(TIMER1_COMPA_vect)
+{
+  /**
+   * This interrupt goes off every half second
+   */
+   xSemaphoreGiveFromISR(xSemaphoreTimer, NULL);
+}
+
+ISR(TIMER1_COMPB_vect)
+{
+  /**
+   * This interrupt goes off every quarter second (currently not used)
+   */
+}
 
 void serialEvent() 
 {
@@ -21,7 +35,6 @@ void serialEvent()
   * Returns: nothing
   */
 
-  digitalWrite(DEBUG_LED, HIGH);
   while (Serial.available()) 
   {
     //Store input value in the string inputString.
@@ -42,7 +55,7 @@ void serialEvent()
       {
         askedForReady = true;
       }
-      else if(inputString.equals(TASK_1_COMMAND_SIMPLE))
+      else if(inputString.equals(TASK_1_COMMAND))
       {
         // Give a semaphore to Task 1
         xSemaphoreGive(xSemaphore1);
@@ -73,14 +86,6 @@ void serialEvent()
         // Give a semaphore to Task 3
         xSemaphoreGive(xSemaphore3);
       }
-      else if (inputString.equals("0"))
-      {
-        digitalWrite(MOTOR_1_PLS, LOW);  
-      }
-      else if (inputString.equals("1"))
-      {
-        digitalWrite(MOTOR_1_PLS, HIGH);  
-      }
       inputString = "";
     }
     else
@@ -88,5 +93,58 @@ void serialEvent()
       inputString += inChar;
     }
   }
-  digitalWrite(DEBUG_LED, LOW);
+}
+
+void xMotorISR()
+{
+  /**
+   * Pulse received on the X Motor, send a message to the Motor Simulator Task
+   */
+
+  if (digitalRead(MOTOR_X_DIR))
+  {
+    motorMessage = X_REVERSE;
+  }
+  else
+  {
+    motorMessage = X_FORWARD;
+  }
+
+  xMessageBufferSendFromISR(xMessageBufferM, &motorMessage, sizeof(motorMessage), NULL);
+}
+
+void yMotorISR()
+{
+  /**
+   * Pulse received on the Y Motor, send a message to the Motor Simulator Task
+   */
+
+  if (digitalRead(MOTOR_Y_DIR))
+  {
+    motorMessage = Y_REVERSE;
+  }
+  else
+  {
+    motorMessage = Y_FORWARD;
+  }
+
+  xMessageBufferSendFromISR(xMessageBufferM, &motorMessage, sizeof(motorMessage), NULL);
+}
+
+void zMotorISR()
+{
+  /**
+   * Pulse received on the Z Motor, send a message to the Motor Simulator Task
+   */
+
+  if (digitalRead(MOTOR_Z_DIR))
+  {
+    motorMessage = Z_REVERSE;
+  }
+  else
+  {
+    motorMessage = Z_FORWARD;
+  }
+
+  xMessageBufferSendFromISR(xMessageBufferM, &motorMessage, sizeof(motorMessage), NULL);
 }
