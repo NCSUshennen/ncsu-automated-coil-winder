@@ -15,17 +15,17 @@ class WindingWriter:
     statorToothLength = None
     statorToothHeight = None
     statorToothWidth = None
-    statorLipRadius = None
+    statorShoeWidth = None
     numberStatorTeeth = None
-    numberWireLayers = None
+    numberTurns = None
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
 
     # --------------------- Functions --------------------- #
     def __init__(self, statorToothLength, statorToothHeight,
-                 statorToothWidth, statorLipRadius, numberStatorTeeth,
-                 numberWireLayers, wireGauge, wireMaterial,
+                 statorToothWidth, statorShoeWidth, numberStatorTeeth,
+                 numberTurns, wireGauge, wireMaterial,
                  distanceBetweenTeeth):
         """Construct a new WindingWriter
 
@@ -33,9 +33,9 @@ class WindingWriter:
         statorToothLength --
         statorToothHeight --
         statorToothWidth --
-        statorLipRadius --
+        statorShoeWidth --
         numberStatorTeeth --
-        numberWireLayers --
+        numberTurns --
         wireGauge --
         wireMaterial --
         distanceBetweenTeeth --
@@ -43,8 +43,8 @@ class WindingWriter:
         self.statorToothLength = statorToothLength
         self.statorToothHeight = statorToothHeight
         self.statorToothWidth = statorToothWidth
-        self.statorLipRadius = statorLipRadius
-        self.numberWireLayers = numberWireLayers
+        self.statorShoeWidth = statorShoeWidth
+        self.numberTurns = numberTurns
         self.wireGauge = wireGauge
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth

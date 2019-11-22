@@ -43,6 +43,7 @@ class WindingReader:
         #       with a newline char at end (readline)
         #       When reach end of file, close out
 
+        # TODO: ask if ardiuno is ready for command, then send winding command
         while True:
             # read next line
             line = pathFile.readline()

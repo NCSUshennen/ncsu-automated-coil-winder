@@ -31,9 +31,9 @@ def main():
     statorToothLength = None
     statorToothHeight = None
     statorToothWidth = None
-    statorLipRadius = None
+    statorShoe= None
     numberStatorTeeth = None
-    numberWireLayers = None
+    numberTurns = None
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
@@ -54,9 +54,9 @@ def main():
     statorToothLength = ui.getStatorToothLength()
     statorToothHeight = ui.getStatorToothHeight()
     statorToothWidth = ui.getStatorToothWidth()
-    statorLipRadius = ui.getStatorLipRadius()
+    statorShoeWidth = ui.getStatorShoeWidth()
     numberStatorTeeth = ui.getNumberStatorTeeth()
-    numberWireLayers = ui.getNumberWireLayers()
+    numberTurns = ui.getNumberTurns()
     wireGauge = ui.getWireGauge()
     wireMaterial = ui.getWireMaterial()
     distanceBetweenTeeth = ui.getDistanceBetweenTeeth()
@@ -64,9 +64,9 @@ def main():
     windingWriter = WindingWriter(statorToothLength,
                                   statorToothHeight,
                                   statorToothWidth,
-                                  statorLipRadius,
+                                  statorShoeWidth,
                                   numberStatorTeeth,
-                                  numberWireLayers,
+                                  numberTurns,
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
@@ -74,9 +74,9 @@ def main():
     windingTester = WindingTester(statorToothLength,
                                   statorToothHeight,
                                   statorToothWidth,
-                                  statorLipRadius,
+                                  statorShoeWidth,
                                   numberStatorTeeth,
-                                  numberWireLayers,
+                                  numberTurns,
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
