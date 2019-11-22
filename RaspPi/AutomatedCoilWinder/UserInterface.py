@@ -152,16 +152,16 @@ class UserInterface:
             except ValueError:
                 print("Please enter a valid integer")
 
-    def getStatorLipRadius(self):
-        """Return statorLipRadius from user
+    def getStatorShoeWidth(self):
+        """Return statorShoeWidth from user
         """
         # --------------------- Variables --------------------- #
         gotValue = False
 
-        # Ask user for statorLipRadius until they enter a valid int
+        # Ask user for statorShoeWidth until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter stator lip radius (in cm): "))
+                userInput = int(input("Enter stator shoe width (in cm): "))
                 gotValue = True
                 return userInput
             except ValueError:
@@ -182,8 +182,8 @@ class UserInterface:
             except ValueError:
                 print("Please enter a valid integer")
 
-    def getNumberWireLayers(self):
-        """Return numberWireLayers from user
+    def getNumberTurns(self):
+        """Return numberTurns from user
         """
         # --------------------- Variables --------------------- #
         gotValue = False
@@ -191,7 +191,7 @@ class UserInterface:
         # Ask user for statorToothHeight until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter number of wire layers (in cm): "))
+                userInput = int(input("Enter number of turns: "))
                 gotValue = True
                 return userInput
             except ValueError:
@@ -241,4 +241,3 @@ class UserInterface:
                 return userInput
             except ValueError:
                 print("Please enter a valid integer")
-

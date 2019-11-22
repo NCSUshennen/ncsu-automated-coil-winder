@@ -19,17 +19,17 @@ class WindingTester:
     statorToothLength = None
     statorToothHeight = None
     statorToothWidth = None
-    statorLipRadius = None
+    statorShoeWidth = None
     numberStatorTeeth = None
-    numberWireLayers = None
+    numberTurns = None
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
 
     # --------------------- Functions --------------------- #
     def __init__(self, statorToothLength, statorToothHeight,
-                 statorToothWidth, statorLipRadius, numberStatorTeeth,
-                 numberWireLayers, wireGauge, wireMaterial,
+                 statorToothWidth, statorShoeWidth, numberStatorTeeth,
+                 numberTurns, wireGauge, wireMaterial,
                  distanceBetweenTeeth):
         """Construct a new WindingTester
 
@@ -37,9 +37,9 @@ class WindingTester:
         statorToothLength --
         statorToothHeight --
         statorToothWidth --
-        statorLipRadius --
+        statorShoeWidth --
         numberStatorTeeth --
-        numberWireLayers --
+        numberTurns --
         wireGauge --
         wireMaterial --
         distanceBetweenTeeth --
@@ -48,8 +48,8 @@ class WindingTester:
         self.statorToothLength = statorToothLength
         self.statorToothHeight = statorToothHeight
         self.statorToothWidth = statorToothWidth
-        self.statorLipRadius = statorLipRadius
-        self.numberWireLayers = numberWireLayers
+        self.statorShoeWidth = statorShoeWidth
+        self.numberTurns = numberTurns
         self.wireGauge = wireGauge
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth
@@ -61,12 +61,12 @@ class WindingTester:
         # --------------------- Variables --------------------- #
         # exampleParam = None
 
-
+        # TODO: ask if ardiuno is ready for command, then send ppst Winding Command
         myData = [["Stator Tooth Length: ", self.statorToothLength],
           ["Stator Tooth Height: ", self.statorToothHeight],
           ["Stator Tooth Width: ", self.statorToothWidth],
-          ["Stator Lip Radius: ", self.statorLipRadius],
-          ["Number of Wire Layers: ", self.numberWireLayers],
+          ["Stator Shoe Width: ", self.statorShoeWidth],
+          ["Number of Turns: ", self.numberTurns],
           ["Wire Gauge: ", self.wireGauge],
           ["Wire Material: ", self.wireMaterial],
           ["Distance Between Teeth: ", self.distanceBetweenTeeth]]
@@ -81,5 +81,4 @@ class WindingTester:
         testsFile.close()
 
         print("Post winding writing complete")
-
 
