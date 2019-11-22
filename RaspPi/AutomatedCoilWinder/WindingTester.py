@@ -2,15 +2,19 @@
 # ------------------------------------------------- #
 # NCSU Senior Design: Automated Coil Winder
 #
-# WindingWriter.py
-#    Constructs a new writer with the given parameters
-#    and generates a path with those parameters
+# WindingTester.py
+#    Constructs a new tester, goes through the post
+#    winding tests, and stores results to CSV file
 #
 # Created: November 2019
 # Last modified: November 2019
 # ------------------------------------------------- #
 
-class WindingWriter:
+# imports
+import serial
+import csv
+
+class WindingTester:
     # --------------------- Variables --------------------- #
     statorToothLength = None
     statorToothHeight = None
@@ -27,7 +31,7 @@ class WindingWriter:
                  statorToothWidth, statorLipRadius, numberStatorTeeth,
                  numberWireLayers, wireGauge, wireMaterial,
                  distanceBetweenTeeth):
-        """Construct a new WindingWriter
+        """Construct a new WindingTester
 
         Keyword arguments:
         statorToothLength --
@@ -39,6 +43,7 @@ class WindingWriter:
         wireGauge --
         wireMaterial --
         distanceBetweenTeeth --
+        fileName --
         """
         self.statorToothLength = statorToothLength
         self.statorToothHeight = statorToothHeight
@@ -49,22 +54,32 @@ class WindingWriter:
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth
 
-    def generatePath(self, fileName):
+    def postWindingTest(self, fileName):
         """Generate a path with the stored parameters
             and return True when complete
         """
         # --------------------- Variables --------------------- #
         # exampleParam = None
 
-        # TODO (485): Generate a path from the given parameters
 
-        # TODO: Generate a basic square path for winding post
-        # Open the path file for writing
-        pathFile = open(fileName, "w")
-        pathFile.write( "Gcode command 1.\n")
-        pathFile.write("Gcode command 2.\n")
+        myData = [["Stator Tooth Length: ", self.statorToothLength],
+          ["Stator Tooth Height: ", self.statorToothHeight],
+          ["Stator Tooth Width: ", self.statorToothWidth],
+          ["Stator Lip Radius: ", self.statorLipRadius],
+          ["Number of Wire Layers: ", self.numberWireLayers],
+          ["Wire Gauge: ", self.wireGauge],
+          ["Wire Material: ", self.wireMaterial],
+          ["Distance Between Teeth: ", self.distanceBetweenTeeth]]
 
-        # Close opened path file
-        pathFile.close()
 
-        return True
+        testsFile = open(fileName, "w")
+        with testsFile:
+            writer = csv.writer(testsFile)
+            writer.writerows(myData)
+
+        # Close opened test file
+        testsFile.close()
+
+        print("Post winding writing complete")
+
+

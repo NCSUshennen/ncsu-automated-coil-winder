@@ -9,6 +9,20 @@
  * and possibly some abort functionality for safety.
  */
 
+ISR(TIMER1_COMPA_vect)
+{
+  /**
+   * This interrupt goes off every half second
+   */
+   xSemaphoreGiveFromISR(xSemaphoreTimer, NULL);
+}
+
+ISR(TIMER1_COMPB_vect)
+{
+  /**
+   * This interrupt goes off every quarter second (currently not used)
+   */
+}
 
 void serialEvent() 
 {
@@ -21,7 +35,6 @@ void serialEvent()
   * Returns: nothing
   */
 
-  digitalWrite(DEBUG_LED, HIGH);
   while (Serial.available()) 
   {
     //Store input value in the string inputString.
@@ -31,14 +44,44 @@ void serialEvent()
     // add it to the inputString:
     if (inChar == '\n')
     {
-      //End of the command, check to see if it corresponds to one of our chosen commands
-      if (inputString.equals("Hello There!"))
+      //End of the command, check to see if it corresponds to one of our chosen commands      
+      if (inputString.equals(SERIAL_TEST))
       {
         // Pretend to be General Grievous and print "General Kenobi!"
         // This is used as a sanity check to ensure serial data is read properly
         Serial.write("General Kenobi!\n");
       }
-      else if (inputString.equals("doPostWindingTest"))
+      else if (inputString.equals(READY_ASK))
+      {
+        askedForReady = true;
+      }
+      else if(inputString.equals(TASK_1_COMMAND))
+      {
+        // Give a semaphore to Task 1
+        xSemaphoreGive(xSemaphore1);
+      }
+      else if (inputString.equals(TASK_2_COMMAND_ALL))
+      {
+        sensorNum = 0;
+        //Give a message to Task 2
+        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+        //Don't worry for now if the message buffer is full, just ignore this command
+      }
+      else if (inputString.equals(TASK_2_COMMAND_SENSOR1))
+      {
+        sensorNum = 1;
+        //Give a message to Task 2
+        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+        //Don't worry for now if the message buffer is full, just ignore this command
+      }
+      else if (inputString.equals(TASK_2_COMMAND_SENSOR2))
+      {
+        sensorNum = 2;
+        //Give a message to Task 2
+        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+        //Don't worry for now if the message buffer is full, just ignore this command
+      }
+      else if (inputString.equals(TASK_3_COMMAND))
       {
         // Give a semaphore to Task 3
         xSemaphoreGive(xSemaphore3);
@@ -50,5 +93,58 @@ void serialEvent()
       inputString += inChar;
     }
   }
-  digitalWrite(DEBUG_LED, LOW);
+}
+
+void xMotorISR()
+{
+  /**
+   * Pulse received on the X Motor, send a message to the Motor Simulator Task
+   */
+
+  if (digitalRead(MOTOR_X_DIR))
+  {
+    motorMessage = X_REVERSE;
+  }
+  else
+  {
+    motorMessage = X_FORWARD;
+  }
+
+  xMessageBufferSendFromISR(xMessageBufferM, &motorMessage, sizeof(motorMessage), NULL);
+}
+
+void yMotorISR()
+{
+  /**
+   * Pulse received on the Y Motor, send a message to the Motor Simulator Task
+   */
+
+  if (digitalRead(MOTOR_Y_DIR))
+  {
+    motorMessage = Y_REVERSE;
+  }
+  else
+  {
+    motorMessage = Y_FORWARD;
+  }
+
+  xMessageBufferSendFromISR(xMessageBufferM, &motorMessage, sizeof(motorMessage), NULL);
+}
+
+void zMotorISR()
+{
+  /**
+   * Pulse received on the Z Motor, send a message to the Motor Simulator Task
+   */
+
+  if (digitalRead(MOTOR_Z_DIR))
+  {
+    motorMessage = Z_REVERSE;
+  }
+  else
+  {
+    motorMessage = Z_FORWARD;
+  }
+
+  xMessageBufferSendFromISR(xMessageBufferM, &motorMessage, sizeof(motorMessage), NULL);
 }

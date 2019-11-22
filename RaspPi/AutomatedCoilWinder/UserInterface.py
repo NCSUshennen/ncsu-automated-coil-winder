@@ -11,8 +11,6 @@
 # ------------------------------------------------- #
 
 class UserInterface:
-    # --------------------- Variables --------------------- #
-    # statorToothLength = None
 
     # --------------------- Functions --------------------- #
     def __init__(self):
@@ -34,6 +32,25 @@ class UserInterface:
                 return True
             elif userInput == "n":
                 print("Not zeroing.\n")
+            else:
+                print("Input error, please input 'y' or 'n'\n")
+
+    def userStartWinding(self):
+        """Ask the user if it's okay to start winding in general.
+            Return True when user okays.
+        """
+        # --------------------- Variables --------------------- #
+        userOkayed = False
+
+        # If the user wants to start winding, return True
+        # Otherwise, keep asking.
+        while not userOkayed:
+            userInput = input("Begin winding? (y/n): ")
+            if userInput == "y":
+                userOkayed = True
+                return True
+            elif userInput == "n":
+                print("Not winding.\n")
             else:
                 print("Input error, please input 'y' or 'n'\n")
 
@@ -224,34 +241,4 @@ class UserInterface:
                 return userInput
             except ValueError:
                 print("Please enter a valid integer")
-
-
-# Below: examples of how to use
-# ui = UserInterface()
-# ui.userZero()
-# ui.userStartWindingTooth()
-# ui.userStartPostWindingTest()
-# ui.displayMessage("Hello, world!")
-
-"""
-ui = UserInterface()
-value = ui.getStatorToothLength()
-print(value)
-value = ui.getStatorToothHeight()
-print(value)
-value = ui.getStatorToothWidth()
-print(value)
-value = ui.getStatorLipRadius()
-print(value)
-value = ui.getNumberStatorTeeth()
-print(value)
-value = ui.getNumberWireLayers()
-print(value)
-value = ui.getWireGauge()
-print(value)
-value = ui.getWireMaterial()
-print(value)
-value = ui.getDistanceBetweenTeeth()
-print(value)
-"""
 
