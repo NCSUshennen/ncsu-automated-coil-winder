@@ -38,8 +38,8 @@
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
-
 #define USE_MOTOR_SIMULATOR 1
+
 #define X_INTERRUPT 18
 #define Y_INTERRUPT 19
 #define Z_INTERRUPT 20
@@ -53,15 +53,15 @@
 #define TEST_SIGNAL_L 53
 #define OUTPUT_SIGNAL A0
 
+// Other macros used for Task 3
+#define RIN 11500.0
+#define CIN 0.00022
+
 // Pins used in Task MotorSimulator
 #define X0_Y0 7
 #define X1_Y0 6
 #define X0_Y1 5
 #define X1_Y1 4
-
-// Other macros used for Task 3
-#define RIN 11500.0
-#define CIN 0.00022
 
 // Used for easier array access when determining coordinates
 #define X 0
@@ -72,19 +72,23 @@
 #define SERIAL_TEST "Hello There!"
 #define READY_ASK "isArduinoReady"
 #define TASK_1_COMMAND_SIMPLE "spinMotorOnce"
+#define TASK_1_COMMAND_SIMPLE_REVERSE "spinMotorReverse"
 #define TASK_1_COMMAND "beginWindingPath"
+#define TASK_1_BEGIN_G_CODE "%"
 #define TASK_2_COMMAND_ALL "getAllSensorValue"
 #define TASK_2_COMMAND_SENSOR1 "getSensor1SensorValue"
 #define TASK_2_COMMAND_SENSOR2 "getSensor2SensorValue"
 #define TASK_3_COMMAND "doPostWindingTest"
 
-//What task am I in?
 uint8_t task = 0; // 0 indicates Idle
 bool askedForReady = false;
-
+bool readingGCode = false;
 
 //Global semaphore variables
 SemaphoreHandle_t xSemaphore1;
+SemaphoreHandle_t xSemaphorePercent;
+SemaphoreHandle_t xSemaphoreManualTurnF;
+SemaphoreHandle_t xSemaphoreManualTurnR;
 SemaphoreHandle_t xSemaphore3;
 SemaphoreHandle_t xSemaphoreTimer;
 
@@ -93,18 +97,23 @@ MessageBufferHandle_t xMessageBuffer2;
 uint8_t sensorNum; // Indicator for the sensor to read the next time Task 2 runs. If this number is 0, read all the sensors
 MessageBufferHandle_t xMessageBufferM; // Message buffer for the motor simulator, to be updated whenver a pulse is given
 enum {X_FORWARD, X_REVERSE, Y_FORWARD, Y_REVERSE, Z_FORWARD, Z_REVERSE} motorMessage;
+MessageBufferHandle_t xMessageBufferGCode;
+char inChar;
 
 //Global variables to store output signal data in Task 3
 int voltages[1000];
 
-String inputString = "";
-
+String inputString = ""; // Used for reading commands
+String gCodeString = ""; // Used for reading G-Code during a winding algorithm
+String magnitudeString = ""; // Used while reading G-Code to determine the magnitude of each movement
 
 void setup()
 {
   //Initialize the Serial Monitor with 9600 baud rate
   Serial.begin(9600);
   inputString.reserve(100);
+  gCodeString.reserve(100);
+  magnitudeString.reserve(20);
 
   Serial.write("ready\n");
   
@@ -197,11 +206,15 @@ void Init_SemaphoresAndMessageBuffers()
    */
    
   xSemaphore1 = xSemaphoreCreateCounting(10, 0);
+  xSemaphorePercent = xSemaphoreCreateCounting(10, 0);
+  xSemaphoreManualTurnF = xSemaphoreCreateCounting(10, 0);
+  xSemaphoreManualTurnR = xSemaphoreCreateCounting(10, 0);
   xSemaphore3 = xSemaphoreCreateCounting(10, 0);
   xSemaphoreTimer = xSemaphoreCreateCounting(10, 0);
   
   xMessageBuffer2 = xMessageBufferCreate(100*sizeof(sensorNum));
   xMessageBufferM = xMessageBufferCreate(100*sizeof(motorMessage));
+  xMessageBufferGCode = xMessageBufferCreate(100*sizeof(inChar));
 }
 
 void Init_Timers()
@@ -239,8 +252,12 @@ void Init_Tasks()
   xTaskCreate(MyTask3, "Task3", 100, NULL, 3, NULL);
   xTaskCreate(MotorSimulator, "MotorSimulator", 100, NULL, 4, NULL);
   xTaskCreate(MyIdleTask, "IdleTask", 100, NULL, 0, NULL);
+
+  xTaskCreate(MyTaskManualTurnF, "TaskManualTurnF", 100, NULL, 5, NULL);
+  xTaskCreate(MyTaskManualTurnR, "TaskManualTurnR", 100, NULL, 6, NULL);
   //We can change the priority of task according to our desire by changing the numerics
   //between NULL texts.
+
 }
 
 float ADCToVoltage(int adcValue)
@@ -271,5 +288,63 @@ void toggleLED(int ledPort)
     else
     {
       digitalWrite(ledPort, HIGH);  
+    }
+}
+
+bool isInt(String wouldBeInt)
+{
+  /**
+    * Reads a String to determine whether it can be converted into a valid integer variable
+    * 
+    * Returns: true if it can, false if it can't
+    */  
+
+    // The first character can be a '-'
+    if (wouldBeInt.length() > 0 && wouldBeInt.charAt(0) != '0' && wouldBeInt.charAt(0) != '1' && wouldBeInt.charAt(0) != '2' && wouldBeInt.charAt(0) != '3' && wouldBeInt.charAt(0) != '4' &&
+    wouldBeInt.charAt(0) != '5' && wouldBeInt.charAt(0) != '6' && wouldBeInt.charAt(0) != '7' && wouldBeInt.charAt(0) != '8' && wouldBeInt.charAt(0) != '9' && wouldBeInt.charAt(0) != '-')
+    {
+      return false;
+    }
+
+    int i;
+    for (i=1; i<wouldBeInt.length(); i++)
+    {
+      if (wouldBeInt.charAt(i) != '0' && wouldBeInt.charAt(i) != '1' && wouldBeInt.charAt(i) != '2' && wouldBeInt.charAt(i) != '3' && wouldBeInt.charAt(i) != '4' &&
+      wouldBeInt.charAt(i) != '5' && wouldBeInt.charAt(i) != '6' && wouldBeInt.charAt(i) != '7' && wouldBeInt.charAt(i) != '8' && wouldBeInt.charAt(i) != '9')
+      {
+        return false;  
+      }  
+    }
+    return true;
+}
+
+int minIndexOf2(int index1, int index2)
+{
+  /**
+    * In a list of 2 potential index values, return the minimum value that isn't -1, if there is one
+    * This is used for reading G-Code
+    * 
+    * Note: This shouldn't be a problem, but this should not be used for reading G-Code Strings longer
+    * than 999 characters
+    * 
+    * Returns: lowest non-negative integer in the array, or -1 if there is no non-negative integer
+    */
+
+    if ((index1 < 0) && (index2 < 0))
+    {
+      return -1;
+    }
+    else
+    {
+      int minIndex = 999;
+      if ((index1 >= 0) && (index1 < minIndex))
+      {
+        minIndex = index1;
+      }
+      if ((index2 >= 0) && (index2 < minIndex))
+      {
+        minIndex = index2;
+      }
+      return minIndex;
     }
 }

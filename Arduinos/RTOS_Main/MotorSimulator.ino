@@ -13,11 +13,13 @@
  * wires to connect ports 23 and 18, 31 and 19, and 39 and 20.
  */
 
+#define TURN_RATE 800
+
 static void MotorSimulator(void* pvParameters)
 {
   int simulatorPosition[3] = {0, 0, 0};
-  unsigned int pulsesToNext[3] = {51200, 51200, 51200}; // Used to keep track of when to "move" the head on the LEDs
-  unsigned int pulsesToPrev[3] = {51200, 51200, 51200};
+  unsigned int pulsesToNext[3] = {TURN_RATE, TURN_RATE, TURN_RATE}; // Used to keep track of when to "move" the head on the LEDs
+  unsigned int pulsesToPrev[3] = {TURN_RATE, TURN_RATE, TURN_RATE};
 
   digitalWrite(X0_Y0, HIGH);
   digitalWrite(X1_Y0, LOW);
@@ -29,6 +31,7 @@ static void MotorSimulator(void* pvParameters)
     enum {X_FORWARD, X_REVERSE, Y_FORWARD, Y_REVERSE, Z_FORWARD, Z_REVERSE} receivedMotorMessage;
     if (xMessageBufferReceive(xMessageBufferM, &receivedMotorMessage, sizeof(receivedMotorMessage), portMAX_DELAY) > 0)
     {
+      task = 4;
       switch(receivedMotorMessage)
       {
         case X_FORWARD:
@@ -37,8 +40,8 @@ static void MotorSimulator(void* pvParameters)
           if (pulsesToNext[X] <= 0)
           {
              simulatorPosition[X]++;
-             pulsesToNext[X] = 51200;
-             pulsesToPrev[X] = 51200;
+             pulsesToNext[X] = TURN_RATE;
+             pulsesToPrev[X] = TURN_RATE;
           }
           break;
         case X_REVERSE:
@@ -47,8 +50,8 @@ static void MotorSimulator(void* pvParameters)
           if (pulsesToPrev[X] <= 0 && simulatorPosition[X] > 0)
           {
              simulatorPosition[X]--;
-             pulsesToNext[X] = 51200;
-             pulsesToPrev[X] = 51200;
+             pulsesToNext[X] = TURN_RATE;
+             pulsesToPrev[X] = TURN_RATE;
           }
           break;
         case Y_FORWARD:
@@ -57,8 +60,8 @@ static void MotorSimulator(void* pvParameters)
           if (pulsesToNext[Y] <= 0)
           {
              simulatorPosition[Y]++;
-             pulsesToNext[Y] = 51200;
-             pulsesToPrev[Y] = 51200;
+             pulsesToNext[Y] = TURN_RATE;
+             pulsesToPrev[Y] = TURN_RATE;
           }
           break;
         case Y_REVERSE:
@@ -67,28 +70,28 @@ static void MotorSimulator(void* pvParameters)
           if (pulsesToPrev[Y] <= 0 && simulatorPosition[Y] > 0)
           {
              simulatorPosition[Y]--;
-             pulsesToNext[Y] = 51200;
-             pulsesToPrev[Y] = 51200;
+             pulsesToNext[Y] = TURN_RATE;
+             pulsesToPrev[Y] = TURN_RATE;
           }
           break;
         case Z_FORWARD:
-          pulsesToNext[Z]--;
-          pulsesToPrev[Z]++;
-          if (pulsesToNext[Z] <= 0)
-          {
-             simulatorPosition[Z]++;
-             pulsesToNext[Z] = 51200;
-             pulsesToPrev[Z] = 51200;
-          }
-          break;
-        case Z_REVERSE:
           pulsesToNext[Z]++;
           pulsesToPrev[Z]--;
           if (pulsesToPrev[Z] <= 0 && simulatorPosition[Z] > 0)
           {
              simulatorPosition[Z]--;
-             pulsesToNext[Z] = 51200;
-             pulsesToPrev[Z] = 51200;
+             pulsesToNext[Z] = TURN_RATE;
+             pulsesToPrev[Z] = TURN_RATE;
+          }
+          break;
+        case Z_REVERSE:
+          pulsesToNext[Z]--;
+          pulsesToPrev[Z]++;
+          if (pulsesToNext[Z] <= 0)
+          {
+             simulatorPosition[Z]++;
+             pulsesToNext[Z] = TURN_RATE;
+             pulsesToPrev[Z] = TURN_RATE;
           }
           break;
         default:
