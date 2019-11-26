@@ -37,60 +37,85 @@ void serialEvent()
 
   while (Serial.available()) 
   {
-    //Store input value in the string inputString.
     
-    //get the new byte:
-    char inChar = (char)Serial.read();
-    // add it to the inputString:
-    if (inChar == '\n')
+    if (readingGCode)
     {
-      //End of the command, check to see if it corresponds to one of our chosen commands      
-      if (inputString.equals(SERIAL_TEST))
-      {
-        // Pretend to be General Grievous and print "General Kenobi!"
-        // This is used as a sanity check to ensure serial data is read properly
-        Serial.write("General Kenobi!\n");
-      }
-      else if (inputString.equals(READY_ASK))
-      {
-        askedForReady = true;
-      }
-      else if(inputString.equals(TASK_1_COMMAND))
-      {
-        // Give a semaphore to Task 1
-        xSemaphoreGive(xSemaphore1);
-      }
-      else if (inputString.equals(TASK_2_COMMAND_ALL))
-      {
-        sensorNum = 0;
-        //Give a message to Task 2
-        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
-        //Don't worry for now if the message buffer is full, just ignore this command
-      }
-      else if (inputString.equals(TASK_2_COMMAND_SENSOR1))
-      {
-        sensorNum = 1;
-        //Give a message to Task 2
-        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
-        //Don't worry for now if the message buffer is full, just ignore this command
-      }
-      else if (inputString.equals(TASK_2_COMMAND_SENSOR2))
-      {
-        sensorNum = 2;
-        //Give a message to Task 2
-        xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
-        //Don't worry for now if the message buffer is full, just ignore this command
-      }
-      else if (inputString.equals(TASK_3_COMMAND))
-      {
-        // Give a semaphore to Task 3
-        xSemaphoreGive(xSemaphore3);
-      }
-      inputString = "";
+      // Every character gets written to the G-Code message buffer
+      inChar = (char)Serial.read();
+      xMessageBufferSend(xMessageBufferGCode, &inChar, sizeof(inChar), 0);
     }
     else
     {
-      inputString += inChar;
+      //Store input value in the string inputString.
+      //get the new byte:
+      inChar = (char)Serial.read();
+      // add it to the inputString:
+      if (inChar == '\n')
+      {
+        //End of the command, check to see if it corresponds to one of our chosen commands      
+        if (inputString.equals(SERIAL_TEST))
+        {
+          // Pretend to be General Grievous and print "General Kenobi!"
+          // This is used as a sanity check to ensure serial data is read properly
+          Serial.write("General Kenobi!\n");
+        }
+        else if (inputString.equals(READY_ASK))
+        {
+          // Used for handshaking between the Arduino and the Pi
+          askedForReady = true;
+        }
+        else if(inputString.equals(TASK_1_COMMAND_SIMPLE))
+        {
+          // Give a semaphore to Task Manual Turn F
+          xSemaphoreGive(xSemaphoreManualTurnF);
+        }
+        else if(inputString.equals(TASK_1_COMMAND_SIMPLE_REVERSE))
+        {
+          // Give a semaphore to Task Manual Turn R
+          xSemaphoreGive(xSemaphoreManualTurnR);
+        }
+        else if(inputString.equals(TASK_1_COMMAND))
+        {
+          // Give a semaphore to Task 1
+          xSemaphoreGive(xSemaphore1);
+        }
+        else if(inputString.equals(TASK_1_BEGIN_G_CODE))
+        {
+          // Give a semaphore to begin G Code
+          xSemaphoreGive(xSemaphorePercent);
+        }
+        else if (inputString.equals(TASK_2_COMMAND_ALL))
+        {
+          sensorNum = 0;
+          //Give a message to Task 2
+          xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+          //Don't worry for now if the message buffer is full, just ignore this command
+        }
+        else if (inputString.equals(TASK_2_COMMAND_SENSOR1))
+        {
+          sensorNum = 1;
+          //Give a message to Task 2
+          xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+          //Don't worry for now if the message buffer is full, just ignore this command
+        }
+        else if (inputString.equals(TASK_2_COMMAND_SENSOR2))
+        {
+          sensorNum = 2;
+          //Give a message to Task 2
+          xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
+          //Don't worry for now if the message buffer is full, just ignore this command
+        }
+        else if (inputString.equals(TASK_3_COMMAND))
+        {
+          // Give a semaphore to Task 3
+          xSemaphoreGive(xSemaphore3);
+        }
+        inputString = "";
+      }
+      else
+      {
+        inputString += inChar;
+      }
     }
   }
 }

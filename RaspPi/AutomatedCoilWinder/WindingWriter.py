@@ -61,8 +61,42 @@ class WindingWriter:
         # TODO: Generate a basic square path for winding post
         # Open the path file for writing
         pathFile = open(fileName, "w")
-        pathFile.write( "Gcode command 1.\n")
-        pathFile.write("Gcode command 2.\n")
+
+        #Move diagonally to start of block
+        pathFile.write( "G0 X100 Y00\n")
+
+        #Move one full rotation
+        pathFile.write("G0 Y225\n")
+        pathFile.write("G0 X175\n")
+        pathFile.write("G0 Y100\n")
+        pathFile.write("G0 X100\n")
+
+        #Move up half a cm
+        pathFile.write("G0 Z5\n")
+
+        #Move one full rotation
+        pathFile.write("G0 Y225\n")
+        pathFile.write("G0 X175\n")
+        pathFile.write("G0 Y100\n")
+        pathFile.write("G0 X100\n")
+
+        #Move one full rotation
+        pathFile.write("G0 Y225\n")
+        pathFile.write("G0 X175\n")
+        pathFile.write("G0 Y100\n")
+        pathFile.write("G0 X100\n")
+
+        #Move down half a cm
+        pathFile.write("G0 Z0\n")
+
+        #Move one full rotation
+        pathFile.write("G0 Y225\n")
+        pathFile.write("G0 X175\n")
+        pathFile.write("G0 Y100\n")
+        pathFile.write("G0 X100\n")
+
+        #Move back to zero
+        pathFile.write( "G0 X0 Y0 Z0\n")
 
         # Close opened path file
         pathFile.close()

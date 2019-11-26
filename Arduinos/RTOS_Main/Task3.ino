@@ -46,7 +46,7 @@ static void MyTask3(void* pvParameters)
         }
         else
         {
-          Serial.write("Resistance Measurement Failed\n");
+          Serial.print("Resistance Measurement Failed\n");
           rFailed = true;
         }
 
@@ -55,15 +55,15 @@ static void MyTask3(void* pvParameters)
       }
       else
       {
-        Serial.write("Resistance Measurement Failed\n");
+        Serial.print("Resistance Measurement Failed\n");
         rFailed = true;
       }
 
       if (!rFailed)
       {
-        Serial.write("Resistance: ");
+        Serial.print("Resistance: ");
         Serial.print(r);
-        Serial.write("\n");  
+        Serial.print("\n");  
       }
       
       //Goal: Use timer interrupts to flash the test signal LED three times, toggling every half-second
