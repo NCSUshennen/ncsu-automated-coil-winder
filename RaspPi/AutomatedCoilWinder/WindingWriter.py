@@ -62,8 +62,11 @@ class WindingWriter:
         # Open the path file for writing
         pathFile = open(fileName, "w")
 
+        #% for Telling arduino this is gcode
+        pathFile.write("%\n")
+
         #Move diagonally to start of block
-        pathFile.write( "G0 X100 Y00\n")
+        pathFile.write( "G0 X100 Y100\n")
 
         #Move one full rotation
         pathFile.write("G0 Y225\n")
@@ -97,6 +100,9 @@ class WindingWriter:
 
         #Move back to zero
         pathFile.write( "G0 X0 Y0 Z0\n")
+
+        #% for Telling arduino this gode is done
+        pathFile.write("%\n")
 
         # Close opened path file
         pathFile.close()

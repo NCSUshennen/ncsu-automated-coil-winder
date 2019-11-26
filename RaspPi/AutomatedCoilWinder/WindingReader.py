@@ -20,20 +20,20 @@ class WindingReader:
     arduinoReadyForCommand = "ready\n"
 
     # --------------------- Functions --------------------- #
-    def __init__(self):
+    def __init__(self, arduinoSerial):
         """Construct a new WindingReader
 
         Keyword arguments:
         serialConnection -- the serial connection to read from
 
         """
-        # self.serialConnection = arduinoSerial
+        self.serialConnection = arduinoSerial
 
     def sendPath(self, fileName):
         """Sends a gcode path from a text file to the given serial conenction
         """
         # --------------------- Variables --------------------- #
-        # exampleParam = None
+        windingPathCmd = "beginWindingPath\n"
 
         # TODO: Send the path stored in the given file name
         # Open the path file for reading and sending
@@ -43,7 +43,8 @@ class WindingReader:
         #       with a newline char at end (readline)
         #       When reach end of file, close out
 
-        # TODO: ask if ardiuno is ready for command, then send winding command
+        # Ask if ardiuno is ready for command, then send winding command
+        self.serialConnection.write(windingPathCmd.encode())
         while True:
             # read next line
             line = pathFile.readline()
@@ -53,7 +54,7 @@ class WindingReader:
                 break
 
             print(line)
-            '''
+
             # send next line to arduino if ready
             readyReceived = False
             while not readyReceived:
@@ -63,9 +64,9 @@ class WindingReader:
                     if inputValue == self.arduinoReadyForCommand:
                             # Give Gcode command
                             print("ReadyReceived\n")
-                            readyReceived = True
                             self.serialConnection.write(line.encode())
-            '''
+                            readyReceived = True
+
 
         # Close opened path file
         pathFile.close()
