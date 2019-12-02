@@ -2,7 +2,7 @@
  * RTOS_Main
  * 
  * Dan Hayduk
- * November 2, 2019
+ * December 2, 2019
  * 
  * This code establishes the RTOS System with working semaphores and message buffers. Tasks MyTask1, MyTask2, and MyTask3 
  * are set up to run the algorithms we originally assigned to Arduino 1, 2, and 3, respectively.
@@ -24,9 +24,9 @@
 #define TASK_IDLE 11
 
 //Pins used in Task 1
-#define MOTOR_X_PLS 23
-#define MOTOR_X_DIR 25
-#define MOTOR_X_ENA 27
+#define MOTOR_X1_PLS 23
+#define MOTOR_X1_DIR 25
+#define MOTOR_X1_ENA 27
 
 #define MOTOR_Y_PLS 31
 #define MOTOR_Y_DIR 33
@@ -35,6 +35,10 @@
 #define MOTOR_Z_PLS 39
 #define MOTOR_Z_DIR 41
 #define MOTOR_Z_ENA 43
+
+#define MOTOR_X2_PLS 47
+#define MOTOR_X2_DIR 49
+#define MOTOR_X2_ENA 51
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
@@ -71,8 +75,12 @@
 // Commands
 #define SERIAL_TEST "Hello There!"
 #define READY_ASK "isArduinoReady"
-#define TASK_1_COMMAND_SIMPLE "spinMotorOnce"
-#define TASK_1_COMMAND_SIMPLE_REVERSE "spinMotorReverse"
+#define TASK_1_COMMAND_SIMPLEX "spinMotorOnceXUp" // that is, increase the X-Value
+#define TASK_1_COMMAND_SIMPLEY "spinMotorOnceYUp"
+#define TASK_1_COMMAND_SIMPLEZ "spinMotorOnceZDown" // that is, decrease the Z-Value, which means the motor spins forward
+#define TASK_1_COMMAND_SIMPLEXR "spinMotorOnceXDown"
+#define TASK_1_COMMAND_SIMPLEYR "spinMotorOnceYDown"
+#define TASK_1_COMMAND_SIMPLEZR "spinMotorOnceZUp"
 #define TASK_1_COMMAND "beginWindingPath"
 #define TASK_1_BEGIN_G_CODE "%"
 #define TASK_2_COMMAND_ALL "getAllSensorValue"
@@ -87,8 +95,6 @@ bool readingGCode = false;
 //Global semaphore variables
 SemaphoreHandle_t xSemaphore1;
 SemaphoreHandle_t xSemaphorePercent;
-SemaphoreHandle_t xSemaphoreManualTurnF;
-SemaphoreHandle_t xSemaphoreManualTurnR;
 SemaphoreHandle_t xSemaphore3;
 SemaphoreHandle_t xSemaphoreTimer;
 
@@ -99,6 +105,8 @@ MessageBufferHandle_t xMessageBufferM; // Message buffer for the motor simulator
 enum {X_FORWARD, X_REVERSE, Y_FORWARD, Y_REVERSE, Z_FORWARD, Z_REVERSE} motorMessage;
 MessageBufferHandle_t xMessageBufferGCode;
 char inChar;
+MessageBufferHandle_t xMessageBufferManualTurnDirection;
+uint8_t manualTurnDirection;
 
 //Global variables to store output signal data in Task 3
 int voltages[1000];
@@ -141,9 +149,9 @@ void Init_Pins()
   pinMode(TASK_3, OUTPUT);
   pinMode(TASK_IDLE, OUTPUT);
 
-  pinMode(MOTOR_X_PLS, OUTPUT);
-  pinMode(MOTOR_X_DIR, OUTPUT);
-  pinMode(MOTOR_X_ENA, OUTPUT);
+  pinMode(MOTOR_X1_PLS, OUTPUT);
+  pinMode(MOTOR_X1_DIR, OUTPUT);
+  pinMode(MOTOR_X1_ENA, OUTPUT);
 
   pinMode(MOTOR_Y_PLS, OUTPUT);
   pinMode(MOTOR_Y_DIR, OUTPUT);
@@ -152,6 +160,10 @@ void Init_Pins()
   pinMode(MOTOR_Z_PLS, OUTPUT);
   pinMode(MOTOR_Z_DIR, OUTPUT);
   pinMode(MOTOR_Z_ENA, OUTPUT);
+
+  pinMode(MOTOR_X2_PLS, OUTPUT);
+  pinMode(MOTOR_X2_DIR, OUTPUT);
+  pinMode(MOTOR_X2_ENA, OUTPUT);
 
 #if USE_MOTOR_SIMULATOR
   pinMode(X_INTERRUPT, INPUT);
@@ -184,9 +196,9 @@ void Init_Pins()
   digitalWrite(X0_Y1, LOW);
   digitalWrite(X1_Y1, LOW);
 
-  digitalWrite(MOTOR_X_PLS, LOW);
-  digitalWrite(MOTOR_X_DIR, LOW);
-  digitalWrite(MOTOR_X_ENA, LOW);
+  digitalWrite(MOTOR_X1_PLS, LOW);
+  digitalWrite(MOTOR_X1_DIR, LOW);
+  digitalWrite(MOTOR_X1_ENA, LOW);
 
   digitalWrite(MOTOR_Y_PLS, LOW);
   digitalWrite(MOTOR_Y_DIR, LOW);
@@ -195,6 +207,10 @@ void Init_Pins()
   digitalWrite(MOTOR_Z_PLS, LOW);
   digitalWrite(MOTOR_Z_DIR, LOW);
   digitalWrite(MOTOR_Z_ENA, LOW);
+
+  digitalWrite(MOTOR_X2_PLS, LOW);
+  digitalWrite(MOTOR_X2_DIR, LOW);
+  digitalWrite(MOTOR_X2_ENA, LOW);
 }
 
 void Init_SemaphoresAndMessageBuffers()
@@ -207,14 +223,13 @@ void Init_SemaphoresAndMessageBuffers()
    
   xSemaphore1 = xSemaphoreCreateCounting(10, 0);
   xSemaphorePercent = xSemaphoreCreateCounting(10, 0);
-  xSemaphoreManualTurnF = xSemaphoreCreateCounting(10, 0);
-  xSemaphoreManualTurnR = xSemaphoreCreateCounting(10, 0);
   xSemaphore3 = xSemaphoreCreateCounting(10, 0);
   xSemaphoreTimer = xSemaphoreCreateCounting(10, 0);
   
   xMessageBuffer2 = xMessageBufferCreate(100*sizeof(sensorNum));
   xMessageBufferM = xMessageBufferCreate(100*sizeof(motorMessage));
   xMessageBufferGCode = xMessageBufferCreate(100*sizeof(inChar));
+  xMessageBufferManualTurnDirection = xMessageBufferCreate(100*sizeof(manualTurnDirection));
 }
 
 void Init_Timers()
@@ -253,8 +268,7 @@ void Init_Tasks()
   xTaskCreate(MotorSimulator, "MotorSimulator", 100, NULL, 4, NULL);
   xTaskCreate(MyIdleTask, "IdleTask", 100, NULL, 0, NULL);
 
-  xTaskCreate(MyTaskManualTurnF, "TaskManualTurnF", 100, NULL, 5, NULL);
-  xTaskCreate(MyTaskManualTurnR, "TaskManualTurnR", 100, NULL, 6, NULL);
+  xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 100, NULL, 5, NULL);
   //We can change the priority of task according to our desire by changing the numerics
   //between NULL texts.
 
