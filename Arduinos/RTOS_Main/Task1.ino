@@ -2,7 +2,7 @@
  * Task1
  * 
  * Dan Hayduk
- * November 24, 2019
+ * December 2, 2019
  * 
  * This task contains an algorithm to read G-Code, line by line, sent by the Raspberry Pi, and send the appropriate signals
  * to the X, Y and Z motors to accomplish movement.
@@ -14,8 +14,9 @@
  * The following G-Code commands can be entered:
  *  G0 or G00: Set rapid-motion mode off (off by default)
  *  G1 or G01: Set rapid-motion mode on
- *  G28: The first G28 command (which should be entered at the beginning of the winding path) indicates that the current position is
- *       position (0, 0, 0). Further G28 commands tell the head to move directly to this spot
+ *  G27: Indicates that the current position is position (0, 0, 0)
+ *  G28: Tells the head to move directly to the position indicated by the last G27 command, or where the head started at the beginning of the winding
+ *       path if there was no G27 command
  *  G90: Set to absolute positioning mode (default)
  *  G91: Set to relative/incremental positioning mode
  *  X#: Move in the X-direction to this location (if absolute positioning) or this distance in the X-direction (if relative/incremental positioning)
@@ -23,7 +24,9 @@
  *  Z#: Move in the Z-direction to this location (if absolute positioning) or this distance in the Z-direction (if relative/incremental positioning)
  *  
  * Multiple commands can be entered in the same line, but unexpected behavior may occur if commands in the same line contradict one another
- * (Ex. "G28" and "G90" in the same line are fine since their functions are unrelated, but "X10" and "X5" will just read the first "X10" and ignore the "X5")
+ * (Ex. "G27" and "G90" in the same line are fine since their functions are unrelated, but "X10" and "X5" will just read the first "X10" and ignore the "X5")
+ * 
+ * Bug: G28 now seems to cause unexpected and unpredictable movement. Do not use G28 until this is fixed.
  */
 
 #define PULSES_PER_MM 160
@@ -48,6 +51,8 @@ static void MyTask1(void* pvParameters)
       int currentPosition[3] = {0, 0, 0};
       bool firstTimeG28 = true;
 
+      Serial.print("ready\n");
+      
       // Await 1st %
       if (xSemaphoreTake(xSemaphorePercent, portMAX_DELAY) == pdTRUE)
       {
@@ -67,6 +72,8 @@ static void MyTask1(void* pvParameters)
             Serial.print("Aborted G-Code Reader due to too many bad commands.\n");
             break; 
           }
+
+          Serial.print("ready\n");
           
           gCodeString = "";
           do
@@ -91,6 +98,7 @@ static void MyTask1(void* pvParameters)
           bool notG01 = (gCodeString.indexOf("G01") < 0);
           bool g1 = (gCodeString.indexOf("G1") >= 0);
           bool g01 = (gCodeString.indexOf("G01") >= 0);
+          bool g27 = (gCodeString.indexOf("G27") >= 0);
           bool g28 = (gCodeString.indexOf("G28") >= 0);
           bool g90 = (gCodeString.indexOf("G90") >= 0);
           bool g91 = (gCodeString.indexOf("G91") >= 0);
@@ -108,30 +116,27 @@ static void MyTask1(void* pvParameters)
             rapidMotion = false;
             motionDelay = 5;
           }
+
+          if (g27)
+          {
+            currentPosition[X] = 0;
+            currentPosition[Y] = 0;
+            currentPosition[Z] = 0;
+          }
           
           if (g28)
           {
-            if (firstTimeG28)
+            if (absPositioning)
             {
-              currentPosition[X] = 0;
-              currentPosition[Y] = 0;
-              currentPosition[Z] = 0;
-              firstTimeG28 = false;
+              destination[X] = 0;
+              destination[Y] = 0;
+              destination[Z] = 0;
             }
             else
             {
-              if (absPositioning)
-              {
-                destination[X] = 0;
-                destination[Y] = 0;
-                destination[Z] = 0;
-              }
-              else
-              {
-                destination[X] = -currentPosition[X];
-                destination[Y] = -currentPosition[Y];
-                destination[Z] = -currentPosition[Z];
-              }
+              destination[X] = -currentPosition[X];
+              destination[Y] = -currentPosition[Y];
+              destination[Z] = -currentPosition[Z];
             }
           }
 
@@ -171,7 +176,6 @@ static void MyTask1(void* pvParameters)
             if (isInt(magnitudeString))
             {
               destination[X] = magnitudeString.toInt();
-              Serial.println(destination[X]);
             }
             else
             {
@@ -297,18 +301,20 @@ static void MyTask1(void* pvParameters)
           {
             // Movement in at least one direction needs to occur
             unsigned long int totalPulses[3] = {0, 0, 0};
-
+            
             // Set direction and calculate totalPulses
             if (absPositioning)
             {
               // Set direction
               if (destination[X] < currentPosition[X])
               {
-                digitalWrite(MOTOR_X_DIR, HIGH);
+                digitalWrite(MOTOR_X1_DIR, HIGH);
+                digitalWrite(MOTOR_X2_DIR, HIGH);
               }
               else
               {
-                digitalWrite(MOTOR_X_DIR, LOW);  
+                digitalWrite(MOTOR_X1_DIR, LOW);
+                digitalWrite(MOTOR_X2_DIR, LOW);  
               }
               if (destination[Y] < currentPosition[Y])
               {
@@ -328,20 +334,25 @@ static void MyTask1(void* pvParameters)
               }
 
               // Calculate totalPulses
-              totalPulses[X] = abs(destination[X]-currentPosition[X])*PULSES_PER_MM;
-              totalPulses[Y] = abs(destination[Y]-currentPosition[Y])*PULSES_PER_MM;
-              totalPulses[Z] = abs(destination[Z]-currentPosition[Z])*PULSES_PER_MM;
+              totalPulses[X] = abs(destination[X]-currentPosition[X]);
+              totalPulses[X] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
+              totalPulses[Y] = abs(destination[Y]-currentPosition[Y]);
+              totalPulses[Y] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
+              totalPulses[Z] = abs(destination[Z]-currentPosition[Z]);
+              totalPulses[Z] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
             }
             else
             {
               // Set direction
               if (destination[X] < 0)
               {
-                digitalWrite(MOTOR_X_DIR, HIGH);
+                digitalWrite(MOTOR_X1_DIR, HIGH);
+                digitalWrite(MOTOR_X2_DIR, HIGH);
               }
               else
               {
-                digitalWrite(MOTOR_X_DIR, LOW);  
+                digitalWrite(MOTOR_X1_DIR, LOW);
+                digitalWrite(MOTOR_X2_DIR, LOW);  
               }
               if (destination[Y] < 0)
               {
@@ -361,18 +372,23 @@ static void MyTask1(void* pvParameters)
               }
 
               // Calculate totalPulses
-              totalPulses[X] = abs(destination[X])*PULSES_PER_MM;
-              totalPulses[Y] = abs(destination[Y])*PULSES_PER_MM;
-              totalPulses[Z] = abs(destination[Z])*PULSES_PER_MM;
+              totalPulses[X] = abs(destination[X]);
+              totalPulses[X] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
+              totalPulses[Y] = abs(destination[Y]);
+              totalPulses[Y] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
+              totalPulses[Z] = abs(destination[Z]);
+              totalPulses[Z] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
             }
 
             // Send those pulses
             unsigned long int i;
             for (i=0; i<totalPulses[X]; i++)
             {
-               digitalWrite(MOTOR_X_PLS, HIGH);
+               digitalWrite(MOTOR_X1_PLS, HIGH);
+               digitalWrite(MOTOR_X2_PLS, HIGH);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-               digitalWrite(MOTOR_X_PLS, LOW);
+               digitalWrite(MOTOR_X1_PLS, LOW);
+               digitalWrite(MOTOR_X2_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
             }
 
@@ -393,7 +409,8 @@ static void MyTask1(void* pvParameters)
             }
 
             // Set all direction values low
-            digitalWrite(MOTOR_X_DIR, LOW);
+            digitalWrite(MOTOR_X1_DIR, LOW);
+            digitalWrite(MOTOR_X2_DIR, LOW);
             digitalWrite(MOTOR_Y_DIR, LOW);
             digitalWrite(MOTOR_Z_DIR, LOW);
 

@@ -64,15 +64,41 @@ void serialEvent()
           // Used for handshaking between the Arduino and the Pi
           askedForReady = true;
         }
-        else if(inputString.equals(TASK_1_COMMAND_SIMPLE))
+        else if(inputString.equals(TASK_1_COMMAND_SIMPLEX))
         {
-          // Give a semaphore to Task Manual Turn F
-          xSemaphoreGive(xSemaphoreManualTurnF);
+          manualTurnDirection = 0;
+          // Send a message to Task Manual Turn F
+          xMessageBufferSend(xMessageBufferManualTurnDirection, &manualTurnDirection, sizeof(manualTurnDirection), 0);
         }
-        else if(inputString.equals(TASK_1_COMMAND_SIMPLE_REVERSE))
+        else if(inputString.equals(TASK_1_COMMAND_SIMPLEY))
         {
-          // Give a semaphore to Task Manual Turn R
-          xSemaphoreGive(xSemaphoreManualTurnR);
+          manualTurnDirection = 1;
+          // Send a message to Task Manual Turn F
+          xMessageBufferSend(xMessageBufferManualTurnDirection, &manualTurnDirection, sizeof(manualTurnDirection), 0);
+        }
+        else if(inputString.equals(TASK_1_COMMAND_SIMPLEZ))
+        {
+          manualTurnDirection = 2;
+          // Send a message to Task Manual Turn F
+          xMessageBufferSend(xMessageBufferManualTurnDirection, &manualTurnDirection, sizeof(manualTurnDirection), 0);
+        }
+        else if(inputString.equals(TASK_1_COMMAND_SIMPLEXR))
+        {
+          manualTurnDirection = 3;
+          // Send a message to Task Manual Turn F
+          xMessageBufferSend(xMessageBufferManualTurnDirection, &manualTurnDirection, sizeof(manualTurnDirection), 0);
+        }
+        else if(inputString.equals(TASK_1_COMMAND_SIMPLEYR))
+        {
+          manualTurnDirection = 4;
+          // Send a message to Task Manual Turn F
+          xMessageBufferSend(xMessageBufferManualTurnDirection, &manualTurnDirection, sizeof(manualTurnDirection), 0);
+        }
+        else if(inputString.equals(TASK_1_COMMAND_SIMPLEZR))
+        {
+          manualTurnDirection = 5;
+          // Send a message to Task Manual Turn F
+          xMessageBufferSend(xMessageBufferManualTurnDirection, &manualTurnDirection, sizeof(manualTurnDirection), 0);
         }
         else if(inputString.equals(TASK_1_COMMAND))
         {
@@ -126,7 +152,7 @@ void xMotorISR()
    * Pulse received on the X Motor, send a message to the Motor Simulator Task
    */
 
-  if (digitalRead(MOTOR_X_DIR))
+  if (digitalRead(MOTOR_X1_DIR))
   {
     motorMessage = X_REVERSE;
   }
