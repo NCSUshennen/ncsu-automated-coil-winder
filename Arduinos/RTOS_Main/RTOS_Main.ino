@@ -42,7 +42,7 @@
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
-#define USE_MOTOR_SIMULATOR 1
+#define USE_MOTOR_SIMULATOR 0
 
 #define X_INTERRUPT 18
 #define Y_INTERRUPT 19
