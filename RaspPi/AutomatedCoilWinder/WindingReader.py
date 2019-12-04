@@ -53,19 +53,20 @@ class WindingReader:
             if line == "":
                 break
 
-            print(line)
-
             # send next line to arduino if ready
             readyReceived = False
             while not readyReceived:
                 if self.serialConnection.inWaiting() > 0:
+                    inputValue = ""
                     inputValue = self.serialConnection.readline().decode()
                     print("in: " + inputValue)
                     if inputValue == self.arduinoReadyForCommand:
                             # Give Gcode command
                             print("ReadyReceived\n")
+                            print(line)
                             self.serialConnection.write(line.encode())
                             readyReceived = True
+
 
 
         # Close opened path file

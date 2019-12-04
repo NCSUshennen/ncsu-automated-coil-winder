@@ -20,7 +20,7 @@ from WindingTester import *
 def main():
     """Begin and run the coil winding program."""
     # --------------------- Variables --------------------- #
-    arduinoMegaPort = "/dev/ttyACM1"
+    arduinoMegaPort = "/dev/ttyACM5"
     arduinoMegaRate = "9600"
 
     arduinoReadyForCommand = "ready\n"
