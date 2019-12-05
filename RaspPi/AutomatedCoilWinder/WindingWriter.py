@@ -77,8 +77,8 @@ class WindingWriter:
         pathFile.write("G0 X475\n")
 
         #Move back to zero
-        pathFile.write("G0 X0 Y0\n")
-        pathFile.write("G0 Z0\n")
+        pathFile.write("G0 X0 Y0 Z0\n")
+        #pathFile.write("G0 Z0\n")
 
         ''' Below is for winding three times -> test with above code first
         #Move down 5mm

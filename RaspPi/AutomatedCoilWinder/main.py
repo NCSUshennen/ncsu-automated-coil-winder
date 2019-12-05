@@ -70,7 +70,7 @@ def main():
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
-    windingReader = WindingReader(arduinoMegaSerial);
+    windingReader = WindingReader(arduinoMegaSerial)
     windingTester = WindingTester(statorToothLength,
                                   statorToothHeight,
                                   statorToothWidth,

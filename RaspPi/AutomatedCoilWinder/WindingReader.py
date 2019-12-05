@@ -61,11 +61,11 @@ class WindingReader:
                     inputValue = self.serialConnection.readline().decode()
                     print("in: " + inputValue)
                     if inputValue == self.arduinoReadyForCommand:
-                            # Give Gcode command
-                            print("ReadyReceived\n")
-                            print(line)
-                            self.serialConnection.write(line.encode())
-                            readyReceived = True
+                        # Give Gcode command
+                        print("ReadyReceived\n")
+                        print(line)
+                        self.serialConnection.write(line.encode())
+                        readyReceived = True
 
 
 
