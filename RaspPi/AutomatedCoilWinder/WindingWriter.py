@@ -66,43 +66,35 @@ class WindingWriter:
         pathFile.write("%\n")
 
         #Move z axis up
-        pathFile.write("G0 Z30\n")
+        pathFile.write("G0 Z35\n")
         #Move diagonally to start of block
-        pathFile.write( "G0 X475 Y185\n")
+        pathFile.write( "G0 X465 Y160\n")
 
+        pathFile.write("G0 Z0\n")
         #Move one full rotation
-        pathFile.write("G0 Y325\n")
-        pathFile.write("G0 X503\n")
-        pathFile.write("G0 Y185\n")
-        pathFile.write("G0 X475\n")
+        pathFile.write("G0 Y320\n")
+        pathFile.write("G0 X500\n")
+        pathFile.write("G0 Y160\n")
+        pathFile.write("G0 X465\n")
+
+        pathFile.write("G0 Z3\n")
+        #Move one full rotation
+        pathFile.write("G0 Y320\n")
+        pathFile.write("G0 X500\n")
+        pathFile.write("G0 Y160\n")
+        pathFile.write("G0 X465\n")
+
+        pathFile.write("G0 Z6\n")
+        #Move one full rotation
+        pathFile.write("G0 Y320\n")
+        pathFile.write("G0 X500\n")
+        pathFile.write("G0 Y160\n")
+        pathFile.write("G0 X465\n")
 
         #Move back to zero
-        pathFile.write("G0 X0 Y0 Z0\n")
-        #pathFile.write("G0 Z0\n")
-
-        ''' Below is for winding three times -> test with above code first
-        #Move down 5mm
-        pathFile.write("G0 Z19\n")
-
-        #Move one full rotation
-        pathFile.write("G0 Y325\n")
-        pathFile.write("G0 X503\n")
-        pathFile.write("G0 Y185\n")
-        pathFile.write("G0 X475\n")
-
-        #Move down 5mm
-        pathFile.write("G0 Z14\n")
-
-        #Move one full rotation
-        pathFile.write("G0 Y325\n")
-        pathFile.write("G0 X503\n")
-        pathFile.write("G0 Y185\n")
-        pathFile.write("G0 X475\n")
-
-        #Move back to zero
+        pathFile.write("G0 Z35\n")
         pathFile.write("G0 X0 Y0\n")
         pathFile.write("G0 Z0\n")
-        '''
 
         #% for Telling arduino this gcode is done
         pathFile.write("%\n")
