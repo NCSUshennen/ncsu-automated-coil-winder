@@ -15,7 +15,7 @@
 
 #define TURN_RATE 800
 #define MM_RATE 160
-#define LED_CHANGE_RATE MM_RATE
+#define LED_CHANGE_RATE TURN_RATE
 
 static void MotorSimulator(void* pvParameters)
 {
@@ -122,7 +122,7 @@ static void MotorSimulator(void* pvParameters)
         positionWasUpdated = false;
       }
       
-      if (simulatorPosition[X] == 0 && simulatorPosition[Y] == 0 && simulatorPosition[Z] == 0)
+      if (simulatorPosition[X] == 0 && simulatorPosition[Y] == 0 /*&& simulatorPosition[Z] == 0*/)
       {
         // Light the 0, 0 LED
         digitalWrite(X0_Y0, HIGH);
@@ -130,7 +130,7 @@ static void MotorSimulator(void* pvParameters)
         digitalWrite(X0_Y1, LOW);
         digitalWrite(X1_Y1, LOW); 
       }
-      else if (simulatorPosition[X] == 1 && simulatorPosition[Y] == 0 && simulatorPosition[Z] == 0)
+      else if (simulatorPosition[X] == 1 && simulatorPosition[Y] == 0 /*&& simulatorPosition[Z] == 0*/)
       {
         // Light the 1, 0 LED
         digitalWrite(X0_Y0, LOW);
@@ -138,7 +138,7 @@ static void MotorSimulator(void* pvParameters)
         digitalWrite(X0_Y1, LOW);
         digitalWrite(X1_Y1, LOW); 
       }
-      else if (simulatorPosition[X] == 0 && simulatorPosition[Y] == 1 && simulatorPosition[Z] == 0)
+      else if (simulatorPosition[X] == 0 && simulatorPosition[Y] == 1 /*&& simulatorPosition[Z] == 0*/)
       {
         // Light the 0, 1 LED
         digitalWrite(X0_Y0, LOW);
@@ -146,7 +146,7 @@ static void MotorSimulator(void* pvParameters)
         digitalWrite(X0_Y1, HIGH);
         digitalWrite(X1_Y1, LOW); 
       }
-      else if (simulatorPosition[X] == 1 && simulatorPosition[Y] == 1 && simulatorPosition[Z] == 0)
+      else if (simulatorPosition[X] == 1 && simulatorPosition[Y] == 1 /*&& simulatorPosition[Z] == 0*/)
       {
         // Light the 1, 1 LED
         digitalWrite(X0_Y0, LOW);
