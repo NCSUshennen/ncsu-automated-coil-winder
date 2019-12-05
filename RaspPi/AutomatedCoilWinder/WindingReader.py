@@ -73,10 +73,49 @@ class WindingReader:
         pathFile.close()
         print("Done reading gcode")
 
-    def zeroMachine(self):
+    def zeroMachine(self, ui):
         """Zeros the machine
         """
         # --------------------- Variables --------------------- #
         # exampleParam = None
 
+        windingPathCmd = "beginWindingPath\n"
+        self.serialConnection.write(windingPathCmd.encode())
+
         # TODO: Send the path to zero the machine
+        line = "%\n"
+        self.serialConnection.write(line.encode())
+
+        line = "G0 X600\n"
+        readyReceived = False
+        while not readyReceived:
+            if self.serialConnection.inWaiting() > 0:
+                inputValue = ""
+                inputValue = self.serialConnection.readline().decode()
+                print("in: " + inputValue)
+                if inputValue == self.arduinoReadyForCommand:
+                    # Give Gcode command
+                    print("ReadyReceived\n")
+                    print(line)
+                    self.serialConnection.write(line.encode())
+                    readyReceived = True
+
+        ui.userZero()
+        ui.displayMessage("\nZeroing")
+
+        line = "G0 X0\n"
+        readyReceived = False
+        while not readyReceived:
+            if self.serialConnection.inWaiting() > 0:
+                inputValue = ""
+                inputValue = self.serialConnection.readline().decode()
+                print("in: " + inputValue)
+                if inputValue == self.arduinoReadyForCommand:
+                    # Give Gcode command
+                    print("ReadyReceived\n")
+                    print(line)
+                    self.serialConnection.write(line.encode())
+                    readyReceived = True
+
+        line = "%\n"
+        self.serialConnection.write(line.encode())

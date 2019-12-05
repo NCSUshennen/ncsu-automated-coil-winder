@@ -94,9 +94,7 @@ def main():
     # TODO: instantiate windingReader, giving it the file name of generated path
 
     # Zero machine with WindingReader -> function for zeroing w/ SensorReader
-    ui.userZero()
-    ui.displayMessage("\nZeroing")
-    # windingReader.zeroMachine()
+    ui.userAway(windingReader)
 
     # Send path with WindingReader
     ui.userStartWinding()
