@@ -57,6 +57,10 @@
 #define TEST_SIGNAL_L 53
 #define OUTPUT_SIGNAL A0
 
+// Other macros used for Task 3
+#define RIN 11500.0
+#define CIN 0.00022
+
 // Pins used in Task MotorSimulator
 #define X0_Y0 7
 #define X1_Y0 6
@@ -83,9 +87,6 @@
 #define TASK_2_COMMAND_SENSOR1 "getSensor1SensorValue"
 #define TASK_2_COMMAND_SENSOR2 "getSensor2SensorValue"
 #define TASK_3_COMMAND "doPostWindingTest"
-
-// Macros to set timing for timer interrupts
-
 
 uint8_t task = 0; // 0 indicates Idle
 bool askedForReady = false;
@@ -122,7 +123,7 @@ void setup()
   gCodeString.reserve(100);
   magnitudeString.reserve(20);
 
-  //Serial.write("ready\n");
+  Serial.write("ready\n");
   
   Init_Pins();
   Init_SemaphoresAndMessageBuffers();
