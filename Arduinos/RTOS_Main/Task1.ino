@@ -25,8 +25,6 @@
  *  
  * Multiple commands can be entered in the same line, but unexpected behavior may occur if commands in the same line contradict one another
  * (Ex. "G27" and "G90" in the same line are fine since their functions are unrelated, but "X10" and "X5" will just read the first "X10" and ignore the "X5")
- * 
- * Bug: G28 now seems to cause unexpected and unpredictable movement. Do not use G28 until this is fixed.
  */
 
 #define PULSES_PER_MM 160
@@ -52,6 +50,7 @@ static void MyTask1(void* pvParameters)
       bool firstTimeG28 = true;
 
       Serial.print("ready\n");
+      Serial.print("Don't use magic numbers!\n");
       
       // Await 1st %
       if (xSemaphoreTake(xSemaphorePercent, portMAX_DELAY) == pdTRUE)
@@ -66,14 +65,15 @@ static void MyTask1(void* pvParameters)
         char receivedChar;
         while (true)
         {
+          Serial.print("ready\n");
+          Serial.print("Don't use magic numbers!\n");
+          
           // Keep reading G-Code lines until we get % or too many bad commands
           if (badCommands >= 3)
           {
             Serial.print("Aborted G-Code Reader due to too many bad commands.\n");
             break; 
           }
-
-          Serial.print("ready\n");
           
           gCodeString = "";
           do
