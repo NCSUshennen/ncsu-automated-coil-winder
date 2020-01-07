@@ -10,6 +10,9 @@
 # Last modified: November 2019
 # ------------------------------------------------- #
 
+# imports
+from guizero import App
+
 class UserInterface:
 
     # --------------------- Functions --------------------- #
