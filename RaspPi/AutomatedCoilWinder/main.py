@@ -20,8 +20,8 @@ from WindingTester import *
 def main():
     """Begin and run the coil winding program."""
     # --------------------- Variables --------------------- #
-    #arduinoMegaPort = "/dev/ttyACM0"
-    #arduinoMegaRate = "9600"
+    arduinoMegaPort = "/dev/ttyACM0"
+    arduinoMegaRate = "9600"
 
     arduinoReadyForCommand = "ready\n"
 
@@ -41,8 +41,8 @@ def main():
     # ------------------- Declarations -------------------- #
 
     # Create serial connection for arduinos
-    #arduinoMegaSerial = serial.Serial(arduinoMegaPort, arduinoMegaRate)
-    #arduinoMegaSerial.flushInput()
+    arduinoMegaSerial = serial.Serial(arduinoMegaPort, arduinoMegaRate)
+    arduinoMegaSerial.flushInput()
 
     # ----------------------- Main ------------------------ #
 
@@ -70,7 +70,7 @@ def main():
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
-    windingReader = WindingReader();
+    windingReader = WindingReader(arduinoMegaSerial)
     windingTester = WindingTester(statorToothLength,
                                   statorToothHeight,
                                   statorToothWidth,
@@ -94,9 +94,7 @@ def main():
     # TODO: instantiate windingReader, giving it the file name of generated path
 
     # Zero machine with WindingReader -> function for zeroing w/ SensorReader
-    ui.userZero()
-    ui.displayMessage("\nZeroing")
-    # windingReader.zeroMachine()
+    ui.userAway(windingReader)
 
     # Send path with WindingReader
     ui.userStartWinding()

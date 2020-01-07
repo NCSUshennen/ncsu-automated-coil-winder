@@ -62,41 +62,42 @@ class WindingWriter:
         # Open the path file for writing
         pathFile = open(fileName, "w")
 
+        #% for Telling arduino this is gcode
+        pathFile.write("%\n")
+
+        #Move z axis up
+        pathFile.write("G0 Z35\n")
         #Move diagonally to start of block
-        pathFile.write( "G0 X100 Y00\n")
+        pathFile.write( "G0 X465 Y160\n")
 
-        #Move one full rotation
-        pathFile.write("G0 Y225\n")
-        pathFile.write("G0 X175\n")
-        pathFile.write("G0 Y100\n")
-        pathFile.write("G0 X100\n")
-
-        #Move up half a cm
-        pathFile.write("G0 Z5\n")
-
-        #Move one full rotation
-        pathFile.write("G0 Y225\n")
-        pathFile.write("G0 X175\n")
-        pathFile.write("G0 Y100\n")
-        pathFile.write("G0 X100\n")
-
-        #Move one full rotation
-        pathFile.write("G0 Y225\n")
-        pathFile.write("G0 X175\n")
-        pathFile.write("G0 Y100\n")
-        pathFile.write("G0 X100\n")
-
-        #Move down half a cm
         pathFile.write("G0 Z0\n")
-
         #Move one full rotation
-        pathFile.write("G0 Y225\n")
-        pathFile.write("G0 X175\n")
-        pathFile.write("G0 Y100\n")
-        pathFile.write("G0 X100\n")
+        pathFile.write("G0 Y320\n")
+        pathFile.write("G0 X500\n")
+        pathFile.write("G0 Y160\n")
+        pathFile.write("G0 X465\n")
+
+        pathFile.write("G0 Z3\n")
+        #Move one full rotation
+        pathFile.write("G0 Y320\n")
+        pathFile.write("G0 X500\n")
+        pathFile.write("G0 Y160\n")
+        pathFile.write("G0 X465\n")
+
+        pathFile.write("G0 Z6\n")
+        #Move one full rotation
+        pathFile.write("G0 Y320\n")
+        pathFile.write("G0 X500\n")
+        pathFile.write("G0 Y160\n")
+        pathFile.write("G0 X465\n")
 
         #Move back to zero
-        pathFile.write( "G0 X0 Y0 Z0\n")
+        pathFile.write("G0 Z35\n")
+        pathFile.write("G0 X0 Y0\n")
+        pathFile.write("G0 Z0\n")
+
+        #% for Telling arduino this gcode is done
+        pathFile.write("%\n")
 
         # Close opened path file
         pathFile.close()

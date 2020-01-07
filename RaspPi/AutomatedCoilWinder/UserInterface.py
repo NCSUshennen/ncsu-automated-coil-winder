@@ -16,6 +16,15 @@ class UserInterface:
     def __init__(self):
         """Construct a new UserInterface
         """
+    def userAway(self, windingReader):
+        """Ask the user if it's okay to zero the machine.
+            Return True when user okays.
+        """
+        userInput = input("Go away? (y/n): ")
+        if userInput == "y":
+            windingReader.zeroMachine(self)
+            self.displayMessage("\nGoingAway")
+
     def userZero(self):
         """Ask the user if it's okay to zero the machine.
             Return True when user okays.
