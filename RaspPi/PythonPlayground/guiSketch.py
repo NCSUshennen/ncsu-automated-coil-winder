@@ -1,5 +1,5 @@
 # imports
-from guizero import App, Window, Text, TextBox, PushButton, Slider
+from guizero import App, Window, Text, TextBox, PushButton, Slider, Combo
 
 # ----------------------- Main Window Functions ------------------------ #
 
@@ -45,6 +45,16 @@ def postWindingButtonPressed():
 # ----------------------- Param Window Functions ------------------------ #
 def doneEnteringParamsButtonPressed():
     closeParameterWindow();
+    # ex
+    statorToothLength = enteredStatorToothLength.value
+    statorToothHeight = enteredStatorToothHeight.value
+    statorToothWidth = enteredStatorToothWidth.value
+    statorShoe = enteredStatorShoe.value
+    numberStatorTeeth = enteredNumberStatorTeeth.value
+    numberWinds = enteredNumberWinds.value
+    wireGauge = enteredWireGauge.value
+    wireMaterial = enteredWireMaterial.value
+    distanceBetweenTeeth = enteredDistanceBetweenTeeth.value
 
 '''
 # ----------------------- Test Code Functions ------------------------ #
@@ -62,9 +72,9 @@ def change_text_size(slider_value):
 
 # Creates the GUI named app and appropriate windows
 app = App(title="Main window")
-parameterWindow = Window(app, title="Parameter window")
+parameterWindow = Window(app, title="Parameter window", layout = "grid")
 parameterWindow.hide();
-windingWindow = Window(app, title="Parameter window")
+windingWindow = Window(app, title="Winding window")
 windingWindow.hide();
 postWindingWindow = Window(app, title="Post winding window")
 postWindingWindow.hide();
@@ -77,7 +87,35 @@ postWindingButton = PushButton(app, command=postWindingButtonPressed, text="Star
 
 # ----------------------- Parameter Window Event Loop ------------------------ #
 # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
-doneEnteringParamsButton = PushButton(parameterWindow, command=doneEnteringParamsButtonPressed, text="Done")
+askStatorToothLength = Text(parameterWindow, text="Stator tooth length (mm):", grid=[0,0], align="left")
+enteredStatorToothLength = TextBox(parameterWindow, width=40, grid=[1,0], align="left")
+
+askStatorToothHeight = Text(parameterWindow, text="Stator tooth height (mm):", grid=[0,1], align="left")
+enteredStatorToothHeight = TextBox(parameterWindow, width=40, grid=[1,1], align="left")
+
+askStatorToothWidth = Text(parameterWindow, text="Stator tooth width (mm):", grid=[0,2], align="left")
+enteredStatorToothWidth = TextBox(parameterWindow, width=40, grid=[1,2], align="left")
+
+askStatorShoe = Text(parameterWindow, text="Stator shoe width (mm):", grid=[0,3], align="left")
+enteredStatorShoe = TextBox(parameterWindow, width=40, grid=[1,3], align="left")
+
+askNumberStatorTeeth = Text(parameterWindow, text="Number stator teeth:", grid=[0,4], align="left")
+enteredNumberStatorTeeth = TextBox(parameterWindow, width=40, grid=[1,4], align="left")
+
+askNumberWinds= Text(parameterWindow, text="Number winds per tooth:", grid=[0,5], align="left")
+enteredNumberWinds = TextBox(parameterWindow, width=40, grid=[1,5], align="left")
+
+askWireGauge = Text(parameterWindow, text="Wire gauge:", grid=[0,6], align="left")
+enteredWireGauge = Combo(parameterWindow, options=["13", "14", "15", "16", "17", "18"], grid=[1,6], align="left")
+
+askWireMaterial = Text(parameterWindow, text="Wire material:", grid=[0,7], align="left")
+enteredWireMaterial = Combo(parameterWindow, options=["Copper"], grid=[1,7], align="left")
+
+askDistanceBetweenTeeth = Text(parameterWindow, text="Distance between teeth: (mm)", grid=[0,8], align="left")
+enteredDistanceBetweenTeeth = TextBox(parameterWindow, width=40, grid=[1,8], align="left")
+
+doneEnteringParamsButton = PushButton(parameterWindow, command=doneEnteringParamsButtonPressed, text="Done", grid=[0,9], align="left")
+
 
 # ----------------------- Winding Window Event Loop ------------------------ #
 # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
