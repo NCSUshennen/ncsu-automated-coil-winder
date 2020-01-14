@@ -73,6 +73,8 @@ def change_text_size(slider_value):
 # Creates the GUI named app and appropriate windows
 app = App(title="Main window")
 parameterWindow = Window(app, title="Parameter window", layout = "grid")
+# parameterWindow = Window(app, title="Parameter window", layout = "grid", bg = "black")
+# parameterWindow.text_color = "white"
 parameterWindow.hide();
 windingWindow = Window(app, title="Winding window")
 windingWindow.hide();
