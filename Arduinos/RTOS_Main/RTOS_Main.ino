@@ -24,21 +24,32 @@
 #define TASK_IDLE 11
 
 //Pins used in Task 1
-#define MOTOR_X1_PLS 23
-#define MOTOR_X1_DIR 25
-#define MOTOR_X1_ENA 27
+#define MOTOR_Z_DIR 23
+#define MOTOR_Z_PLS 25
+#define MOTOR_Z_ALM 27
 
+#define MOTOR_Y_DIR 29
 #define MOTOR_Y_PLS 31
-#define MOTOR_Y_DIR 33
-#define MOTOR_Y_ENA 35
+#define MOTOR_Y_ALM 33
 
-#define MOTOR_Z_PLS 39
-#define MOTOR_Z_DIR 41
-#define MOTOR_Z_ENA 43
+#define MOTOR_X2_DIR 35
+#define MOTOR_X2_PLS 37
+#define MOTOR_X2_ALM 39
 
-#define MOTOR_X2_PLS 47
-#define MOTOR_X2_DIR 49
-#define MOTOR_X2_ENA 51
+#define MOTOR_X1_DIR 41
+#define MOTOR_X1_PLS 43
+#define MOTOR_X1_ALM 45
+
+#define ZEROING_Z 49
+#define ZEROING_Y 51
+#define ZEROING_X 53
+
+#define WIRE_LENGTH_A 44
+#define WIRE_LENGTH_B 46
+#define WIRE_LENGTH_SW 48
+#define WIRE_PRESENCE 52
+
+#define OVER_POSITION 40
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
@@ -53,9 +64,10 @@
 #define SENSOR_2 A2
 
 // Pins used in Task 3
-#define TEST_SIGNAL_RANDC 52
-#define TEST_SIGNAL_L 53
+#define TEST_SIGNAL_RANDC 38
+#define TEST_SIGNAL 40
 #define OUTPUT_SIGNAL A0
+#define INPUT_VOLTAGE A7
 
 // Other macros used for Task 3
 #define RIN 11500.0
@@ -96,7 +108,8 @@ bool readingGCode = false;
 SemaphoreHandle_t xSemaphore1;
 SemaphoreHandle_t xSemaphorePercent;
 SemaphoreHandle_t xSemaphore3;
-SemaphoreHandle_t xSemaphoreTimer;
+SemaphoreHandle_t xSemaphoreTimerA;
+SemaphoreHandle_t xSemaphoreTimerB;
 
 //Global message variables
 MessageBufferHandle_t xMessageBuffer2;
@@ -151,19 +164,19 @@ void Init_Pins()
 
   pinMode(MOTOR_X1_PLS, OUTPUT);
   pinMode(MOTOR_X1_DIR, OUTPUT);
-  pinMode(MOTOR_X1_ENA, OUTPUT);
+  pinMode(MOTOR_X1_ALM, INPUT);
 
   pinMode(MOTOR_Y_PLS, OUTPUT);
   pinMode(MOTOR_Y_DIR, OUTPUT);
-  pinMode(MOTOR_Y_ENA, OUTPUT);
+  pinMode(MOTOR_Y_ALM, INPUT);
 
   pinMode(MOTOR_Z_PLS, OUTPUT);
   pinMode(MOTOR_Z_DIR, OUTPUT);
-  pinMode(MOTOR_Z_ENA, OUTPUT);
+  pinMode(MOTOR_Z_ALM, INPUT);
 
   pinMode(MOTOR_X2_PLS, OUTPUT);
   pinMode(MOTOR_X2_DIR, OUTPUT);
-  pinMode(MOTOR_X2_ENA, OUTPUT);
+  pinMode(MOTOR_X2_ALM, INPUT);
 
 #if USE_MOTOR_SIMULATOR
   pinMode(X_INTERRUPT, INPUT);
@@ -183,8 +196,9 @@ void Init_Pins()
   pinMode(SENSOR_2, INPUT);
 
   pinMode(TEST_SIGNAL_RANDC, OUTPUT);
-  pinMode(TEST_SIGNAL_L, OUTPUT);
+  pinMode(TEST_SIGNAL, OUTPUT);
   pinMode(OUTPUT_SIGNAL, INPUT); // That is, this is the output of the system, which the Arduino is measuring
+  pinMode(INPUT_VOLTAGE, INPUT);
 
   digitalWrite(TASK_1, LOW);
   digitalWrite(TASK_2, LOW);
@@ -198,19 +212,18 @@ void Init_Pins()
 
   digitalWrite(MOTOR_X1_PLS, LOW);
   digitalWrite(MOTOR_X1_DIR, LOW);
-  digitalWrite(MOTOR_X1_ENA, LOW);
 
   digitalWrite(MOTOR_Y_PLS, LOW);
   digitalWrite(MOTOR_Y_DIR, LOW);
-  digitalWrite(MOTOR_Y_ENA, LOW);
 
   digitalWrite(MOTOR_Z_PLS, LOW);
   digitalWrite(MOTOR_Z_DIR, LOW);
-  digitalWrite(MOTOR_Z_ENA, LOW);
 
   digitalWrite(MOTOR_X2_PLS, LOW);
   digitalWrite(MOTOR_X2_DIR, LOW);
-  digitalWrite(MOTOR_X2_ENA, LOW);
+
+  digitalWrite(TEST_SIGNAL_RANDC, LOW);
+  digitalWrite(TEST_SIGNAL, LOW);
 }
 
 void Init_SemaphoresAndMessageBuffers()
@@ -224,7 +237,8 @@ void Init_SemaphoresAndMessageBuffers()
   xSemaphore1 = xSemaphoreCreateCounting(10, 0);
   xSemaphorePercent = xSemaphoreCreateCounting(10, 0);
   xSemaphore3 = xSemaphoreCreateCounting(10, 0);
-  xSemaphoreTimer = xSemaphoreCreateCounting(10, 0);
+  xSemaphoreTimerA = xSemaphoreCreateCounting(10, 0);
+  xSemaphoreTimerB = xSemaphoreCreateCounting(10, 0);
   
   xMessageBuffer2 = xMessageBufferCreate(100*sizeof(sensorNum));
   xMessageBufferM = xMessageBufferCreate(100*sizeof(motorMessage));
@@ -246,10 +260,11 @@ void Init_Timers()
    TCCR1A = 0;
    TCCR1B = 0;
    OCR1A = 62499; //one-second interrupt
-   OCR1B = 15624; //quarter-second interrupt (not used)
+   OCR1B = 1; //one-tick interrupt
    TCCR1B |= (1<<CS12) | (1<<WGM12); //prescalar 256, CTC mode; each tick is 16 us
    TIMSK1 |= (1<<OCIE1A) | (1<<OCIE1B); //enable 2 timer compare interrupts
    TIMSK1 &= ~(1<<OCIE1A); //disable interrupt A
+   TIMSK1 &= ~(1<<OCIE1B); //disable interrupt B
 }
 
 void Init_Tasks()
@@ -307,7 +322,7 @@ void toggleLED(int ledPort)
 
 bool isInt(String wouldBeInt)
 {
-  /**
+   /**
     * Reads a String to determine whether it can be converted into a valid integer variable
     * 
     * Returns: true if it can, false if it can't
@@ -334,7 +349,7 @@ bool isInt(String wouldBeInt)
 
 int minIndexOf2(int index1, int index2)
 {
-  /**
+   /**
     * In a list of 2 potential index values, return the minimum value that isn't -1, if there is one
     * This is used for reading G-Code
     * 
