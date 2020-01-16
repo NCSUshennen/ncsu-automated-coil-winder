@@ -29,8 +29,11 @@
 
 #define PULSES_PER_MM 160
 
+int currentPosition[3] = {0, 0, 0};
+
 static void MyTask1(void* pvParameters)
 {
+  //int currentPosition[3] = {0, 0, 0};
   while(1)
   { 
     if (xSemaphoreTake(xSemaphore1, portMAX_DELAY) == pdTRUE)
@@ -46,7 +49,6 @@ static void MyTask1(void* pvParameters)
       int motionDelay = 5;
       int destination[3] = {0, 0, 0};
       bool absPositioning = true;
-      int currentPosition[3] = {0, 0, 0};
       bool firstTimeG28 = true;
 
       Serial.print("ready\n");
@@ -66,7 +68,10 @@ static void MyTask1(void* pvParameters)
         while (true)
         {
           Serial.print("ready\n");
+<<<<<<< HEAD
+=======
           Serial.print("Don't use magic numbers!\n");
+>>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
           
           // Keep reading G-Code lines until we get % or too many bad commands
           if (badCommands >= 3)

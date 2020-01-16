@@ -14,7 +14,7 @@ ISR(TIMER1_COMPA_vect)
   /**
    * This interrupt goes off every half second
    */
-   xSemaphoreGiveFromISR(xSemaphoreTimer, NULL);
+   xSemaphoreGiveFromISR(xSemaphoreTimerA, NULL);
 }
 
 ISR(TIMER1_COMPB_vect)
@@ -22,6 +22,8 @@ ISR(TIMER1_COMPB_vect)
   /**
    * This interrupt goes off every quarter second (currently not used)
    */
+   xSemaphoreGiveFromISR(xSemaphoreTimerB, NULL);
+   Serial.println(TCNT1);
 }
 
 void serialEvent() 
