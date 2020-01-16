@@ -8,9 +8,8 @@
  * to make an LED flash three times at a rate of one flash per second.
  */
 
-
-#define RIN 10.0
-#define CIN 0.0000001 
+#define RIN 11500.0
+#define CIN 0.00022 
 #define VIN 5.0
 
 static void MyTask3(void* pvParameters)
@@ -149,12 +148,17 @@ static void MyTask3(void* pvParameters)
         }
 
         // Read voltage measurement and convert to resistance
+<<<<<<< HEAD
         r = ADCToVoltage(analogRead(OUTPUT_SIGNAL))*RIN/(3.3-ADCToVoltage(analogRead(OUTPUT_SIGNAL)));
         float Vin = ADCToVoltage(analogRead(INPUT_VOLTAGE));
         float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
         Serial.println(Vin);
         Serial.println(Vout);
         r = Vout*RIN/(Vin-Vout);
+=======
+        float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
+        r = Vout*RIN/(VIN-Vout);
+>>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
       }
       else
       {
@@ -168,6 +172,7 @@ static void MyTask3(void* pvParameters)
         Serial.print(r);
         Serial.print("\n");  
       }
+<<<<<<< HEAD
       else
       {
         Serial.print("Resistance Measurement Failed");
@@ -189,6 +194,11 @@ static void MyTask3(void* pvParameters)
 
       digitalWrite(TEST_SIGNAL_RANDC, LOW);
       digitalWrite(TEST_SIGNAL, LOW);
+=======
+
+      digitalWrite(TEST_SIGNAL_RANDC, LOW);
+      digitalWrite(TEST_SIGNAL_L, LOW);
+>>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
       
       //Goal: Use timer interrupts to flash the test signal LED three times, toggling every half-second
       /*unsigned int i;

@@ -20,20 +20,20 @@ class WindingReader:
     arduinoReadyForCommand = "ready\n"
 
     # --------------------- Functions --------------------- #
-    def __init__(self):
+    def __init__(self, arduinoSerial):
         """Construct a new WindingReader
 
         Keyword arguments:
         serialConnection -- the serial connection to read from
 
         """
-        # self.serialConnection = arduinoSerial
+        self.serialConnection = arduinoSerial
 
     def sendPath(self, fileName):
         """Sends a gcode path from a text file to the given serial conenction
         """
         # --------------------- Variables --------------------- #
-        # exampleParam = None
+        windingPathCmd = "beginWindingPath\n"
 
         # TODO: Send the path stored in the given file name
         # Open the path file for reading and sending
@@ -43,7 +43,8 @@ class WindingReader:
         #       with a newline char at end (readline)
         #       When reach end of file, close out
 
-        # TODO: ask if ardiuno is ready for command, then send winding command
+        # Ask if ardiuno is ready for command, then send winding command
+        self.serialConnection.write(windingPathCmd.encode())
         while True:
             # read next line
             line = pathFile.readline()
@@ -52,29 +53,69 @@ class WindingReader:
             if line == "":
                 break
 
-            print(line)
-            '''
             # send next line to arduino if ready
             readyReceived = False
             while not readyReceived:
                 if self.serialConnection.inWaiting() > 0:
+                    inputValue = ""
                     inputValue = self.serialConnection.readline().decode()
                     print("in: " + inputValue)
                     if inputValue == self.arduinoReadyForCommand:
-                            # Give Gcode command
-                            print("ReadyReceived\n")
-                            readyReceived = True
-                            self.serialConnection.write(line.encode())
-            '''
+                        # Give Gcode command
+                        print("ReadyReceived\n")
+                        print(line)
+                        self.serialConnection.write(line.encode())
+                        readyReceived = True
+
+
 
         # Close opened path file
         pathFile.close()
         print("Done reading gcode")
 
-    def zeroMachine(self):
+    def zeroMachine(self, ui):
         """Zeros the machine
         """
         # --------------------- Variables --------------------- #
         # exampleParam = None
 
+        windingPathCmd = "beginWindingPath\n"
+        self.serialConnection.write(windingPathCmd.encode())
+
         # TODO: Send the path to zero the machine
+        line = "%\n"
+        self.serialConnection.write(line.encode())
+
+        line = "G0 X600\n"
+        readyReceived = False
+        while not readyReceived:
+            if self.serialConnection.inWaiting() > 0:
+                inputValue = ""
+                inputValue = self.serialConnection.readline().decode()
+                print("in: " + inputValue)
+                if inputValue == self.arduinoReadyForCommand:
+                    # Give Gcode command
+                    print("ReadyReceived\n")
+                    print(line)
+                    self.serialConnection.write(line.encode())
+                    readyReceived = True
+
+        ui.userZero()
+        ui.displayMessage("\nZeroing")
+
+        line = "G0 X0\n"
+        readyReceived = False
+        while not readyReceived:
+            if self.serialConnection.inWaiting() > 0:
+                inputValue = ""
+                inputValue = self.serialConnection.readline().decode()
+                print("in: " + inputValue)
+                if inputValue == self.arduinoReadyForCommand:
+                    # Give Gcode command
+                    print("ReadyReceived\n")
+                    print(line)
+                    self.serialConnection.write(line.encode())
+                    readyReceived = True
+
+        line = "%\n"
+        self.serialConnection.write(line.encode())
