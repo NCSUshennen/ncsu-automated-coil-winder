@@ -56,18 +56,6 @@ def doneEnteringParamsButtonPressed():
     wireMaterial = enteredWireMaterial.value
     distanceBetweenTeeth = enteredDistanceBetweenTeeth.value
 
-'''
-# ----------------------- Test Code Functions ------------------------ #
-
-# function for changing text from text box
-def say_my_name():
-    message.value = my_name.value
-    # Coil winding: break in a function (???) then come back when main says so
-
-# function for slider
-def change_text_size(slider_value):
-    message.size = slider_value
-'''
 # ----------------------- User Interface Creation ------------------------ #
 
 # Creates the GUI named app and appropriate windows
@@ -78,7 +66,7 @@ parameterWindow = Window(app, title="Parameter window", layout = "grid")
 parameterWindow.hide();
 windingWindow = Window(app, title="Winding window")
 windingWindow.hide();
-postWindingWindow = Window(app, title="Post winding window")
+postWindingWindow = Window(app, title="Post winding window", layout = "grid")
 postWindingWindow.hide();
 
 # ----------------------- Main Window Event Loop ------------------------ #
@@ -86,6 +74,12 @@ postWindingWindow.hide();
 parameterButton = PushButton(app, command=parameterButtonPressed, text="Enter Stator Parameters")
 windingButton = PushButton(app, command=windingButtonPressed, text="Start winding")
 postWindingButton = PushButton(app, command=postWindingButtonPressed, text="Start post winding test")
+
+predictedTimeMessage = Text(app, text="Predicted time: None (enter parameters)");
+predictedFillFactorMessage = Text(app, text="Predicted fill factor: None (enter parameters)");
+predictedWindingResistanceMessage = Text(app, text="Predicted winding resistance: None (enter parameters)");
+actualTimeMessage = Text(app, text="Actual time: None (wind a coil)");
+elongationMessage = Text(app, text="Elongation: None (wind a coil)");
 
 # ----------------------- Parameter Window Event Loop ------------------------ #
 # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
@@ -121,16 +115,14 @@ doneEnteringParamsButton = PushButton(parameterWindow, command=doneEnteringParam
 
 # ----------------------- Winding Window Event Loop ------------------------ #
 # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
+windingStatorMessage = Text(windingWindow, text="Winding stator", size=40, font="Times New Roman", color="green")
+windingWindowCloseMessage = Text(windingWindow, text="Window will close when winding is complete", font="Times New Roman")
 
 # ----------------------- Post Winding Window Event Loop ------------------------ #
 # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
-
-''' # ----------------------- Test Code Event Loop ------------------------ #
-# Event loop - GUI widget (text, text boxes, buttons, etc) code here
-message = Text(app, text="Welcome to my app", size=40, font="Times New Roman", color="lightblue")
-my_name = TextBox(app, width=40)
-update_text = PushButton(app, command=say_my_name, text="Display my name")
-text_size = Slider(app, command=change_text_size, start=10, end=80)
-'''
+postWindingTitle = Text(postWindingWindow, text="Post Winding Results ", size=20, font="Times New Roman", grid=[0, 0], align="left")
+resistanceMessage = Text(postWindingWindow, text="Resistance: ", font="Times New Roman", grid=[0,1], align="left")
+capacitanceMessage = Text(postWindingWindow, text="Capacitance: ", font="Times New Roman", grid=[0,2], align="left")
+inductanceMessage = Text(postWindingWindow, text="Inductance: ", font="Times New Roman", grid=[0,3], align="left")
 
 app.display()  # start the event loop - while true block - code after this doesn't execute
