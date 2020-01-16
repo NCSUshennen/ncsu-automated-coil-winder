@@ -125,10 +125,12 @@ postWindingTitle = Text(postWindingWindow, text="Post Winding Results ", size=20
 resistanceMessage = Text(postWindingWindow, text="Resistance: ", font="Times New Roman", grid=[0,1], align="left")
 capacitanceMessage = Text(postWindingWindow, text="Capacitance: ", font="Times New Roman", grid=[0,2], align="left")
 inductanceMessage = Text(postWindingWindow, text="Inductance: ", font="Times New Roman", grid=[0,3], align="left")
+doneViewingPostWindingButton = PushButton(postWindingWindow, text="Done", grid=[0,4], align="left")
 
 # ----------------------- Safety Interrupt Window Event Loop ------------------------ #
 windingStatorMessage = Text(safetyInterruptWindow, text="Safety Error", size=40, font="Times New Roman", color="red")
 windingStatorMessage = Text(safetyInterruptWindow, text="Something went wrong and the program was halted.",font="Times New Roman")
 windingStatorMessage = Text(safetyInterruptWindow, text="Reset the machine and try again.",font="Times New Roman")
+
 
 app.display()  # start the event loop - while true block - code after this doesn't execute
