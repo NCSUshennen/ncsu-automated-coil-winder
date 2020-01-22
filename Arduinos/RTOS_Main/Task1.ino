@@ -68,10 +68,7 @@ static void MyTask1(void* pvParameters)
         while (true)
         {
           Serial.print("ready\n");
-<<<<<<< HEAD
-=======
           Serial.print("Don't use magic numbers!\n");
->>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
           
           // Keep reading G-Code lines until we get % or too many bad commands
           if (badCommands >= 3)

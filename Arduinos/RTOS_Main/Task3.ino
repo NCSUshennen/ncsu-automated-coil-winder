@@ -29,7 +29,9 @@ static void MyTask3(void* pvParameters)
       float l = 0;
       bool lFailed = false;
 
-      digitalWrite(TEST_SIGNAL_RANDC, LOW);
+      toggleLED(TEST_SIGNAL);
+
+      /*digitalWrite(TEST_SIGNAL_RANDC, LOW);
       digitalWrite(TEST_SIGNAL, LOW);
 
       // Inductance
@@ -148,21 +150,14 @@ static void MyTask3(void* pvParameters)
         }
 
         // Read voltage measurement and convert to resistance
-<<<<<<< HEAD
-        r = ADCToVoltage(analogRead(OUTPUT_SIGNAL))*RIN/(3.3-ADCToVoltage(analogRead(OUTPUT_SIGNAL)));
         float Vin = ADCToVoltage(analogRead(INPUT_VOLTAGE));
         float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
         Serial.println(Vin);
         Serial.println(Vout);
         r = Vout*RIN/(Vin-Vout);
-=======
-        float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
-        r = Vout*RIN/(VIN-Vout);
->>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
       }
       else
       {
-        Serial.print("Resistance Measurement Failed\n");
         rFailed = true;
       }
 
@@ -172,7 +167,6 @@ static void MyTask3(void* pvParameters)
         Serial.print(r);
         Serial.print("\n");  
       }
-<<<<<<< HEAD
       else
       {
         Serial.print("Resistance Measurement Failed");
@@ -193,12 +187,7 @@ static void MyTask3(void* pvParameters)
       }
 
       digitalWrite(TEST_SIGNAL_RANDC, LOW);
-      digitalWrite(TEST_SIGNAL, LOW);
-=======
-
-      digitalWrite(TEST_SIGNAL_RANDC, LOW);
-      digitalWrite(TEST_SIGNAL_L, LOW);
->>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
+      digitalWrite(TEST_SIGNAL, LOW);*/
       
       //Goal: Use timer interrupts to flash the test signal LED three times, toggling every half-second
       /*unsigned int i;
@@ -221,7 +210,7 @@ static void MyTask3(void* pvParameters)
       TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A*/
 
       
-      digitalWrite(TEST_SIGNAL, HIGH);
+      /*digitalWrite(TEST_SIGNAL, HIGH);
       int i;
       int voltagesSize = 1000;
       for (i=0; i<voltagesSize; i++)
@@ -235,7 +224,7 @@ static void MyTask3(void* pvParameters)
       {
         Serial.println(ADCToVoltage(voltages[i]));  
       }
-      digitalWrite(TEST_SIGNAL, LOW);
+      digitalWrite(TEST_SIGNAL, LOW);*/
     }
   }
 }
