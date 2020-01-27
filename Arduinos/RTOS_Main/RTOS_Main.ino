@@ -64,8 +64,8 @@
 #define SENSOR_2 A2
 
 // Pins used in Task 3
-#define TEST_SIGNAL_RANDC 38
-#define TEST_SIGNAL 40
+#define TEST_SIGNAL_RANDC 36
+#define TEST_SIGNAL_L 38
 #define OUTPUT_SIGNAL A0
 #define INPUT_VOLTAGE A7
 
@@ -195,7 +195,7 @@ void Init_Pins()
   pinMode(SENSOR_2, INPUT);
 
   pinMode(TEST_SIGNAL_RANDC, OUTPUT);
-  pinMode(TEST_SIGNAL, OUTPUT);
+  pinMode(TEST_SIGNAL_L, OUTPUT);
   pinMode(OUTPUT_SIGNAL, INPUT); // That is, this is the output of the system, which the Arduino is measuring
   pinMode(INPUT_VOLTAGE, INPUT);
 
@@ -222,7 +222,7 @@ void Init_Pins()
   digitalWrite(MOTOR_X2_DIR, LOW);
 
   digitalWrite(TEST_SIGNAL_RANDC, LOW);
-  digitalWrite(TEST_SIGNAL, LOW);
+  digitalWrite(TEST_SIGNAL_L, LOW);
 }
 
 void Init_SemaphoresAndMessageBuffers()
