@@ -376,3 +376,20 @@ int minIndexOf2(int index1, int index2)
       return minIndex;
     }
 }
+
+void settleADC()
+{
+    /**
+    * This function is to be called after the ADC reference voltage has been changed in order to allow it
+    * to settle. It does this by performing 50 dummy conversions
+    * 
+    * Returns: nothing
+    */
+
+    int i;
+    int dummyConversionVariable;
+    for (i = 0; i < 50; i++)
+    {
+      dummyConversionVariable = analogRead(OUTPUT_SIGNAL);
+    }
+}

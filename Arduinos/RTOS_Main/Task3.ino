@@ -38,9 +38,24 @@ static void MyTask3(void* pvParameters)
       vTaskDelay(1000/portTICK_PERIOD_MS);
       
       // Read voltage measurement and convert to resistance
-      float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
- 
+      int itWorked = analogRead(OUTPUT_SIGNAL);
+      float Vout = ADCToVoltage(itWorked);
+
+      analogReference(INTERNAL1V1);
+      settleADC();
+      
+      int didItWork1V1 = analogRead(OUTPUT_SIGNAL);
+      
+      analogReference(DEFAULT);
+      settleADC();
+      
+      int didItWork5V = analogRead(OUTPUT_SIGNAL);
+      
       Serial.println(Vout);
+      Serial.println(itWorked);
+      Serial.println(didItWork1V1);
+      Serial.println("Well that was dumb...");
+      Serial.println(didItWork5V);
       
       if (VIN - Vout > 0)
       {
