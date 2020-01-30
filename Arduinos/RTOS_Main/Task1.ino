@@ -2,14 +2,19 @@
  * Task1
  * 
  * Dan Hayduk
- * December 2, 2019
+ * January 30, 2020
  * 
  * This task contains an algorithm to read G-Code, line by line, sent by the Raspberry Pi, and send the appropriate signals
  * to the X, Y and Z motors to accomplish movement.
  * 
- * The G-Code is expected to send numerical movement values corresponding to movement distance in millimeters. Currently, there
- * is NOT a failsafe built-in for if the G-Code tries to move the winding head out of bounds; this will likely be implemented
- * second-semester when the dimensions of the frame are finalized. Until then, be careful!
+ * The G-Code is expected to send numerical movement values corresponding to movement distance in millimeters. The ability to read
+ * zeroing switches and over-position switches has been implemented in order to prevent the winding head from moving out of bounds.
+ * If an over-position switch is hit, the user will have to manually turn the threaded rods to move the head back to a position away
+ * from the switch. If any switch is hit unexpectedly, the Arduino will not have the correct position stored in the currentPosition
+ * variable, so the winding head must be zeroed before another winding algorithm can be executed.
+ * 
+ * There are currently plans to implement a feature to preemptively predict if a G-Code command is about to send the winding head out of
+ * bounds and stop the winding algorithm before it runs the movement. However, this has not yet been implemented.
  * 
  * The following G-Code commands can be entered:
  *  G0 or G00: Set rapid-motion mode off (off by default)
@@ -52,7 +57,6 @@ static void MyTask1(void* pvParameters)
       bool firstTimeG28 = true;
 
       Serial.print("ready\n");
-      Serial.print("Don't use magic numbers!\n");
       
       // Await 1st %
       if (xSemaphoreTake(xSemaphorePercent, portMAX_DELAY) == pdTRUE)
@@ -68,12 +72,11 @@ static void MyTask1(void* pvParameters)
         while (true)
         {
           Serial.print("ready\n");
-          Serial.print("Don't use magic numbers!\n");
           
           // Keep reading G-Code lines until we get % or too many bad commands
           if (badCommands >= 3)
           {
-            Serial.print("Aborted G-Code Reader due to too many bad commands.\n");
+            Serial.print("ErrorTooManyBadCommands\n");
             break; 
           }
           
@@ -303,6 +306,9 @@ static void MyTask1(void* pvParameters)
           {
             // Movement in at least one direction needs to occur
             unsigned long int totalPulses[3] = {0, 0, 0};
+            bool xMovementNegative = false;
+            bool yMovementNegative = false;
+            bool zMovementNegative = false;
             
             // Set direction and calculate totalPulses
             if (absPositioning)
@@ -312,6 +318,7 @@ static void MyTask1(void* pvParameters)
               {
                 digitalWrite(MOTOR_X1_DIR, HIGH);
                 digitalWrite(MOTOR_X2_DIR, HIGH);
+                xMovementNegative = true;
               }
               else
               {
@@ -321,6 +328,7 @@ static void MyTask1(void* pvParameters)
               if (destination[Y] < currentPosition[Y])
               {
                 digitalWrite(MOTOR_Y_DIR, HIGH);
+                yMovementNegative = true;
               }
               else
               {
@@ -332,7 +340,8 @@ static void MyTask1(void* pvParameters)
               }
               else
               {
-                digitalWrite(MOTOR_Z_DIR, LOW);  
+                digitalWrite(MOTOR_Z_DIR, LOW);
+                zMovementNegative = true;
               }
 
               // Calculate totalPulses
@@ -350,6 +359,7 @@ static void MyTask1(void* pvParameters)
               {
                 digitalWrite(MOTOR_X1_DIR, HIGH);
                 digitalWrite(MOTOR_X2_DIR, HIGH);
+                xMovementNegative = true;
               }
               else
               {
@@ -359,6 +369,7 @@ static void MyTask1(void* pvParameters)
               if (destination[Y] < 0)
               {
                 digitalWrite(MOTOR_Y_DIR, HIGH);
+                yMovementNegative = true;
               }
               else
               {
@@ -370,7 +381,8 @@ static void MyTask1(void* pvParameters)
               }
               else
               {
-                digitalWrite(MOTOR_Z_DIR, LOW);  
+                digitalWrite(MOTOR_Z_DIR, LOW);
+                zMovementNegative = true;
               }
 
               // Calculate totalPulses
@@ -384,6 +396,8 @@ static void MyTask1(void* pvParameters)
 
             // Send those pulses
             unsigned long int i;
+            bool hitXZeroingSwitch = false;
+            bool hitOverPositionSwitch = false;
             for (i=0; i<totalPulses[X]; i++)
             {
                digitalWrite(MOTOR_X1_PLS, HIGH);
@@ -392,22 +406,99 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_X1_PLS, LOW);
                digitalWrite(MOTOR_X2_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+
+               // Check to see if a contact switch has been hit and react accordingly
+               if (digitalRead(ZEROING_X) != HIGH && xMovementNegative)
+               {
+                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
+                  hitXZeroingSwitch = true;
+                  break;
+               }
+               else if (digitalRead(OVER_POSITION) != HIGH)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  break;
+               }
             }
 
+            if (hitXZeroingSwitch)
+            {
+              Serial.print(ZEROING_X_ERROR);
+              break;  
+            }
+            else if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              break;
+            }
+
+            bool hitYZeroingSwitch = false;
             for (i=0; i<totalPulses[Y]; i++)
             {
                digitalWrite(MOTOR_Y_PLS, HIGH);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
                digitalWrite(MOTOR_Y_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+
+               // Check to see if a contact switch has been hit and react accordingly
+               if (digitalRead(ZEROING_Y) != HIGH && yMovementNegative)
+               {
+                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Y-Direction
+                  hitYZeroingSwitch = true;
+                  break;
+               }
+               else if (digitalRead(OVER_POSITION) != HIGH)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  break;
+               }
             }
 
+            if (hitYZeroingSwitch)
+            {
+              Serial.print(ZEROING_Y_ERROR);
+              break;  
+            }
+            else if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              break;
+            }
+            
+            bool hitZZeroingSwitch = false;
             for (i=0; i<totalPulses[Z]; i++)
             {
                digitalWrite(MOTOR_Z_PLS, HIGH);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
                digitalWrite(MOTOR_Z_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+
+               // Check to see if a contact switch has been hit and react accordingly
+               if (digitalRead(ZEROING_Z) != HIGH && zMovementNegative)
+               {
+                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Z-Direction
+                  hitZZeroingSwitch = true;
+                  break;
+               }
+               else if (digitalRead(OVER_POSITION) != HIGH)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  break;
+               }
+            }
+
+            if (hitZZeroingSwitch)
+            {
+              Serial.print(ZEROING_Z_ERROR);
+              break;  
+            }
+            else if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              break;
             }
 
             // Set all direction values low

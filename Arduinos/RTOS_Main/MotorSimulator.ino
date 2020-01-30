@@ -10,7 +10,7 @@
  * simpler, but avoids the risk of damaging the motors or their drivers while testing the G-Code algorithm.
  * 
  * Note: To use the simulator, make sure to connect LEDs to pins 4-7 as specified in their macros and use jumper
- * wires to connect ports 23 and 18, 31 and 19, and 39 and 20.
+ * wires to connect ports 37 and 18, 31 and 19, and 25 and 20.
  */
 
 #define TURN_RATE 800

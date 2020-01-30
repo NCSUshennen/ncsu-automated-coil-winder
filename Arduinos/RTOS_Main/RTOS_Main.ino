@@ -96,8 +96,13 @@
 #define TASK_2_COMMAND_SENSOR2 "getSensor2SensorValue"
 #define TASK_3_COMMAND "doPostWindingTest"
 
-// Macros to set timing for timer interrupts
+// Error Messages
+#define OVER_POSITION_ERROR "ErrorHitOverPositionSwitch\n"
+#define ZEROING_Z_ERROR "ErrorHitZZeroingSwitch\n"
+#define ZEROING_Y_ERROR "ErrorHitYZeroingSwitch\n"
+#define ZEROING_X_ERROR "ErrorHitXZeroingSwitch\n"
 
+// Macros to set timing for timer interrupts
 
 uint8_t task = 0; // 0 indicates Idle
 bool askedForReady = false;
