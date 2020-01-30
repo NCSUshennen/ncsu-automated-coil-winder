@@ -23,10 +23,12 @@ class WindingWriter:
     distanceBetweenTeeth = None
 
     # --------------------- Winding head values --------------------- #
-    headClearanceX = None
-    headClearanceY = None
+    headClearanceX = 8.5
+    headClearanceY = 15
 
     # --------------------- Position values --------------------- #
+    startingCornerX = 462.5
+    startingCornerY = 175
     currentCornerX = None
     currentCornerY = None
     currentCornerZ = None
@@ -64,15 +66,15 @@ class WindingWriter:
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth
 
-        self.headClearanceY = 15
-        self.headClearanceX = 8.5
         # Starting corner
-        self.currentCornerX = 465
-        self.currentCornerY = 160
+        self.currentCornerX = int(self.startingCornerX - (0.5 * self.statorToothWidth) + (
+                    0.5 * self.statorShoeWidth) + self.headClearanceX)
+        self.currentCornerY = self.startingCornerY - self.headClearanceY
 
     def calculateValues(self):
         self.ylength = self.statorToothLength + (2 * self.headClearanceY)
         self.xlength = self.statorShoeWidth + int(2 * self.headClearanceX)
+        print("xlength: "+ str(self.xlength))
 
         if (self.wireGauge == "18"):
             self.zlength = 1
@@ -114,7 +116,6 @@ class WindingWriter:
         pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
 
         self.calculateValues()
-        self.windRect(pathFile)
         self.windRect(pathFile)
 
         # % for Telling arduino this gcode is done

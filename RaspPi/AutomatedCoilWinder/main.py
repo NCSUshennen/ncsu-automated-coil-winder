@@ -41,8 +41,8 @@ def main():
     # ------------------- Declarations -------------------- #
 
     # Create serial connection for arduinos
-    arduinoMegaSerial = serial.Serial(arduinoMegaPort, arduinoMegaRate)
-    arduinoMegaSerial.flushInput()
+    #arduinoMegaSerial = serial.Serial(arduinoMegaPort, arduinoMegaRate)
+    #arduinoMegaSerial.flushInput()
 
     # ----------------------- Main ------------------------ #
 
@@ -70,7 +70,7 @@ def main():
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
-    windingReader = WindingReader(arduinoMegaSerial)
+    #windingReader = WindingReader(arduinoMegaSerial)
     windingTester = WindingTester(statorToothLength,
                                   statorToothHeight,
                                   statorToothWidth,
