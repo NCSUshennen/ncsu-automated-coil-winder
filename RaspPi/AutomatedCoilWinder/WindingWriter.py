@@ -76,10 +76,19 @@ class WindingWriter:
         self.xlength = self.statorShoeWidth + int(2 * self.headClearanceX)
         print("xlength: "+ str(self.xlength))
 
+        # Resolution is 0.05 mm
         if (self.wireGauge == "18"):
-            self.zlength = 1
+            self.zlength = 1.0
         elif (self.wireGauge == "17"):
-            self.zlength = 1
+            self.zlength = 1.15
+        elif (self.wireGauge == "16"):
+            self.zlength = 1.30
+        elif (self.wireGauge == "15"):
+            self.zlength = 1.45
+        elif (self.wireGauge == "14"):
+            self.zlength = 1.6
+        elif (self.wireGauge == "13"):
+            self.zlength = 1.8
         else:
             self.zlength = 1
         return
