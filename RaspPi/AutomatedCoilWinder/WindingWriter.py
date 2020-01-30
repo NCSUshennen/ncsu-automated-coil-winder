@@ -17,15 +17,30 @@ class WindingWriter:
     statorToothWidth = None
     statorShoeWidth = None
     numberStatorTeeth = None
-    numberTurns = None
+    numberWinds = None
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
 
+    # --------------------- Winding head values --------------------- #
+    headClearanceX = None
+    headClearanceY = None
+
+    # --------------------- Position values --------------------- #
+    currentCornerX = None
+    currentCornerY = None
+    currentCornerZ = None
+    currentZ = None
+
+    # --------------------- Calculated values --------------------- #
+    ylength = None
+    xlength = None
+    zlength = None
+
     # --------------------- Functions --------------------- #
     def __init__(self, statorToothLength, statorToothHeight,
                  statorToothWidth, statorShoeWidth, numberStatorTeeth,
-                 numberTurns, wireGauge, wireMaterial,
+                 numberWinds, wireGauge, wireMaterial,
                  distanceBetweenTeeth):
         """Construct a new WindingWriter
 
@@ -35,7 +50,7 @@ class WindingWriter:
         statorToothWidth --
         statorShoeWidth --
         numberStatorTeeth --
-        numberTurns --
+        numberWinds --
         wireGauge --
         wireMaterial --
         distanceBetweenTeeth --
@@ -44,24 +59,75 @@ class WindingWriter:
         self.statorToothHeight = statorToothHeight
         self.statorToothWidth = statorToothWidth
         self.statorShoeWidth = statorShoeWidth
-        self.numberTurns = numberTurns
+        self.numberWinds = numberWinds
         self.wireGauge = wireGauge
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth
+
+        self.headClearanceY = 15
+        self.headClearanceX = 8.5
+        # Starting corner
+        self.currentCornerX = 465
+        self.currentCornerY = 160
+
+    def calculateValues(self):
+        self.ylength = self.statorToothLength + (2 * self.headClearanceY)
+        self.xlength = self.statorShoeWidth + int(2 * self.headClearanceX)
+
+        if (self.wireGauge == "18"):
+            self.zlength = 1
+        elif (self.wireGauge == "17"):
+            self.zlength = 1
+        else:
+            self.zlength = 1
+        return
+
+    def createPosts(self):
+        return
+
+    def windRect(self, pathFile):
+        # Go forward in the y direction parameter ylength
+        pathFile.write("G0 Y" + str(self.currentCornerY + self.ylength) + "\n")
+        # Go forward in the x direction parameter xlength
+        pathFile.write("G0 X" + str(self.currentCornerX + self.xlength) + "\n")
+        # Go backwards in the ydirection ylength
+        pathFile.write("G0 Y" + str(self.currentCornerY) + "\n")
+        # Go backwards in the xdirection xlength
+        pathFile.write("G0 X" + str(self.currentCornerX) + "\n")
+
+        return
 
     def generatePath(self, fileName):
         """Generate a path with the stored parameters
             and return True when complete
         """
-        # --------------------- Variables --------------------- #
-        # exampleParam = None
 
         # TODO (485): Generate a path from the given parameters
-
-        # TODO: Generate a basic square path for winding post
         # Open the path file for writing
         pathFile = open(fileName, "w")
+        # % for Telling arduino this is gcode
+        pathFile.write("%\n")
 
+        # --------------------- Path generation --------------------- #
+
+        # Move diagonally to start of block
+        pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
+
+        self.calculateValues()
+        self.windRect(pathFile)
+        self.windRect(pathFile)
+
+        # % for Telling arduino this gcode is done
+        pathFile.write("%\n")
+        # Close opened path file
+        pathFile.close()
+
+        """
+        # Generate a basic square path for winding post
+        # Open the path file for writing
+        pathFile = open(fileName, "w")
+        
+        
         #% for Telling arduino this is gcode
         pathFile.write("%\n")
 
@@ -101,5 +167,6 @@ class WindingWriter:
 
         # Close opened path file
         pathFile.close()
+        """
 
         return True

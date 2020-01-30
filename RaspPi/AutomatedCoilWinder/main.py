@@ -33,7 +33,7 @@ def main():
     statorToothWidth = None
     statorShoe= None
     numberStatorTeeth = None
-    numberTurns = None
+    numberWinds = None
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
@@ -56,7 +56,7 @@ def main():
     statorToothWidth = ui.getStatorToothWidth()
     statorShoeWidth = ui.getStatorShoeWidth()
     numberStatorTeeth = ui.getNumberStatorTeeth()
-    numberTurns = ui.getNumberTurns()
+    numberWinds = ui.getNumberWinds()
     wireGauge = ui.getWireGauge()
     wireMaterial = ui.getWireMaterial()
     distanceBetweenTeeth = ui.getDistanceBetweenTeeth()
@@ -66,7 +66,7 @@ def main():
                                   statorToothWidth,
                                   statorShoeWidth,
                                   numberStatorTeeth,
-                                  numberTurns,
+                                  numberWinds,
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
@@ -76,7 +76,7 @@ def main():
                                   statorToothWidth,
                                   statorShoeWidth,
                                   numberStatorTeeth,
-                                  numberTurns,
+                                  numberWinds,
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
