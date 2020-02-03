@@ -149,6 +149,21 @@ class UserInterface:
             except ValueError:
                 print("Please enter a valid integer")
 
+    def getStatorWindHeight(self):
+        """Return statorToothHeight from user
+        """
+        # --------------------- Variables --------------------- #
+        gotValue = False
+
+        # Ask user for statorToothHeight until they enter a valid int
+        while not gotValue:
+            try:
+                userInput = int(input("Enter stator wind height (in mm): "))
+                gotValue = True
+                return userInput
+            except ValueError:
+                print("Please enter a valid integer")
+
     def getStatorToothWidth(self):
         """Return statorToothWidth from user
         """

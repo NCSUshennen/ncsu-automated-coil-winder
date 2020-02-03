@@ -30,6 +30,7 @@ def main():
 
     statorToothLength = None
     statorToothHeight = None
+    statorWindHeight = None
     statorToothWidth = None
     statorShoe= None
     numberStatorTeeth = None
@@ -53,6 +54,7 @@ def main():
 
     statorToothLength = ui.getStatorToothLength()
     statorToothHeight = ui.getStatorToothHeight()
+    statorWindHeight = ui.getStatorWindHeight()
     statorToothWidth = ui.getStatorToothWidth()
     statorShoeWidth = ui.getStatorShoeWidth()
     numberStatorTeeth = ui.getNumberStatorTeeth()
@@ -63,6 +65,7 @@ def main():
 
     windingWriter = WindingWriter(statorToothLength,
                                   statorToothHeight,
+                                  statorWindHeight,
                                   statorToothWidth,
                                   statorShoeWidth,
                                   numberStatorTeeth,
