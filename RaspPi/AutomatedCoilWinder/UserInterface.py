@@ -203,7 +203,7 @@ class UserInterface:
         # Ask user for numberStatorTeeth until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter the number of stator teeth (in mm): "))
+                userInput = int(input("Enter the number of stator teeth: "))
                 gotValue = True
                 return userInput
             except ValueError:

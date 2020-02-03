@@ -166,10 +166,9 @@ class WindingWriter:
         self.calculateValues()
 
         # Keep winding until you've wound the last tooth
-        while self.numTeethWound < self.numberStatorTeeth:
-            # Initial values
+        while self.numTeethWound <= self.numberStatorTeeth:
+            # Initial/reset values
             self.numTimesWound = 0
-            self.numZWinds = 0
             self.numZWinds = 0
             self.zDirection = "up"
 
@@ -180,7 +179,7 @@ class WindingWriter:
                 # Wind the next rectangle
                 self.windRect(pathFile)
 
-                if self.numZWinds >= self.maxNumZWinds-1:
+                if self.numZWinds >= self.maxNumZWinds - 1:
                     self.switchZDirection()
                     self.numZWinds = 0
                 else:
@@ -193,64 +192,25 @@ class WindingWriter:
                 # Increase number of times we've wound this tooth
                 self.numTimesWound += 1
 
-            # TODO: Wind next post and set new current corner
-
             # Increase the number of teeth wound
             self.numTeethWound += 1
-            return
 
-        # TODO: Wind the last post and zero
+            # TODO: Wind next post and set new current corner
+            if self.numTeethWound <= self.numberStatorTeeth:
+                self.currentCornerX += self.distanceBetweenTeeth + self.statorToothWidth
+                pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
+                self.currentZ = self.currentCornerZ
+                # pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
+
+        # TODO: Wind the last post and zero without hitting posts
+        pathFile.write("G0 X15\n")
+        pathFile.write("G0 Y0\n")
+        pathFile.write("G0 X0\n")
+        pathFile.write("G0 Z0\n")
 
         # % for Telling arduino this gcode is done
         pathFile.write("%\n")
         # Close opened path file
         pathFile.close()
-
-        """
-        # Generate a basic square path for winding post
-        # Open the path file for writing
-        pathFile = open(fileName, "w")
-        
-        
-        #% for Telling arduino this is gcode
-        pathFile.write("%\n")
-
-        #Move z axis up
-        pathFile.write("G0 Z35\n")
-        #Move diagonally to start of block
-        pathFile.write( "G0 X465 Y160\n")
-
-        pathFile.write("G0 Z0\n")
-        #Move one full rotation
-        pathFile.write("G0 Y320\n")
-        pathFile.write("G0 X500\n")
-        pathFile.write("G0 Y160\n")
-        pathFile.write("G0 X465\n")
-
-        pathFile.write("G0 Z3\n")
-        #Move one full rotation
-        pathFile.write("G0 Y320\n")
-        pathFile.write("G0 X500\n")
-        pathFile.write("G0 Y160\n")
-        pathFile.write("G0 X465\n")
-
-        pathFile.write("G0 Z6\n")
-        #Move one full rotation
-        pathFile.write("G0 Y320\n")
-        pathFile.write("G0 X500\n")
-        pathFile.write("G0 Y160\n")
-        pathFile.write("G0 X465\n")
-
-        #Move back to zero
-        pathFile.write("G0 Z35\n")
-        pathFile.write("G0 X0 Y0\n")
-        pathFile.write("G0 Z0\n")
-
-        #% for Telling arduino this gcode is done
-        pathFile.write("%\n")
-
-        # Close opened path file
-        pathFile.close()
-        """
 
         return True
