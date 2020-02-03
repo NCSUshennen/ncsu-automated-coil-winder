@@ -166,7 +166,7 @@ class WindingWriter:
         self.calculateValues()
 
         # Keep winding until you've wound the last tooth
-        while self.numTeethWound <= self.numberStatorTeeth:
+        while self.numTeethWound < self.numberStatorTeeth:
             # Initial/reset values
             self.numTimesWound = 0
             self.numZWinds = 0
@@ -203,10 +203,10 @@ class WindingWriter:
                 # pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
 
         # TODO: Wind the last post and zero without hitting posts
-        pathFile.write("G0 X15\n")
-        pathFile.write("G0 Y0\n")
-        pathFile.write("G0 X0\n")
-        pathFile.write("G0 Z0\n")
+        pathFile.write("G0 X15.0\n")
+        pathFile.write("G0 Y0.0\n")
+        pathFile.write("G0 X0.0\n")
+        pathFile.write("G0 Z0.0\n")
 
         # % for Telling arduino this gcode is done
         pathFile.write("%\n")
