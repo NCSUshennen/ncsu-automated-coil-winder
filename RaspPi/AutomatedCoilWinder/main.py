@@ -94,6 +94,7 @@ def main():
     # Generate path
     ui.displayMessage("\nGenerating the path")
     windingWriter.generatePath("pathFile.txt")
+    ui.displayMessage(str(windingWriter.getTotalMillimetersTraveled()))
     # TODO: instantiate windingReader, giving it the file name of generated path
 
     # Zero machine with WindingReader -> function for zeroing w/ SensorReader

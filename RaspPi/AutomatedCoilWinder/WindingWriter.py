@@ -24,6 +24,12 @@ class WindingWriter:
     wireMaterial = None
     distanceBetweenTeeth = None
 
+    # --------------------- Distance traveled values --------------------- #
+    totalMillimetersTraveled = None
+    prevX = None;
+    prevY = None;
+    prevZ = None;
+
     # --------------------- Winding head values --------------------- #
     # TODO: update with actual head clearances later
     headClearanceX = 8.5
@@ -72,6 +78,7 @@ class WindingWriter:
     currentPostLowerLeftY = None
 
     # --------------------- Functions --------------------- #
+    # --------------------- Constructor --------------------- #
     def __init__(self, statorToothLength, statorToothHeight, statorWindHeight,
                  statorToothWidth, statorShoeWidth, numberStatorTeeth,
                  numberWinds, wireGauge, wireMaterial,
@@ -104,6 +111,25 @@ class WindingWriter:
         self.currentCornerX = float(self.startingCornerX - (0.5 * self.statorToothWidth) + (
                 0.5 * self.statorShoeWidth) + self.headClearanceX)
         self.currentCornerY = float(self.startingCornerY - self.headClearanceY)
+
+        # Initialize all distance parameters to 0
+        self.totalMillimetersTraveled = 0
+        self.prevX = 0
+        self.prevY = 0
+        self.prevZ = 0
+
+    # --------------------- Distance counting --------------------- #
+    def calculateDistanceTraveled(self, newX, newY, newZ):
+        self.totalMillimetersTraveled += abs(self.prevX - newX) + abs(self.prevY - newY) + abs(self.prevZ - newZ)
+        self.prevX = newX
+        self.prevY = newY
+        self.prevZ = newZ
+        return
+
+    def getTotalMillimetersTraveled(self):
+        return self.totalMillimetersTraveled
+
+    # --------------------- Path generation --------------------- #
 
     def calculateValues(self):
         self.ylength = float(self.statorToothLength + (2 * self.headClearanceY))
@@ -167,25 +193,37 @@ class WindingWriter:
 
         # Go to upper left corner of next post
         pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostUpperLeftY, self.prevZ)
         pathFile.write("G0 X" + str(self.currentPostUpperLeftX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostUpperLeftX, self.prevY, self.prevZ)
 
         # Go down to correct z
         pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, self.currentCornerZ)
 
         # Wind once
         pathFile.write("G0 X" + str(self.currentPostUpperRightX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostUpperRightX, self.prevY, self.prevZ)
         pathFile.write("G0 Y" + str(self.currentPostLowerRightY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostLowerRightY, self.prevZ)
         pathFile.write("G0 X" + str(self.currentPostLowerLeftX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostLowerLeftX, self.prevY, self.prevZ)
         pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostUpperLeftY, self.prevZ)
 
         # Go up a wireGauge length
         pathFile.write("G0 Z" + str(self.currentCornerZ + self.wireDiameter) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, self.currentCornerZ + self.wireDiameter)
 
         # Wind once again
         pathFile.write("G0 X" + str(self.currentPostUpperRightX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostUpperRightX, self.prevY, self.prevZ)
         pathFile.write("G0 Y" + str(self.currentPostLowerRightY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostLowerRightY, self.prevZ)
         pathFile.write("G0 X" + str(self.currentPostLowerLeftX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostLowerLeftX, self.prevY, self.prevZ)
         pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostUpperLeftY, self.prevZ)
 
         # Increase the post we are currently on
         self.currentPost += 1
@@ -194,12 +232,16 @@ class WindingWriter:
     def windRect(self, pathFile):
         # Go forward in the y direction parameter ylength
         pathFile.write("G0 Y" + str(self.currentCornerY + self.ylength) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentCornerY + self.ylength, self.prevZ)
         # Go forward in the x direction parameter xlength
         pathFile.write("G0 X" + str(self.currentCornerX + self.xlength) + "\n")
+        self.calculateDistanceTraveled(self.currentCornerX + self.xlength, self.prevY, self.prevZ)
         # Go backwards in the ydirection ylength
         pathFile.write("G0 Y" + str(self.currentCornerY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentCornerY, self.prevZ)
         # Go backwards in the xdirection xlength
         pathFile.write("G0 X" + str(self.currentCornerX) + "\n")
+        self.calculateDistanceTraveled(self.currentCornerX, self.prevY, self.prevZ)
         return
 
     def generatePath(self, fileName):
@@ -229,6 +271,7 @@ class WindingWriter:
 
         # Move diagonally to start of block
         pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
+        self.calculateDistanceTraveled(self.currentCornerX, self.currentCornerY, self.prevZ)
 
         # Keep winding until you've wound the last tooth
         while self.numTeethWound < self.numberStatorTeeth:
@@ -240,6 +283,7 @@ class WindingWriter:
             while self.numTimesWound < self.numberWinds:
                 # Go to next current Z
                 pathFile.write("G0 Z" + str(self.currentZ) + "\n")
+                self.calculateDistanceTraveled(self.prevX, self.prevY, self.currentZ)
 
                 # Wind the next rectangle
                 self.windRect(pathFile)
@@ -267,14 +311,19 @@ class WindingWriter:
             if self.numTeethWound <= self.numberStatorTeeth:
                 self.currentCornerX += self.distanceBetweenTeeth + self.statorToothWidth
                 pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
+                self.calculateDistanceTraveled(self.currentCornerX, self.currentCornerY, self.prevZ)
                 self.currentZ = self.currentCornerZ
                 # pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
 
         # TODO: Wind the last post and zero without hitting posts
         pathFile.write("G0 X15.0\n")
+        self.calculateDistanceTraveled(15, self.prevY, self.prevZ)
         pathFile.write("G0 Y0.0\n")
+        self.calculateDistanceTraveled(self.prevX, 0, self.prevZ)
         pathFile.write("G0 X0.0\n")
+        self.calculateDistanceTraveled(0, self.prevY, self.prevZ)
         pathFile.write("G0 Z0.0\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, 0)
 
         # % for Telling arduino this gcode is done
         pathFile.write("%\n")
