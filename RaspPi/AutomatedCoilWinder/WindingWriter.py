@@ -25,17 +25,20 @@ class WindingWriter:
     distanceBetweenTeeth = None
 
     # --------------------- Winding head values --------------------- #
+    # TODO: update with actual head clearances later
     headClearanceX = 8.5
     headClearanceY = 15
+    postHeadClearance = 5
 
     # --------------------- Position values --------------------- #
+    # TODO: update with actual starting values later
     startingCornerX = 462.5
     startingCornerY = 175
     currentCornerX = None
     currentCornerY = None
     currentCornerZ = None
     currentZ = None
-    postYValue = 10
+    postYValue = 20
     postXValues = None
     currentPost = None
 
@@ -50,6 +53,23 @@ class WindingWriter:
     xlength = None
     wireDiameter = None
     maxNumZWinds = None
+    postWindDistance = None
+
+    # --------------------- Misc. Post values --------------------- #
+    postDiameter = 10
+    currentPostCenterX = None
+
+    currentPostUpperLeftX = None
+    currentPostUpperLeftY = None
+
+    currentPostUpperRightX = None
+    currentPostUpperRightY = None
+
+    currentPostLowerRightX = None
+    currentPostLowerRightY = None
+
+    currentPostLowerLeftX = None
+    currentPostLowerLeftY = None
 
     # --------------------- Functions --------------------- #
     def __init__(self, statorToothLength, statorToothHeight, statorWindHeight,
@@ -109,10 +129,16 @@ class WindingWriter:
         self.currentZ = float(self.statorWindHeight + (self.wireDiameter * 0.5))
         self.currentCornerZ = self.currentZ
         self.maxNumZWinds = float((self.statorToothHeight - self.statorWindHeight) / self.wireDiameter)
+
+        # post values
+        self.postWindDistance = (0.5 * self.postDiameter) + self.postHeadClearance
+
         return
 
     def createPosts(self):
-        self.postXValues = [175, 275]
+        # TODO: update with actual post values later
+        self.postXValues = [462, 478, 494, 510, 526, 542, 558, 574, 590, 606, 622, 638, 654, 670, 686, 702, 718, 734,
+                            750, 766, 782, 798]
         self.currentPost = 0
         return
 
@@ -123,8 +149,46 @@ class WindingWriter:
             self.zDirection = "up"
         return
 
-    def windNextPost(self):
-        # self.currentPost += 1
+    def windNextPost(self, pathFile):
+        self.currentPostCenterX = self.postXValues[self.currentPost]
+
+        # Post winding rectangle corner values
+        self.currentPostUpperLeftX = self.postWindDistance + self.currentPostCenterX
+        self.currentPostUpperLeftY = self.postWindDistance + self.postYValue
+
+        self.currentPostUpperRightX = self.currentPostCenterX - self.postWindDistance
+        self.currentPostUpperRightY = self.postWindDistance + self.postYValue
+
+        self.currentPostLowerRightX = self.currentPostCenterX - self.postWindDistance
+        self.currentPostLowerRightY = self.postYValue - self.postWindDistance
+
+        self.currentPostLowerLeftX = self.postWindDistance + self.currentPostCenterX
+        self.currentPostLowerLeftY = self.postYValue - self.postWindDistance
+
+        # Go to upper left corner of next post
+        pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+        pathFile.write("G0 X" + str(self.currentPostUpperLeftX) + "\n")
+
+        # Go down to correct z
+        pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
+
+        # Wind once
+        pathFile.write("G0 X" + str(self.currentPostUpperRightX) + "\n")
+        pathFile.write("G0 Y" + str(self.currentPostLowerRightY) + "\n")
+        pathFile.write("G0 X" + str(self.currentPostLowerLeftX) + "\n")
+        pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+
+        # Go up a wireGauge length
+        pathFile.write("G0 Z" + str(self.currentCornerZ + self.wireDiameter) + "\n")
+
+        # Wind once again
+        pathFile.write("G0 X" + str(self.currentPostUpperRightX) + "\n")
+        pathFile.write("G0 Y" + str(self.currentPostLowerRightY) + "\n")
+        pathFile.write("G0 X" + str(self.currentPostLowerLeftX) + "\n")
+        pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+
+        # Increase the post we are currently on
+        self.currentPost += 1
         return
 
     def windRect(self, pathFile):
@@ -156,14 +220,15 @@ class WindingWriter:
         self.numTeethWound = 0
         self.zDirection = "up"
 
-        # TODO: Wind first post
-        self.windNextPost()
+        # Calculate necessary values
+        self.calculateValues()
+        self.createPosts()
+
+        # Wind first post
+        self.windNextPost(pathFile)
 
         # Move diagonally to start of block
         pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
-
-        # Calculate necessary values
-        self.calculateValues()
 
         # Keep winding until you've wound the last tooth
         while self.numTeethWound < self.numberStatorTeeth:
@@ -195,7 +260,10 @@ class WindingWriter:
             # Increase the number of teeth wound
             self.numTeethWound += 1
 
-            # TODO: Wind next post and set new current corner
+            # Wind next post
+            self.windNextPost(pathFile)
+
+            # Set/go to new current corner
             if self.numTeethWound <= self.numberStatorTeeth:
                 self.currentCornerX += self.distanceBetweenTeeth + self.statorToothWidth
                 pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
