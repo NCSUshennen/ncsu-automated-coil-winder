@@ -15,7 +15,7 @@
 
 #define TURN_RATE 800
 #define MM_RATE 160
-#define LED_CHANGE_RATE TURN_RATE
+#define LED_CHANGE_RATE 8
 
 static void MotorSimulator(void* pvParameters)
 {
@@ -114,11 +114,11 @@ static void MotorSimulator(void* pvParameters)
         // Calculate the simulator's position in millimeters and print it
 
         Serial.print("Position:  X: ");
-        Serial.print(simulatorPosition[X]);
+        Serial.print(simulatorPosition[X]/20.0);
         Serial.print(", Y: ");
-        Serial.print(simulatorPosition[Y]);
+        Serial.print(simulatorPosition[Y]/20.0);
         Serial.print(", Z: ");
-        Serial.println(simulatorPosition[Z]);
+        Serial.println(simulatorPosition[Z]/20.0);
         positionWasUpdated = false;
       }
       

@@ -53,7 +53,7 @@
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
-#define USE_MOTOR_SIMULATOR 0
+#define USE_MOTOR_SIMULATOR 1
 
 #define X_INTERRUPT 18
 #define Y_INTERRUPT 19
@@ -324,26 +324,27 @@ void toggleLED(int ledPort)
     }
 }
 
-bool isInt(String wouldBeInt)
+bool isFloat(String wouldBeFloat)
 {
    /**
-    * Reads a String to determine whether it can be converted into a valid integer variable
+    * Reads a String to determine whether it can be converted into a valid floating-point variable
     * 
     * Returns: true if it can, false if it can't
     */  
 
     // The first character can be a '-'
-    if (wouldBeInt.length() > 0 && wouldBeInt.charAt(0) != '0' && wouldBeInt.charAt(0) != '1' && wouldBeInt.charAt(0) != '2' && wouldBeInt.charAt(0) != '3' && wouldBeInt.charAt(0) != '4' &&
-    wouldBeInt.charAt(0) != '5' && wouldBeInt.charAt(0) != '6' && wouldBeInt.charAt(0) != '7' && wouldBeInt.charAt(0) != '8' && wouldBeInt.charAt(0) != '9' && wouldBeInt.charAt(0) != '-')
+    if (wouldBeFloat.length() > 0 && wouldBeFloat.charAt(0) != '0' && wouldBeFloat.charAt(0) != '1' && wouldBeFloat.charAt(0) != '2' && wouldBeFloat.charAt(0) != '3' && wouldBeFloat.charAt(0) != '4' &&
+    wouldBeFloat.charAt(0) != '5' && wouldBeFloat.charAt(0) != '6' && wouldBeFloat.charAt(0) != '7' && wouldBeFloat.charAt(0) != '8' && wouldBeFloat.charAt(0) != '9' && wouldBeFloat.charAt(0) != '.' && 
+    wouldBeFloat.charAt(0) != '-')
     {
       return false;
     }
 
     int i;
-    for (i=1; i<wouldBeInt.length(); i++)
+    for (i=1; i<wouldBeFloat.length(); i++)
     {
-      if (wouldBeInt.charAt(i) != '0' && wouldBeInt.charAt(i) != '1' && wouldBeInt.charAt(i) != '2' && wouldBeInt.charAt(i) != '3' && wouldBeInt.charAt(i) != '4' &&
-      wouldBeInt.charAt(i) != '5' && wouldBeInt.charAt(i) != '6' && wouldBeInt.charAt(i) != '7' && wouldBeInt.charAt(i) != '8' && wouldBeInt.charAt(i) != '9')
+      if (wouldBeFloat.length() > 0 && wouldBeFloat.charAt(0) != '0' && wouldBeFloat.charAt(0) != '1' && wouldBeFloat.charAt(0) != '2' && wouldBeFloat.charAt(0) != '3' && wouldBeFloat.charAt(0) != '4' &&
+      wouldBeFloat.charAt(0) != '5' && wouldBeFloat.charAt(0) != '6' && wouldBeFloat.charAt(0) != '7' && wouldBeFloat.charAt(0) != '8' && wouldBeFloat.charAt(0) != '9' && wouldBeFloat.charAt(0) != '.')
       {
         return false;  
       }  

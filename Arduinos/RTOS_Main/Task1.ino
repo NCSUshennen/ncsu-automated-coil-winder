@@ -4,6 +4,8 @@
  * Dan Hayduk
  * January 30, 2020
  * 
+ * NEED TO TEST FLOATING POINT CONVERSION ON INCREMENTAL POSITIONING
+ * 
  * This task contains an algorithm to read G-Code, line by line, sent by the Raspberry Pi, and send the appropriate signals
  * to the X, Y and Z motors to accomplish movement.
  * 
@@ -34,7 +36,7 @@
 
 #define PULSES_PER_MM 160
 
-int currentPosition[3] = {0, 0, 0};
+float currentPosition[3] = {0, 0, 0};
 
 static void MyTask1(void* pvParameters)
 {
@@ -52,7 +54,7 @@ static void MyTask1(void* pvParameters)
       int badCommands = 0;
       bool rapidMotion = false;
       int motionDelay = 5;
-      int destination[3] = {0, 0, 0};
+      float destination[3] = {0, 0, 0};
       bool absPositioning = true;
       bool firstTimeG28 = true;
 
@@ -155,6 +157,7 @@ static void MyTask1(void* pvParameters)
           }
 
           // Read X input if there is any
+          unsigned int additionalPulses[3] = {0, 0, 0};
           if (xIndex >= 0)
           {
             
@@ -162,15 +165,13 @@ static void MyTask1(void* pvParameters)
             int spaceXIndex = gCodeString.indexOf(" ", xIndex);
 
             int endXIndex = minIndexOf2(lineXIndex, spaceXIndex);
-
             if (endXIndex < 0)
             {
               badCommands++;
               continue;
             }
             
-            // endXIndex is now the index of the nearest space, linefeed, or end of the string
-            
+            // endXIndex is now the index of the nearest space, linefeed, or dot
             magnitudeString = "";
             int i;
             for (i=xIndex+1; i<endXIndex; i++)
@@ -178,9 +179,9 @@ static void MyTask1(void* pvParameters)
               magnitudeString += gCodeString.charAt(i);
             }
             
-            if (isInt(magnitudeString))
+            if (isFloat(magnitudeString))
             {
-              destination[X] = magnitudeString.toInt();
+              destination[X] = magnitudeString.toFloat();
             }
             else
             {
@@ -225,9 +226,9 @@ static void MyTask1(void* pvParameters)
               magnitudeString += gCodeString.charAt(i);
             }
             
-            if (isInt(magnitudeString))
+            if (isFloat(magnitudeString))
             {
-              destination[Y] = magnitudeString.toInt();
+              destination[Y] = magnitudeString.toFloat();
             }
             else
             {
@@ -272,7 +273,7 @@ static void MyTask1(void* pvParameters)
               magnitudeString += gCodeString.charAt(i);
             }
             
-            if (isInt(magnitudeString))
+            if (isFloat(magnitudeString))
             {
               destination[Z] = magnitudeString.toInt();
             }
@@ -345,12 +346,12 @@ static void MyTask1(void* pvParameters)
               }
 
               // Calculate totalPulses
-              totalPulses[X] = abs(destination[X]-currentPosition[X]);
-              totalPulses[X] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
-              totalPulses[Y] = abs(destination[Y]-currentPosition[Y]);
-              totalPulses[Y] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
-              totalPulses[Z] = abs(destination[Z]-currentPosition[Z]);
-              totalPulses[Z] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
+              float distanceToCover = abs(destination[X]-currentPosition[X]);
+              totalPulses[X] = distanceToCover * PULSES_PER_MM;
+              distanceToCover = abs(destination[Y]-currentPosition[Y]);
+              totalPulses[Y] = distanceToCover * PULSES_PER_MM;
+              distanceToCover = abs(destination[Z]-currentPosition[Z]);
+              totalPulses[Z] = distanceToCover * PULSES_PER_MM;
             }
             else
             {
@@ -386,12 +387,9 @@ static void MyTask1(void* pvParameters)
               }
 
               // Calculate totalPulses
-              totalPulses[X] = abs(destination[X]);
-              totalPulses[X] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
-              totalPulses[Y] = abs(destination[Y]);
-              totalPulses[Y] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
-              totalPulses[Z] = abs(destination[Z]);
-              totalPulses[Z] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
+              totalPulses[X] = abs(destination[X])*PULSES_PER_MM;
+              totalPulses[Y] = abs(destination[Y])*PULSES_PER_MM;
+              totalPulses[Z] = abs(destination[Z])*PULSES_PER_MM;
             }
 
             // Send those pulses
@@ -406,7 +404,8 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_X1_PLS, LOW);
                digitalWrite(MOTOR_X2_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-
+#if USE_MOTOR_SIMULATOR
+#else
                // Check to see if a contact switch has been hit and react accordingly
                if (digitalRead(ZEROING_X) != HIGH && xMovementNegative)
                {
@@ -420,8 +419,11 @@ static void MyTask1(void* pvParameters)
                   hitOverPositionSwitch = true;
                   break;
                }
+#endif
             }
 
+#if USE_MOTOR_SIMULATOR
+#else
             if (hitXZeroingSwitch)
             {
               Serial.print(ZEROING_X_ERROR);
@@ -432,7 +434,7 @@ static void MyTask1(void* pvParameters)
               Serial.print(OVER_POSITION_ERROR);
               break;
             }
-
+#endif
             bool hitYZeroingSwitch = false;
             for (i=0; i<totalPulses[Y]; i++)
             {
@@ -441,6 +443,8 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_Y_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
 
+#if USE_MOTOR_SIMULATOR
+#else
                // Check to see if a contact switch has been hit and react accordingly
                if (digitalRead(ZEROING_Y) != HIGH && yMovementNegative)
                {
@@ -454,8 +458,11 @@ static void MyTask1(void* pvParameters)
                   hitOverPositionSwitch = true;
                   break;
                }
+#endif
             }
 
+#if USE_MOTOR_SIMULATOR
+#else
             if (hitYZeroingSwitch)
             {
               Serial.print(ZEROING_Y_ERROR);
@@ -466,6 +473,7 @@ static void MyTask1(void* pvParameters)
               Serial.print(OVER_POSITION_ERROR);
               break;
             }
+#endif
             
             bool hitZZeroingSwitch = false;
             for (i=0; i<totalPulses[Z]; i++)
@@ -475,6 +483,8 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_Z_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
 
+#if USE_MOTOR_SIMULATOR
+#else
                // Check to see if a contact switch has been hit and react accordingly
                if (digitalRead(ZEROING_Z) != HIGH && zMovementNegative)
                {
@@ -488,8 +498,11 @@ static void MyTask1(void* pvParameters)
                   hitOverPositionSwitch = true;
                   break;
                }
+#endif
             }
-
+            
+#if USE_MOTOR_SIMULATOR
+#else
             if (hitZZeroingSwitch)
             {
               Serial.print(ZEROING_Z_ERROR);
@@ -500,6 +513,7 @@ static void MyTask1(void* pvParameters)
               Serial.print(OVER_POSITION_ERROR);
               break;
             }
+#endif
 
             // Set all direction values low
             digitalWrite(MOTOR_X1_DIR, LOW);
@@ -520,6 +534,11 @@ static void MyTask1(void* pvParameters)
               currentPosition[Y] += destination[Y];
               currentPosition[Z] += destination[Z];
             }
+
+            // Clear additionalPulses
+            additionalPulses[X] = 0;
+            additionalPulses[Y] = 0;
+            additionalPulses[Z] = 0;
             
             badCommands = 0;
           }
