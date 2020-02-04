@@ -128,7 +128,7 @@ class UserInterface:
         # Ask user for statorToothLength until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter stator tooth length (in cm): "))
+                userInput = int(input("Enter stator tooth length (in mm): "))
                 gotValue = True
                 return userInput
             except ValueError:
@@ -143,7 +143,22 @@ class UserInterface:
         # Ask user for statorToothHeight until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter stator tooth height (in cm): "))
+                userInput = int(input("Enter stator tooth height (in mm): "))
+                gotValue = True
+                return userInput
+            except ValueError:
+                print("Please enter a valid integer")
+
+    def getStatorWindHeight(self):
+        """Return statorToothHeight from user
+        """
+        # --------------------- Variables --------------------- #
+        gotValue = False
+
+        # Ask user for statorToothHeight until they enter a valid int
+        while not gotValue:
+            try:
+                userInput = int(input("Enter stator wind height (in mm): "))
                 gotValue = True
                 return userInput
             except ValueError:
@@ -158,7 +173,7 @@ class UserInterface:
         # Ask user for statorToothWidth until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter stator tooth width (in cm): "))
+                userInput = int(input("Enter stator tooth width (in mm): "))
                 gotValue = True
                 return userInput
             except ValueError:
@@ -173,7 +188,7 @@ class UserInterface:
         # Ask user for statorShoeWidth until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter stator shoe width (in cm): "))
+                userInput = int(input("Enter stator shoe width (in mm): "))
                 gotValue = True
                 return userInput
             except ValueError:
@@ -188,13 +203,13 @@ class UserInterface:
         # Ask user for numberStatorTeeth until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter the number of stator teeth (in cm): "))
+                userInput = int(input("Enter the number of stator teeth: "))
                 gotValue = True
                 return userInput
             except ValueError:
                 print("Please enter a valid integer")
 
-    def getNumberTurns(self):
+    def getNumberWinds(self):
         """Return numberTurns from user
         """
         # --------------------- Variables --------------------- #
@@ -203,7 +218,7 @@ class UserInterface:
         # Ask user for statorToothHeight until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter number of turns: "))
+                userInput = int(input("Enter number of winds: "))
                 gotValue = True
                 return userInput
             except ValueError:
@@ -218,7 +233,7 @@ class UserInterface:
         # Ask user for statorToothHeight until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter stator wireGauge (in cm): "))
+                userInput = int(input("Enter stator wireGauge: "))
                 gotValue = True
                 return userInput
             except ValueError:
@@ -248,7 +263,7 @@ class UserInterface:
         # Ask user for distanceBetweenTeeth until they enter a valid int
         while not gotValue:
             try:
-                userInput = int(input("Enter distance between teeth (in cm): "))
+                userInput = int(input("Enter distance between teeth (in mm): "))
                 gotValue = True
                 return userInput
             except ValueError:

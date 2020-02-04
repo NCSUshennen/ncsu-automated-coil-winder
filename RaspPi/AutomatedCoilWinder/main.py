@@ -30,10 +30,11 @@ def main():
 
     statorToothLength = None
     statorToothHeight = None
+    statorWindHeight = None
     statorToothWidth = None
     statorShoe= None
     numberStatorTeeth = None
-    numberTurns = None
+    numberWinds = None
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
@@ -41,8 +42,8 @@ def main():
     # ------------------- Declarations -------------------- #
 
     # Create serial connection for arduinos
-    arduinoMegaSerial = serial.Serial(arduinoMegaPort, arduinoMegaRate)
-    arduinoMegaSerial.flushInput()
+    #arduinoMegaSerial = serial.Serial(arduinoMegaPort, arduinoMegaRate)
+    #arduinoMegaSerial.flushInput()
 
     # ----------------------- Main ------------------------ #
 
@@ -53,30 +54,32 @@ def main():
 
     statorToothLength = ui.getStatorToothLength()
     statorToothHeight = ui.getStatorToothHeight()
+    statorWindHeight = ui.getStatorWindHeight()
     statorToothWidth = ui.getStatorToothWidth()
     statorShoeWidth = ui.getStatorShoeWidth()
     numberStatorTeeth = ui.getNumberStatorTeeth()
-    numberTurns = ui.getNumberTurns()
+    numberWinds = ui.getNumberWinds()
     wireGauge = ui.getWireGauge()
     wireMaterial = ui.getWireMaterial()
     distanceBetweenTeeth = ui.getDistanceBetweenTeeth()
 
     windingWriter = WindingWriter(statorToothLength,
                                   statorToothHeight,
+                                  statorWindHeight,
                                   statorToothWidth,
                                   statorShoeWidth,
                                   numberStatorTeeth,
-                                  numberTurns,
+                                  numberWinds,
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
-    windingReader = WindingReader(arduinoMegaSerial)
+    #windingReader = WindingReader(arduinoMegaSerial)
     windingTester = WindingTester(statorToothLength,
                                   statorToothHeight,
                                   statorToothWidth,
                                   statorShoeWidth,
                                   numberStatorTeeth,
-                                  numberTurns,
+                                  numberWinds,
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
