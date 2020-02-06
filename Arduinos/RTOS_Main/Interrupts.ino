@@ -138,6 +138,11 @@ void serialEvent()
           // Give a semaphore to Task 3
           xSemaphoreGive(xSemaphore3);
         }
+        else if (inputString.equals(TASK_4_COMMAND))
+        {
+          // Give a semaphore to Task 4
+          xSemaphoreGive(xSemaphore4);
+        }
         inputString = "";
       }
       else

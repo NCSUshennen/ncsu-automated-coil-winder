@@ -36,7 +36,7 @@ static void MotorSimulator(void* pvParameters)
     enum {X_FORWARD, X_REVERSE, Y_FORWARD, Y_REVERSE, Z_FORWARD, Z_REVERSE} receivedMotorMessage;
     if (xMessageBufferReceive(xMessageBufferM, &receivedMotorMessage, sizeof(receivedMotorMessage), portMAX_DELAY) > 0)
     {
-      task = 4;
+      task = 5;
       switch(receivedMotorMessage)
       {
         case X_FORWARD:

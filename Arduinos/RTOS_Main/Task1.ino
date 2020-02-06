@@ -4,8 +4,6 @@
  * Dan Hayduk
  * January 30, 2020
  * 
- * NEED TO TEST FLOATING POINT CONVERSION ON INCREMENTAL POSITIONING
- * 
  * This task contains an algorithm to read G-Code, line by line, sent by the Raspberry Pi, and send the appropriate signals
  * to the X, Y and Z motors to accomplish movement.
  * 
@@ -171,7 +169,7 @@ static void MyTask1(void* pvParameters)
               continue;
             }
             
-            // endXIndex is now the index of the nearest space, linefeed, or dot
+            // endXIndex is now the index of the nearest space, linefeed, or null character
             magnitudeString = "";
             int i;
             for (i=xIndex+1; i<endXIndex; i++)

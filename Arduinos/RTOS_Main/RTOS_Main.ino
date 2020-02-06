@@ -2,10 +2,11 @@
  * RTOS_Main
  * 
  * Dan Hayduk
- * December 2, 2019
+ * February 6, 2020
  * 
  * This code establishes the RTOS System with working semaphores and message buffers. Tasks MyTask1, MyTask2, and MyTask3 
- * are set up to run the algorithms we originally assigned to Arduino 1, 2, and 3, respectively.
+ * are set up to run the algorithms we originally assigned to Arduino 1, 2, and 3, respectively. An additional task has
+ * been added for zeroing, titled MyTask4.
  */
 
 // Includes the RTOS, semaphores and message buffers
@@ -95,14 +96,13 @@
 #define TASK_2_COMMAND_SENSOR1 "getSensor1SensorValue"
 #define TASK_2_COMMAND_SENSOR2 "getSensor2SensorValue"
 #define TASK_3_COMMAND "doPostWindingTest"
+#define TASK_4_COMMAND "beginZeroing"
 
 // Error Messages
 #define OVER_POSITION_ERROR "ErrorHitOverPositionSwitch\n"
 #define ZEROING_Z_ERROR "ErrorHitZZeroingSwitch\n"
 #define ZEROING_Y_ERROR "ErrorHitYZeroingSwitch\n"
 #define ZEROING_X_ERROR "ErrorHitXZeroingSwitch\n"
-
-// Macros to set timing for timer interrupts
 
 uint8_t task = 0; // 0 indicates Idle
 bool askedForReady = false;
@@ -112,6 +112,7 @@ bool readingGCode = false;
 SemaphoreHandle_t xSemaphore1;
 SemaphoreHandle_t xSemaphorePercent;
 SemaphoreHandle_t xSemaphore3;
+SemaphoreHandle_t xSemaphore4;
 SemaphoreHandle_t xSemaphoreTimerA;
 SemaphoreHandle_t xSemaphoreTimerB;
 
@@ -241,6 +242,7 @@ void Init_SemaphoresAndMessageBuffers()
   xSemaphore1 = xSemaphoreCreateCounting(10, 0);
   xSemaphorePercent = xSemaphoreCreateCounting(10, 0);
   xSemaphore3 = xSemaphoreCreateCounting(10, 0);
+  xSemaphore4 = xSemaphoreCreateCounting(10, 0);
   xSemaphoreTimerA = xSemaphoreCreateCounting(10, 0);
   xSemaphoreTimerB = xSemaphoreCreateCounting(10, 0);
   
@@ -274,9 +276,8 @@ void Init_Timers()
 void Init_Tasks()
 {
   /**
-   * Create three tasks with labels Task1, Task2, Task3 and MotorSimulator and assign priorities. 
-   * We also create a fourth task labeled IdleTask to run when no task is in operation. 
-   * The IdleTask has the lowest priority.
+   * Create tasks with labels Task1, Task2, Task3, Task4, MotorSimulator and TaskManualTurn and assign priorities. 
+   * There is another task labeled IdleTask, which has the lowest priority and runs when no task is in operation. 
    * 
    * Returns: nothing
    */
@@ -284,12 +285,12 @@ void Init_Tasks()
   xTaskCreate(MyTask1, "Task1", 100, NULL, 1, NULL);
   xTaskCreate(MyTask2, "Task2", 100, NULL, 2, NULL);
   xTaskCreate(MyTask3, "Task3", 100, NULL, 3, NULL);
-  xTaskCreate(MotorSimulator, "MotorSimulator", 100, NULL, 4, NULL);
+  xTaskCreate(MyTask4, "Task4", 100, NULL, 4, NULL);
+  xTaskCreate(MotorSimulator, "MotorSimulator", 100, NULL, 5, NULL);
+  xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 100, NULL, 6, NULL);
   xTaskCreate(MyIdleTask, "IdleTask", 100, NULL, 0, NULL);
 
-  xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 100, NULL, 5, NULL);
-  //We can change the priority of task according to our desire by changing the numerics
-  //between NULL texts.
+  
 
 }
 
@@ -343,8 +344,8 @@ bool isFloat(String wouldBeFloat)
     int i;
     for (i=1; i<wouldBeFloat.length(); i++)
     {
-      if (wouldBeFloat.length() > 0 && wouldBeFloat.charAt(0) != '0' && wouldBeFloat.charAt(0) != '1' && wouldBeFloat.charAt(0) != '2' && wouldBeFloat.charAt(0) != '3' && wouldBeFloat.charAt(0) != '4' &&
-      wouldBeFloat.charAt(0) != '5' && wouldBeFloat.charAt(0) != '6' && wouldBeFloat.charAt(0) != '7' && wouldBeFloat.charAt(0) != '8' && wouldBeFloat.charAt(0) != '9' && wouldBeFloat.charAt(0) != '.')
+      if (wouldBeFloat.length() > 0 && wouldBeFloat.charAt(i) != '0' && wouldBeFloat.charAt(i) != '1' && wouldBeFloat.charAt(i) != '2' && wouldBeFloat.charAt(i) != '3' && wouldBeFloat.charAt(i) != '4' &&
+      wouldBeFloat.charAt(i) != '5' && wouldBeFloat.charAt(i) != '6' && wouldBeFloat.charAt(i) != '7' && wouldBeFloat.charAt(i) != '8' && wouldBeFloat.charAt(i) != '9' && wouldBeFloat.charAt(i) != '.')
       {
         return false;  
       }  
