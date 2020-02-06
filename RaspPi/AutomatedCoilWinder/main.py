@@ -21,7 +21,7 @@ from WindingTester import *
 
 # Returns the total predicted time in seconds given the distance traveled
 def predictTime(totalMillimetersTraveled):
-    timePerMillimeter = 0.035
+    timePerMillimeter = 0.01
     time = totalMillimetersTraveled * timePerMillimeter
     return time
 
@@ -113,7 +113,7 @@ def main():
     ui.displayMessage("\nGenerating the path")
     windingWriter.generatePath("pathFile.txt")
     ui.displayMessage("Total mm: " + str(windingWriter.getTotalMillimetersTraveled()))
-    ui.displayMessage("Predicted Time: " + str(predictTime(windingWriter.getTotalMillimetersTraveled())) + " secs")
+    ui.displayMessage("Predicted Time: " + str(windingWriter.getPredictedTotalTime()) + " secs")
     ui.displayMessage("Fill factor: " + str(predictFillFactor(numberWinds, windingWriter.getMaxNumZWinds())) + "%")
     # TODO: instantiate windingReader, giving it the file name of generated path
 

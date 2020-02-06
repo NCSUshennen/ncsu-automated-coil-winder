@@ -24,8 +24,15 @@ class WindingWriter:
     wireMaterial = None
     distanceBetweenTeeth = None
 
-    # --------------------- Distance traveled values --------------------- #
+    # --------------------- Distance traveled/Time measurement values --------------------- #
     totalMillimetersTraveled = None
+    totalTimeTaken = None
+    xRateTime = 0.0095
+    xOffsetTime = 0.185
+    yRateTime = 0.008
+    yOffsetTime = 0.268
+    zRateTime = 0.0058
+    zOffsetTime = 0.485
     prevX = None;
     prevY = None;
     prevZ = None;
@@ -114,17 +121,32 @@ class WindingWriter:
 
         # Initialize all distance parameters to 0
         self.totalMillimetersTraveled = 0
+        self.totalTimeTaken = 0
         self.prevX = 0
         self.prevY = 0
         self.prevZ = 0
 
     # --------------------- Distance counting --------------------- #
     def calculateDistanceTraveled(self, newX, newY, newZ):
-        self.totalMillimetersTraveled += abs(self.prevX - newX) + abs(self.prevY - newY) + abs(self.prevZ - newZ)
+        xDistance = abs(self.prevX - newX)
+        yDistance = abs(self.prevY - newY)
+        zDistance = abs(self.prevZ - newZ)
+        self.totalMillimetersTraveled += xDistance + yDistance + zDistance
+        if xDistance != 0:
+            self.totalTimeTaken += (self.xRateTime * xDistance) + self.xOffsetTime
+        if yDistance != 0:
+            self.totalTimeTaken += (self.yRateTime * yDistance) + self.yOffsetTime
+        if zDistance != 0:
+            self.totalTimeTaken += (self.zRateTime * zDistance) + self.zOffsetTime
+
+        # Set previous values to current values for next reading
         self.prevX = newX
         self.prevY = newY
         self.prevZ = newZ
         return
+
+    def getPredictedTotalTime(self):
+        return self.totalTimeTaken
 
     def getTotalMillimetersTraveled(self):
         return self.totalMillimetersTraveled
