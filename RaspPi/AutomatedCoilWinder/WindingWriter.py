@@ -129,6 +129,9 @@ class WindingWriter:
     def getTotalMillimetersTraveled(self):
         return self.totalMillimetersTraveled
 
+    def getMaxNumZWinds(self):
+        return self.maxNumZWinds
+
     # --------------------- Path generation --------------------- #
 
     def calculateValues(self):

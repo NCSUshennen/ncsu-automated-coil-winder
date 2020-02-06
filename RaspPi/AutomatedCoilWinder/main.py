@@ -26,6 +26,15 @@ def predictTime(totalMillimetersTraveled):
     return time
 
 
+def predictFillFactor(numberWinds, maxNumZWinds):
+    numberLayers = 2
+    # Calculate max winds (number of layers times the number of winds per height)
+    maxNumberWinds = numberLayers * maxNumZWinds
+    # Fill factor is the ratio of number of winds completed over max number of winds possible
+    fillFactor = 100 * (numberWinds / maxNumberWinds)
+    return fillFactor
+
+
 def main():
     """Begin and run the coil winding program."""
     # --------------------- Variables --------------------- #
@@ -105,6 +114,7 @@ def main():
     windingWriter.generatePath("pathFile.txt")
     ui.displayMessage("Total mm: " + str(windingWriter.getTotalMillimetersTraveled()))
     ui.displayMessage("Predicted Time: " + str(predictTime(windingWriter.getTotalMillimetersTraveled())) + " secs")
+    ui.displayMessage("Fill factor: " + str(predictFillFactor(numberWinds, windingWriter.getMaxNumZWinds())) + "%")
     # TODO: instantiate windingReader, giving it the file name of generated path
 
     # Zero machine with WindingReader -> function for zeroing w/ SensorReader
