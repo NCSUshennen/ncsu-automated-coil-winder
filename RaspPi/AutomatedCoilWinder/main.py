@@ -11,13 +11,103 @@
 
 # imports
 import serial
-from UserInterface import *
+# from UserInterface import *
 from WindingWriter import *
 from WindingReader import *
 from WindingTester import *
 
 
-# from SensorReader import *
+class Main:
+    arduinoMegaSerial = None
+    arduinoMegaPort = "/dev/ttyACM0"
+    arduinoMegaRate = "9600"
+    arduinoReadyForCommand = "ready\n"
+
+    statorToothLength = None
+    statorToothHeight = None
+    statorWindHeight = None
+    statorToothWidth = None
+    statorShoeWidth = None
+    numberStatorTeeth = None
+    numberWinds = None
+    wireGauge = None
+    wireMaterial = None
+    distanceBetweenTeeth = None
+
+    windingWriter = None
+    windingReader = None
+    windingTester = None
+
+    def __init__(self):
+        # TODO: Set up new serial connection with arduino
+        # Create serial connection for arduinos
+        self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
+        self.arduinoMegaSerial.flushInput()
+        self.statorToothLength = None  # dummy so can have an init w/o connecting to Arduino
+
+    def buildGCode(self, statorToothLength,
+                   statorToothHeight,
+                   statorWindHeight,
+                   statorToothWidth,
+                   statorShoeWidth,
+                   numberStatorTeeth,
+                   numberWinds,
+                   wireGauge,
+                   wireMaterial,
+                   distanceBetweenTeeth):
+        """Construct a new Main
+
+                        Keyword arguments:
+                        statorToothLength --
+                        statorToothHeight --
+                        statorToothWidth --
+                        statorShoeWidth --
+                        numberStatorTeeth --
+                        numberWinds --
+                        wireGauge --
+                        wireMaterial --
+                        distanceBetweenTeeth --
+                        """
+        self.statorToothLength = statorToothLength
+        self.statorToothHeight = statorToothHeight
+        self.statorWindHeight = statorWindHeight
+        self.statorToothWidth = statorToothWidth
+        self.statorShoeWidth = statorShoeWidth
+        self.numberStatorTeeth = numberStatorTeeth
+        self.numberWinds = numberWinds
+        self.wireGauge = wireGauge
+        self.wireMaterial = wireMaterial
+        self.distanceBetweenTeeth = distanceBetweenTeeth
+
+        # Instantiate WindingWriter, WindingReader, WindingTester
+        self.windingWriter = WindingWriter(statorToothLength,
+                                           statorToothHeight,
+                                           statorWindHeight,
+                                           statorToothWidth,
+                                           statorShoeWidth,
+                                           numberStatorTeeth,
+                                           numberWinds,
+                                           wireGauge,
+                                           wireMaterial,
+                                           distanceBetweenTeeth)
+        # windingReader = WindingReader(self.arduinoMegaSerial)
+        self.windingTester = WindingTester(statorToothLength,
+                                           statorToothHeight,
+                                           statorToothWidth,
+                                           statorShoeWidth,
+                                           numberStatorTeeth,
+                                           numberWinds,
+                                           wireGauge,
+                                           wireMaterial,
+                                           distanceBetweenTeeth)
+
+        # Generate gcode
+        self.windingWriter.generatePath("pathFile.txt")
+
+    # TODO: Start winding and predictions and such
+
+
+'''
 
 # Returns the total predicted time in seconds given the distance traveled
 def predictTime(totalMillimetersTraveled):
@@ -135,3 +225,4 @@ def main():
 
 # do stuff in main
 main()
+'''
