@@ -8,7 +8,7 @@
  * to make an LED flash three times at a rate of one flash per second.
  */
 
-#define RIN 11500.0
+#define RIN 1000.0
 #define CIN 0.00022 
 #define VIN 5.0
 
@@ -29,10 +29,90 @@ static void MyTask3(void* pvParameters)
       float l = 0;
       bool lFailed = false;
 
-      digitalWrite(TEST_SIGNAL_RANDC, LOW);
-      digitalWrite(TEST_SIGNAL, LOW);
+      digitalWrite(TEST_SIGNAL_RANDC, HIGH);
+      digitalWrite(TEST_SIGNAL_L, LOW);
 
-      // Inductance
+      // Resistance
+      
+      // Wait 1 second
+      vTaskDelay(1000/portTICK_PERIOD_MS);
+      
+      // Read voltage measurement and convert to resistance
+      int itWorked = analogRead(OUTPUT_SIGNAL);
+      float Vout = ADCToVoltage(itWorked);
+
+      analogReference(INTERNAL1V1);
+      settleADC();
+      
+      int didItWork1V1 = analogRead(OUTPUT_SIGNAL);
+      
+      analogReference(DEFAULT);
+      settleADC();
+      
+      int didItWork5V = analogRead(OUTPUT_SIGNAL);
+      
+      Serial.println(Vout);
+      Serial.println(itWorked);
+      Serial.println(didItWork1V1);
+      Serial.println("Well that was dumb...");
+      Serial.println(didItWork5V);
+      
+      if (VIN - Vout > 0)
+      {
+        r = Vout*RIN/(VIN-Vout);
+      }
+      else
+      {
+        rFailed = true;
+      }
+
+      digitalWrite(TEST_SIGNAL_RANDC, LOW);
+
+      // Wait 1 second
+      vTaskDelay(1000/portTICK_PERIOD_MS);
+
+      /*// Resistance
+      
+      // Wait 1 second
+      TCNT1 = 0;
+      TIMSK1 |= (1<<OCIE1A); //enable timer interrupt A
+      if (xSemaphoreTake(xSemaphoreTimerA, 2000/portTICK_PERIOD_MS) == pdTRUE)
+      {
+        TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A
+
+        // Read voltage measurement and convert to resistance
+        float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
+        //Serial.println(Vout);
+
+        if (VIN - Vout > 0)
+        {
+          r = Vout*RIN/(VIN-Vout);
+        }
+        else
+        {
+          rFailed = true;
+        }
+
+        digitalWrite(TEST_SIGNAL_RANDC, LOW);
+
+        // Wait 1 second
+        TCNT1 = 0;
+        TIMSK1 |= (1<<OCIE1A); //enable timer interrupt A
+        if (xSemaphoreTake(xSemaphoreTimerA, 2000/portTICK_PERIOD_MS) == pdTRUE)
+        {
+          TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A
+        }
+        else
+        {
+          rFailed = true;
+        }
+      }
+      else
+      {
+        rFailed = true;
+      }*/
+
+      /*// Inductance
 
       // Wait 1 second
       TCNT1 = 0;
@@ -125,46 +205,7 @@ static void MyTask3(void* pvParameters)
       else
       {
         lFailed = true;
-      }
-      
-      // Resistance
-      
-      // Wait 1 second
-      TCNT1 = 0;
-      TIMSK1 |= (1<<OCIE1A); //enable timer interrupt A
-      if (xSemaphoreTake(xSemaphoreTimerA, 2000/portTICK_PERIOD_MS) == pdTRUE)
-      {
-        TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A
-        // Wait 1 second
-        TCNT1 = 0;
-        TIMSK1 |= (1<<OCIE1A); //enable timer interrupt A
-        if (xSemaphoreTake(xSemaphoreTimerA, 2000/portTICK_PERIOD_MS) == pdTRUE)
-        {
-          TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A
-        }
-        else
-        {
-          rFailed = true;
-        }
-
-        // Read voltage measurement and convert to resistance
-<<<<<<< HEAD
-        r = ADCToVoltage(analogRead(OUTPUT_SIGNAL))*RIN/(3.3-ADCToVoltage(analogRead(OUTPUT_SIGNAL)));
-        float Vin = ADCToVoltage(analogRead(INPUT_VOLTAGE));
-        float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
-        Serial.println(Vin);
-        Serial.println(Vout);
-        r = Vout*RIN/(Vin-Vout);
-=======
-        float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
-        r = Vout*RIN/(VIN-Vout);
->>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
-      }
-      else
-      {
-        Serial.print("Resistance Measurement Failed\n");
-        rFailed = true;
-      }
+      }*/
 
       if (!rFailed)
       {
@@ -172,7 +213,6 @@ static void MyTask3(void* pvParameters)
         Serial.print(r);
         Serial.print("\n");  
       }
-<<<<<<< HEAD
       else
       {
         Serial.print("Resistance Measurement Failed");
@@ -193,35 +233,9 @@ static void MyTask3(void* pvParameters)
       }
 
       digitalWrite(TEST_SIGNAL_RANDC, LOW);
-      digitalWrite(TEST_SIGNAL, LOW);
-=======
-
-      digitalWrite(TEST_SIGNAL_RANDC, LOW);
       digitalWrite(TEST_SIGNAL_L, LOW);
->>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
-      
-      //Goal: Use timer interrupts to flash the test signal LED three times, toggling every half-second
-      /*unsigned int i;
-      TCNT1 = 0; //set the starting count to 0
-      TIMSK1 |= (1<<OCIE1A); //enable timer interrupt A
-      for (i=0; i<6; i++)
-      {
-        if (xSemaphoreTake(xSemaphoreTimer, 600/portTICK_PERIOD_MS) == pdTRUE) //Used to figure out of the timer reached the desired count
-        {
-          toggleLED(TEST_SIGNAL_RANDC); 
-        }
-        else
-        {
-          Serial.print("When i=");
-          Serial.print(i);
-          Serial.print(", the timer was not accessed successfully. The timer reads ");
-          Serial.println(TCNT1);  
-        }
-      }
-      TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A*/
 
-      
-      digitalWrite(TEST_SIGNAL, HIGH);
+      /*digitalWrite(TEST_SIGNAL, HIGH);
       int i;
       int voltagesSize = 1000;
       for (i=0; i<voltagesSize; i++)
@@ -235,7 +249,7 @@ static void MyTask3(void* pvParameters)
       {
         Serial.println(ADCToVoltage(voltages[i]));  
       }
-      digitalWrite(TEST_SIGNAL, LOW);
+      digitalWrite(TEST_SIGNAL, LOW);*/
     }
   }
 }

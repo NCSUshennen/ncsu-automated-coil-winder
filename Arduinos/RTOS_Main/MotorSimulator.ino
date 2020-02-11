@@ -10,12 +10,12 @@
  * simpler, but avoids the risk of damaging the motors or their drivers while testing the G-Code algorithm.
  * 
  * Note: To use the simulator, make sure to connect LEDs to pins 4-7 as specified in their macros and use jumper
- * wires to connect ports 23 and 18, 31 and 19, and 39 and 20.
+ * wires to connect ports 37 and 18, 31 and 19, and 25 and 20.
  */
 
 #define TURN_RATE 800
 #define MM_RATE 160
-#define LED_CHANGE_RATE TURN_RATE
+#define LED_CHANGE_RATE 8
 
 static void MotorSimulator(void* pvParameters)
 {
@@ -36,7 +36,7 @@ static void MotorSimulator(void* pvParameters)
     enum {X_FORWARD, X_REVERSE, Y_FORWARD, Y_REVERSE, Z_FORWARD, Z_REVERSE} receivedMotorMessage;
     if (xMessageBufferReceive(xMessageBufferM, &receivedMotorMessage, sizeof(receivedMotorMessage), portMAX_DELAY) > 0)
     {
-      task = 4;
+      task = 5;
       switch(receivedMotorMessage)
       {
         case X_FORWARD:
@@ -114,11 +114,11 @@ static void MotorSimulator(void* pvParameters)
         // Calculate the simulator's position in millimeters and print it
 
         Serial.print("Position:  X: ");
-        Serial.print(simulatorPosition[X]);
+        Serial.print(simulatorPosition[X]/20.0);
         Serial.print(", Y: ");
-        Serial.print(simulatorPosition[Y]);
+        Serial.print(simulatorPosition[Y]/20.0);
         Serial.print(", Z: ");
-        Serial.println(simulatorPosition[Z]);
+        Serial.println(simulatorPosition[Z]/20.0);
         positionWasUpdated = false;
       }
       

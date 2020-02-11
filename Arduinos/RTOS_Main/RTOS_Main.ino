@@ -2,10 +2,11 @@
  * RTOS_Main
  * 
  * Dan Hayduk
- * December 2, 2019
+ * February 6, 2020
  * 
  * This code establishes the RTOS System with working semaphores and message buffers. Tasks MyTask1, MyTask2, and MyTask3 
- * are set up to run the algorithms we originally assigned to Arduino 1, 2, and 3, respectively.
+ * are set up to run the algorithms we originally assigned to Arduino 1, 2, and 3, respectively. An additional task has
+ * been added for zeroing, titled MyTask4.
  */
 
 // Includes the RTOS, semaphores and message buffers
@@ -53,7 +54,7 @@
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
-#define USE_MOTOR_SIMULATOR 0
+#define USE_MOTOR_SIMULATOR 1
 
 #define X_INTERRUPT 18
 #define Y_INTERRUPT 19
@@ -64,8 +65,8 @@
 #define SENSOR_2 A2
 
 // Pins used in Task 3
-#define TEST_SIGNAL_RANDC 38
-#define TEST_SIGNAL 40
+#define TEST_SIGNAL_RANDC 36
+#define TEST_SIGNAL_L 38
 #define OUTPUT_SIGNAL A0
 #define INPUT_VOLTAGE A7
 
@@ -95,9 +96,13 @@
 #define TASK_2_COMMAND_SENSOR1 "getSensor1SensorValue"
 #define TASK_2_COMMAND_SENSOR2 "getSensor2SensorValue"
 #define TASK_3_COMMAND "doPostWindingTest"
+#define TASK_4_COMMAND "beginZeroing"
 
-// Macros to set timing for timer interrupts
-
+// Error Messages
+#define OVER_POSITION_ERROR "ErrorHitOverPositionSwitch\n"
+#define ZEROING_Z_ERROR "ErrorHitZZeroingSwitch\n"
+#define ZEROING_Y_ERROR "ErrorHitYZeroingSwitch\n"
+#define ZEROING_X_ERROR "ErrorHitXZeroingSwitch\n"
 
 uint8_t task = 0; // 0 indicates Idle
 bool askedForReady = false;
@@ -107,6 +112,7 @@ bool readingGCode = false;
 SemaphoreHandle_t xSemaphore1;
 SemaphoreHandle_t xSemaphorePercent;
 SemaphoreHandle_t xSemaphore3;
+SemaphoreHandle_t xSemaphore4;
 SemaphoreHandle_t xSemaphoreTimerA;
 SemaphoreHandle_t xSemaphoreTimerB;
 
@@ -195,7 +201,7 @@ void Init_Pins()
   pinMode(SENSOR_2, INPUT);
 
   pinMode(TEST_SIGNAL_RANDC, OUTPUT);
-  pinMode(TEST_SIGNAL, OUTPUT);
+  pinMode(TEST_SIGNAL_L, OUTPUT);
   pinMode(OUTPUT_SIGNAL, INPUT); // That is, this is the output of the system, which the Arduino is measuring
   pinMode(INPUT_VOLTAGE, INPUT);
 
@@ -222,7 +228,7 @@ void Init_Pins()
   digitalWrite(MOTOR_X2_DIR, LOW);
 
   digitalWrite(TEST_SIGNAL_RANDC, LOW);
-  digitalWrite(TEST_SIGNAL, LOW);
+  digitalWrite(TEST_SIGNAL_L, LOW);
 }
 
 void Init_SemaphoresAndMessageBuffers()
@@ -236,6 +242,7 @@ void Init_SemaphoresAndMessageBuffers()
   xSemaphore1 = xSemaphoreCreateCounting(10, 0);
   xSemaphorePercent = xSemaphoreCreateCounting(10, 0);
   xSemaphore3 = xSemaphoreCreateCounting(10, 0);
+  xSemaphore4 = xSemaphoreCreateCounting(10, 0);
   xSemaphoreTimerA = xSemaphoreCreateCounting(10, 0);
   xSemaphoreTimerB = xSemaphoreCreateCounting(10, 0);
   
@@ -269,9 +276,8 @@ void Init_Timers()
 void Init_Tasks()
 {
   /**
-   * Create three tasks with labels Task1, Task2, Task3 and MotorSimulator and assign priorities. 
-   * We also create a fourth task labeled IdleTask to run when no task is in operation. 
-   * The IdleTask has the lowest priority.
+   * Create tasks with labels Task1, Task2, Task3, Task4, MotorSimulator and TaskManualTurn and assign priorities. 
+   * There is another task labeled IdleTask, which has the lowest priority and runs when no task is in operation. 
    * 
    * Returns: nothing
    */
@@ -279,12 +285,12 @@ void Init_Tasks()
   xTaskCreate(MyTask1, "Task1", 100, NULL, 1, NULL);
   xTaskCreate(MyTask2, "Task2", 100, NULL, 2, NULL);
   xTaskCreate(MyTask3, "Task3", 100, NULL, 3, NULL);
-  xTaskCreate(MotorSimulator, "MotorSimulator", 100, NULL, 4, NULL);
+  xTaskCreate(MyTask4, "Task4", 100, NULL, 4, NULL);
+  xTaskCreate(MotorSimulator, "MotorSimulator", 100, NULL, 5, NULL);
+  xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 100, NULL, 6, NULL);
   xTaskCreate(MyIdleTask, "IdleTask", 100, NULL, 0, NULL);
 
-  xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 100, NULL, 5, NULL);
-  //We can change the priority of task according to our desire by changing the numerics
-  //between NULL texts.
+  
 
 }
 
@@ -319,26 +325,27 @@ void toggleLED(int ledPort)
     }
 }
 
-bool isInt(String wouldBeInt)
+bool isFloat(String wouldBeFloat)
 {
    /**
-    * Reads a String to determine whether it can be converted into a valid integer variable
+    * Reads a String to determine whether it can be converted into a valid floating-point variable
     * 
     * Returns: true if it can, false if it can't
     */  
 
     // The first character can be a '-'
-    if (wouldBeInt.length() > 0 && wouldBeInt.charAt(0) != '0' && wouldBeInt.charAt(0) != '1' && wouldBeInt.charAt(0) != '2' && wouldBeInt.charAt(0) != '3' && wouldBeInt.charAt(0) != '4' &&
-    wouldBeInt.charAt(0) != '5' && wouldBeInt.charAt(0) != '6' && wouldBeInt.charAt(0) != '7' && wouldBeInt.charAt(0) != '8' && wouldBeInt.charAt(0) != '9' && wouldBeInt.charAt(0) != '-')
+    if (wouldBeFloat.length() > 0 && wouldBeFloat.charAt(0) != '0' && wouldBeFloat.charAt(0) != '1' && wouldBeFloat.charAt(0) != '2' && wouldBeFloat.charAt(0) != '3' && wouldBeFloat.charAt(0) != '4' &&
+    wouldBeFloat.charAt(0) != '5' && wouldBeFloat.charAt(0) != '6' && wouldBeFloat.charAt(0) != '7' && wouldBeFloat.charAt(0) != '8' && wouldBeFloat.charAt(0) != '9' && wouldBeFloat.charAt(0) != '.' && 
+    wouldBeFloat.charAt(0) != '-')
     {
       return false;
     }
 
     int i;
-    for (i=1; i<wouldBeInt.length(); i++)
+    for (i=1; i<wouldBeFloat.length(); i++)
     {
-      if (wouldBeInt.charAt(i) != '0' && wouldBeInt.charAt(i) != '1' && wouldBeInt.charAt(i) != '2' && wouldBeInt.charAt(i) != '3' && wouldBeInt.charAt(i) != '4' &&
-      wouldBeInt.charAt(i) != '5' && wouldBeInt.charAt(i) != '6' && wouldBeInt.charAt(i) != '7' && wouldBeInt.charAt(i) != '8' && wouldBeInt.charAt(i) != '9')
+      if (wouldBeFloat.length() > 0 && wouldBeFloat.charAt(i) != '0' && wouldBeFloat.charAt(i) != '1' && wouldBeFloat.charAt(i) != '2' && wouldBeFloat.charAt(i) != '3' && wouldBeFloat.charAt(i) != '4' &&
+      wouldBeFloat.charAt(i) != '5' && wouldBeFloat.charAt(i) != '6' && wouldBeFloat.charAt(i) != '7' && wouldBeFloat.charAt(i) != '8' && wouldBeFloat.charAt(i) != '9' && wouldBeFloat.charAt(i) != '.')
       {
         return false;  
       }  
@@ -374,5 +381,22 @@ int minIndexOf2(int index1, int index2)
         minIndex = index2;
       }
       return minIndex;
+    }
+}
+
+void settleADC()
+{
+    /**
+    * This function is to be called after the ADC reference voltage has been changed in order to allow it
+    * to settle. It does this by performing 50 dummy conversions
+    * 
+    * Returns: nothing
+    */
+
+    int i;
+    int dummyConversionVariable;
+    for (i = 0; i < 50; i++)
+    {
+      dummyConversionVariable = analogRead(OUTPUT_SIGNAL);
     }
 }

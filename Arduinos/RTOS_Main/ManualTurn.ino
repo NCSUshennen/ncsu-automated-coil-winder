@@ -17,7 +17,7 @@ static void MyTaskManualTurn(void* pvParameters)
     unsigned long int i; // 4294967295 MAX
     if (xMessageBufferReceive(xMessageBufferManualTurnDirection, &receivedManualTurnDirection, sizeof(receivedManualTurnDirection), portMAX_DELAY) > 0)
     {
-      task = 5;
+      task = 6;
       switch (receivedManualTurnDirection)
       {
         case 0:
@@ -139,31 +139,5 @@ static void MyTaskManualTurn(void* pvParameters)
           break;  
       }
     }
-    
-    /*if (xSemaphoreTake(xSemaphoreManualTurnF, portMAX_DELAY) == pdTRUE)
-    {
-      task = 5;
-      
-      vTaskDelay(2/portTICK_PERIOD_MS);
-      
-      // Spin 800 steps in the X and Y directions
-      unsigned long int i; // 4294967295 MAX
-      for (i=0; i<800; i++)
-      {
-        digitalWrite(MOTOR_X1_PLS, HIGH);
-        digitalWrite(MOTOR_X2_PLS, HIGH);
-        vTaskDelay(1/portTICK_PERIOD_MS/4);
-        digitalWrite(MOTOR_X1_PLS, LOW);
-        digitalWrite(MOTOR_X2_PLS, LOW);
-        vTaskDelay(1/portTICK_PERIOD_MS/4);
-        //Serial.println(i);
-      }
-      
-      // Disable motors
-      vTaskDelay(1/portTICK_PERIOD_MS);
-      digitalWrite(MOTOR_X1_DIR, LOW);
-      digitalWrite(MOTOR_X2_DIR, LOW);
-      vTaskDelay(1/portTICK_PERIOD_MS);
-    }*/
   }
 }

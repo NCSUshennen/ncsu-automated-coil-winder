@@ -21,7 +21,7 @@ class WindingTester:
     statorToothWidth = None
     statorShoeWidth = None
     numberStatorTeeth = None
-    numberTurns = None
+    numberWinds = None
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
@@ -29,7 +29,7 @@ class WindingTester:
     # --------------------- Functions --------------------- #
     def __init__(self, statorToothLength, statorToothHeight,
                  statorToothWidth, statorShoeWidth, numberStatorTeeth,
-                 numberTurns, wireGauge, wireMaterial,
+                 numberWinds, wireGauge, wireMaterial,
                  distanceBetweenTeeth):
         """Construct a new WindingTester
 
@@ -39,7 +39,7 @@ class WindingTester:
         statorToothWidth --
         statorShoeWidth --
         numberStatorTeeth --
-        numberTurns --
+        numberWinds --
         wireGauge --
         wireMaterial --
         distanceBetweenTeeth --
@@ -49,7 +49,7 @@ class WindingTester:
         self.statorToothHeight = statorToothHeight
         self.statorToothWidth = statorToothWidth
         self.statorShoeWidth = statorShoeWidth
-        self.numberTurns = numberTurns
+        self.numberWinds = numberWinds
         self.wireGauge = wireGauge
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth

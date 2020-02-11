@@ -2,14 +2,19 @@
  * Task1
  * 
  * Dan Hayduk
- * December 2, 2019
+ * January 30, 2020
  * 
  * This task contains an algorithm to read G-Code, line by line, sent by the Raspberry Pi, and send the appropriate signals
  * to the X, Y and Z motors to accomplish movement.
  * 
- * The G-Code is expected to send numerical movement values corresponding to movement distance in millimeters. Currently, there
- * is NOT a failsafe built-in for if the G-Code tries to move the winding head out of bounds; this will likely be implemented
- * second-semester when the dimensions of the frame are finalized. Until then, be careful!
+ * The G-Code is expected to send numerical movement values corresponding to movement distance in millimeters. The ability to read
+ * zeroing switches and over-position switches has been implemented in order to prevent the winding head from moving out of bounds.
+ * If an over-position switch is hit, the user will have to manually turn the threaded rods to move the head back to a position away
+ * from the switch. If any switch is hit unexpectedly, the Arduino will not have the correct position stored in the currentPosition
+ * variable, so the winding head must be zeroed before another winding algorithm can be executed.
+ * 
+ * There are currently plans to implement a feature to preemptively predict if a G-Code command is about to send the winding head out of
+ * bounds and stop the winding algorithm before it runs the movement. However, this has not yet been implemented.
  * 
  * The following G-Code commands can be entered:
  *  G0 or G00: Set rapid-motion mode off (off by default)
@@ -29,7 +34,7 @@
 
 #define PULSES_PER_MM 160
 
-int currentPosition[3] = {0, 0, 0};
+float currentPosition[3] = {0, 0, 0};
 
 static void MyTask1(void* pvParameters)
 {
@@ -47,12 +52,11 @@ static void MyTask1(void* pvParameters)
       int badCommands = 0;
       bool rapidMotion = false;
       int motionDelay = 5;
-      int destination[3] = {0, 0, 0};
+      float destination[3] = {0, 0, 0};
       bool absPositioning = true;
       bool firstTimeG28 = true;
 
       Serial.print("ready\n");
-      Serial.print("Don't use magic numbers!\n");
       
       // Await 1st %
       if (xSemaphoreTake(xSemaphorePercent, portMAX_DELAY) == pdTRUE)
@@ -68,15 +72,11 @@ static void MyTask1(void* pvParameters)
         while (true)
         {
           Serial.print("ready\n");
-<<<<<<< HEAD
-=======
-          Serial.print("Don't use magic numbers!\n");
->>>>>>> cf121a8b16fa60f1c5fad620af8df27d3661a1c5
           
           // Keep reading G-Code lines until we get % or too many bad commands
           if (badCommands >= 3)
           {
-            Serial.print("Aborted G-Code Reader due to too many bad commands.\n");
+            Serial.print("ErrorTooManyBadCommands\n");
             break; 
           }
           
@@ -155,6 +155,7 @@ static void MyTask1(void* pvParameters)
           }
 
           // Read X input if there is any
+          unsigned int additionalPulses[3] = {0, 0, 0};
           if (xIndex >= 0)
           {
             
@@ -162,15 +163,13 @@ static void MyTask1(void* pvParameters)
             int spaceXIndex = gCodeString.indexOf(" ", xIndex);
 
             int endXIndex = minIndexOf2(lineXIndex, spaceXIndex);
-
             if (endXIndex < 0)
             {
               badCommands++;
               continue;
             }
             
-            // endXIndex is now the index of the nearest space, linefeed, or end of the string
-            
+            // endXIndex is now the index of the nearest space, linefeed, or null character
             magnitudeString = "";
             int i;
             for (i=xIndex+1; i<endXIndex; i++)
@@ -178,9 +177,9 @@ static void MyTask1(void* pvParameters)
               magnitudeString += gCodeString.charAt(i);
             }
             
-            if (isInt(magnitudeString))
+            if (isFloat(magnitudeString))
             {
-              destination[X] = magnitudeString.toInt();
+              destination[X] = magnitudeString.toFloat();
             }
             else
             {
@@ -225,9 +224,9 @@ static void MyTask1(void* pvParameters)
               magnitudeString += gCodeString.charAt(i);
             }
             
-            if (isInt(magnitudeString))
+            if (isFloat(magnitudeString))
             {
-              destination[Y] = magnitudeString.toInt();
+              destination[Y] = magnitudeString.toFloat();
             }
             else
             {
@@ -272,7 +271,7 @@ static void MyTask1(void* pvParameters)
               magnitudeString += gCodeString.charAt(i);
             }
             
-            if (isInt(magnitudeString))
+            if (isFloat(magnitudeString))
             {
               destination[Z] = magnitudeString.toInt();
             }
@@ -306,6 +305,9 @@ static void MyTask1(void* pvParameters)
           {
             // Movement in at least one direction needs to occur
             unsigned long int totalPulses[3] = {0, 0, 0};
+            bool xMovementNegative = false;
+            bool yMovementNegative = false;
+            bool zMovementNegative = false;
             
             // Set direction and calculate totalPulses
             if (absPositioning)
@@ -315,6 +317,7 @@ static void MyTask1(void* pvParameters)
               {
                 digitalWrite(MOTOR_X1_DIR, HIGH);
                 digitalWrite(MOTOR_X2_DIR, HIGH);
+                xMovementNegative = true;
               }
               else
               {
@@ -324,6 +327,7 @@ static void MyTask1(void* pvParameters)
               if (destination[Y] < currentPosition[Y])
               {
                 digitalWrite(MOTOR_Y_DIR, HIGH);
+                yMovementNegative = true;
               }
               else
               {
@@ -335,16 +339,17 @@ static void MyTask1(void* pvParameters)
               }
               else
               {
-                digitalWrite(MOTOR_Z_DIR, LOW);  
+                digitalWrite(MOTOR_Z_DIR, LOW);
+                zMovementNegative = true;
               }
 
               // Calculate totalPulses
-              totalPulses[X] = abs(destination[X]-currentPosition[X]);
-              totalPulses[X] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
-              totalPulses[Y] = abs(destination[Y]-currentPosition[Y]);
-              totalPulses[Y] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
-              totalPulses[Z] = abs(destination[Z]-currentPosition[Z]);
-              totalPulses[Z] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
+              float distanceToCover = abs(destination[X]-currentPosition[X]);
+              totalPulses[X] = distanceToCover * PULSES_PER_MM;
+              distanceToCover = abs(destination[Y]-currentPosition[Y]);
+              totalPulses[Y] = distanceToCover * PULSES_PER_MM;
+              distanceToCover = abs(destination[Z]-currentPosition[Z]);
+              totalPulses[Z] = distanceToCover * PULSES_PER_MM;
             }
             else
             {
@@ -353,6 +358,7 @@ static void MyTask1(void* pvParameters)
               {
                 digitalWrite(MOTOR_X1_DIR, HIGH);
                 digitalWrite(MOTOR_X2_DIR, HIGH);
+                xMovementNegative = true;
               }
               else
               {
@@ -362,6 +368,7 @@ static void MyTask1(void* pvParameters)
               if (destination[Y] < 0)
               {
                 digitalWrite(MOTOR_Y_DIR, HIGH);
+                yMovementNegative = true;
               }
               else
               {
@@ -373,20 +380,20 @@ static void MyTask1(void* pvParameters)
               }
               else
               {
-                digitalWrite(MOTOR_Z_DIR, LOW);  
+                digitalWrite(MOTOR_Z_DIR, LOW);
+                zMovementNegative = true;
               }
 
               // Calculate totalPulses
-              totalPulses[X] = abs(destination[X]);
-              totalPulses[X] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
-              totalPulses[Y] = abs(destination[Y]);
-              totalPulses[Y] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
-              totalPulses[Z] = abs(destination[Z]);
-              totalPulses[Z] *= PULSES_PER_MM; // Multiplication carried out separately to allow for conversion to unsigned long int
+              totalPulses[X] = abs(destination[X])*PULSES_PER_MM;
+              totalPulses[Y] = abs(destination[Y])*PULSES_PER_MM;
+              totalPulses[Z] = abs(destination[Z])*PULSES_PER_MM;
             }
 
             // Send those pulses
             unsigned long int i;
+            bool hitXZeroingSwitch = false;
+            bool hitOverPositionSwitch = false;
             for (i=0; i<totalPulses[X]; i++)
             {
                digitalWrite(MOTOR_X1_PLS, HIGH);
@@ -395,23 +402,116 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_X1_PLS, LOW);
                digitalWrite(MOTOR_X2_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+#if USE_MOTOR_SIMULATOR
+#else
+               // Check to see if a contact switch has been hit and react accordingly
+               if (digitalRead(ZEROING_X) != HIGH && xMovementNegative)
+               {
+                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
+                  hitXZeroingSwitch = true;
+                  break;
+               }
+               else if (digitalRead(OVER_POSITION) != HIGH)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  break;
+               }
+#endif
             }
 
+#if USE_MOTOR_SIMULATOR
+#else
+            if (hitXZeroingSwitch)
+            {
+              Serial.print(ZEROING_X_ERROR);
+              break;  
+            }
+            else if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              break;
+            }
+#endif
+            bool hitYZeroingSwitch = false;
             for (i=0; i<totalPulses[Y]; i++)
             {
                digitalWrite(MOTOR_Y_PLS, HIGH);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
                digitalWrite(MOTOR_Y_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+
+#if USE_MOTOR_SIMULATOR
+#else
+               // Check to see if a contact switch has been hit and react accordingly
+               if (digitalRead(ZEROING_Y) != HIGH && yMovementNegative)
+               {
+                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Y-Direction
+                  hitYZeroingSwitch = true;
+                  break;
+               }
+               else if (digitalRead(OVER_POSITION) != HIGH)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  break;
+               }
+#endif
             }
 
+#if USE_MOTOR_SIMULATOR
+#else
+            if (hitYZeroingSwitch)
+            {
+              Serial.print(ZEROING_Y_ERROR);
+              break;  
+            }
+            else if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              break;
+            }
+#endif
+            
+            bool hitZZeroingSwitch = false;
             for (i=0; i<totalPulses[Z]; i++)
             {
                digitalWrite(MOTOR_Z_PLS, HIGH);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
                digitalWrite(MOTOR_Z_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+
+#if USE_MOTOR_SIMULATOR
+#else
+               // Check to see if a contact switch has been hit and react accordingly
+               if (digitalRead(ZEROING_Z) != HIGH && zMovementNegative)
+               {
+                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Z-Direction
+                  hitZZeroingSwitch = true;
+                  break;
+               }
+               else if (digitalRead(OVER_POSITION) != HIGH)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  break;
+               }
+#endif
             }
+            
+#if USE_MOTOR_SIMULATOR
+#else
+            if (hitZZeroingSwitch)
+            {
+              Serial.print(ZEROING_Z_ERROR);
+              break;  
+            }
+            else if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              break;
+            }
+#endif
 
             // Set all direction values low
             digitalWrite(MOTOR_X1_DIR, LOW);
@@ -432,6 +532,11 @@ static void MyTask1(void* pvParameters)
               currentPosition[Y] += destination[Y];
               currentPosition[Z] += destination[Z];
             }
+
+            // Clear additionalPulses
+            additionalPulses[X] = 0;
+            additionalPulses[Y] = 0;
+            additionalPulses[Z] = 0;
             
             badCommands = 0;
           }
