@@ -39,7 +39,8 @@ class Main:
     windingTester = None
 
     def __init__(self):
-        # TODO: Set up new serial connection with arduino
+        """Construct a new Main by setting up serial connection
+                """
         # Create serial connection for arduinos
         self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
         self.arduinoMegaSerial.flushInput()
@@ -90,7 +91,7 @@ class Main:
                                            wireGauge,
                                            wireMaterial,
                                            distanceBetweenTeeth)
-        # windingReader = WindingReader(self.arduinoMegaSerial)
+        windingReader = WindingReader(self.arduinoMegaSerial)
         self.windingTester = WindingTester(statorToothLength,
                                            statorToothHeight,
                                            statorToothWidth,
@@ -104,11 +105,43 @@ class Main:
         # Generate gcode
         self.windingWriter.generatePath("pathFile.txt")
 
-    # TODO: Start winding and predictions and such
+    def startWinding(self):
+        """Sends the path with the Arduino with the windingReader
+                """
+        self.windingReader.sendPath("pathFile.txt")
+
+    def startPostWindingTest(self):
+        """Starts the post winding test
+                        """
+        self.windingTester.postWindingTest("postWindingTests.csv")
+
+    def getPredictedTime(self):
+        """Returns predicted time calculated by windingWriter
+                                """
+        return self.windingWriter.getPredictedTotalTime()
+
+    def getPredictedFillFactor(self):
+        """Returns calculated fill factor
+                                """
+        numberLayers = 2
+        # Calculate max winds (number of layers times the number of winds per height)
+        maxNumZWinds = self.windingWriter.getMaxNumZWinds()
+        maxNumberWinds = numberLayers * maxNumZWinds
+        # Fill factor is the ratio of number of winds completed over max number of winds possible
+        fillFactor = 100 * (self.numberWinds / maxNumberWinds)
+        return fillFactor
+
+    def predictResistance(self):
+        # TODO: Implement for Beta demo
+        return 0
+
+    def getPostWindingResult(self):
+        # TODO: Implement to get stuff from winding Tester - Dan
+        return 0
 
 
 '''
-
+# Old main
 # Returns the total predicted time in seconds given the distance traveled
 def predictTime(totalMillimetersTraveled):
     timePerMillimeter = 0.01
