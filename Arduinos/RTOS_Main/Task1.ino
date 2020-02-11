@@ -155,7 +155,7 @@ static void MyTask1(void* pvParameters)
           }
 
           // Read X input if there is any
-          unsigned int additionalPulses[3] = {0, 0, 0};
+          //unsigned int additionalPulses[3] = {0, 0, 0};
           if (xIndex >= 0)
           {
             
@@ -402,8 +402,8 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_X1_PLS, LOW);
                digitalWrite(MOTOR_X2_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-#if USE_MOTOR_SIMULATOR
-#else
+//#if USE_MOTOR_SIMULATOR
+//#else
                // Check to see if a contact switch has been hit and react accordingly
                if (digitalRead(ZEROING_X) != HIGH && xMovementNegative)
                {
@@ -417,11 +417,11 @@ static void MyTask1(void* pvParameters)
                   hitOverPositionSwitch = true;
                   break;
                }
-#endif
+//#endif
             }
 
-#if USE_MOTOR_SIMULATOR
-#else
+//#if USE_MOTOR_SIMULATOR
+//#else
             if (hitXZeroingSwitch)
             {
               Serial.print(ZEROING_X_ERROR);
@@ -432,7 +432,7 @@ static void MyTask1(void* pvParameters)
               Serial.print(OVER_POSITION_ERROR);
               break;
             }
-#endif
+//#endif
             bool hitYZeroingSwitch = false;
             for (i=0; i<totalPulses[Y]; i++)
             {
@@ -441,8 +441,8 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_Y_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
 
-#if USE_MOTOR_SIMULATOR
-#else
+//#if USE_MOTOR_SIMULATOR
+//#else
                // Check to see if a contact switch has been hit and react accordingly
                if (digitalRead(ZEROING_Y) != HIGH && yMovementNegative)
                {
@@ -456,11 +456,11 @@ static void MyTask1(void* pvParameters)
                   hitOverPositionSwitch = true;
                   break;
                }
-#endif
+//#endif
             }
 
-#if USE_MOTOR_SIMULATOR
-#else
+//#if USE_MOTOR_SIMULATOR
+//#else
             if (hitYZeroingSwitch)
             {
               Serial.print(ZEROING_Y_ERROR);
@@ -471,7 +471,7 @@ static void MyTask1(void* pvParameters)
               Serial.print(OVER_POSITION_ERROR);
               break;
             }
-#endif
+//#endif
             
             bool hitZZeroingSwitch = false;
             for (i=0; i<totalPulses[Z]; i++)
@@ -481,8 +481,8 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_Z_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
 
-#if USE_MOTOR_SIMULATOR
-#else
+//#if USE_MOTOR_SIMULATOR
+//#else
                // Check to see if a contact switch has been hit and react accordingly
                if (digitalRead(ZEROING_Z) != HIGH && zMovementNegative)
                {
@@ -496,11 +496,11 @@ static void MyTask1(void* pvParameters)
                   hitOverPositionSwitch = true;
                   break;
                }
-#endif
+//#endif
             }
             
-#if USE_MOTOR_SIMULATOR
-#else
+//#if USE_MOTOR_SIMULATOR
+//#else
             if (hitZZeroingSwitch)
             {
               Serial.print(ZEROING_Z_ERROR);
@@ -511,7 +511,7 @@ static void MyTask1(void* pvParameters)
               Serial.print(OVER_POSITION_ERROR);
               break;
             }
-#endif
+//#endif
 
             // Set all direction values low
             digitalWrite(MOTOR_X1_DIR, LOW);
@@ -533,10 +533,10 @@ static void MyTask1(void* pvParameters)
               currentPosition[Z] += destination[Z];
             }
 
-            // Clear additionalPulses
+            /*// Clear additionalPulses
             additionalPulses[X] = 0;
             additionalPulses[Y] = 0;
-            additionalPulses[Z] = 0;
+            additionalPulses[Z] = 0;*/
             
             badCommands = 0;
           }

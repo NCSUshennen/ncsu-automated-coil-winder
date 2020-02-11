@@ -286,7 +286,7 @@ void Init_Tasks()
   xTaskCreate(MyTask2, "Task2", 100, NULL, 2, NULL);
   xTaskCreate(MyTask3, "Task3", 100, NULL, 3, NULL);
   xTaskCreate(MyTask4, "Task4", 100, NULL, 4, NULL);
-  xTaskCreate(MotorSimulator, "MotorSimulator", 100, NULL, 5, NULL);
+  xTaskCreate(MotorSimulator, "MotorSimulator", 200, NULL, 5, NULL);
   xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 100, NULL, 6, NULL);
   xTaskCreate(MyIdleTask, "IdleTask", 100, NULL, 0, NULL);
 

@@ -17,15 +17,14 @@
 #define MM_RATE 160
 #define LED_CHANGE_RATE 8
 
+int simulatorPosition[3] = {0, 0, 0};
+int simulatorPositionMM[3] = {0, 0, 0};
+unsigned int pulsesToNext[3] = {LED_CHANGE_RATE, LED_CHANGE_RATE, LED_CHANGE_RATE}; // Used to keep track of when to "move" the head on the LEDs
+unsigned int pulsesToPrev[3] = {LED_CHANGE_RATE, LED_CHANGE_RATE, LED_CHANGE_RATE};
+boolean positionWasUpdated = false;
+
 static void MotorSimulator(void* pvParameters)
 {
-  int simulatorPosition[3] = {0, 0, 0};
-  int simulatorPositionMM[3] = {0, 0, 0};
-  unsigned int pulsesToNext[3] = {LED_CHANGE_RATE, LED_CHANGE_RATE, LED_CHANGE_RATE}; // Used to keep track of when to "move" the head on the LEDs
-  unsigned int pulsesToPrev[3] = {LED_CHANGE_RATE, LED_CHANGE_RATE, LED_CHANGE_RATE};
-  boolean positionWasUpdated = false;
-
-
   digitalWrite(X0_Y0, HIGH);
   digitalWrite(X1_Y0, LOW);
   digitalWrite(X0_Y1, LOW);
@@ -53,12 +52,16 @@ static void MotorSimulator(void* pvParameters)
         case X_REVERSE:
           pulsesToNext[X]++;
           pulsesToPrev[X]--;
-          if (pulsesToPrev[X] <= 0 && simulatorPosition[X] > 0)
+          if (pulsesToPrev[X] <= 0)
           {
+             //Serial.println("I have been activated!");
              positionWasUpdated = true;
              simulatorPosition[X]--;
              pulsesToNext[X] = LED_CHANGE_RATE;
              pulsesToPrev[X] = LED_CHANGE_RATE;
+             //Serial.println(simulatorPosition[X]);
+             //Serial.println(simulatorPosition[Y]);
+             //Serial.println(simulatorPosition[Z]);
           }
           break;
         case Y_FORWARD:
@@ -75,7 +78,7 @@ static void MotorSimulator(void* pvParameters)
         case Y_REVERSE:
           pulsesToNext[Y]++;
           pulsesToPrev[Y]--;
-          if (pulsesToPrev[Y] <= 0 && simulatorPosition[Y] > 0)
+          if (pulsesToPrev[Y] <= 0)
           {
              positionWasUpdated = true;
              simulatorPosition[Y]--;
@@ -86,7 +89,7 @@ static void MotorSimulator(void* pvParameters)
         case Z_FORWARD:
           pulsesToNext[Z]++;
           pulsesToPrev[Z]--;
-          if (pulsesToPrev[Z] <= 0 && simulatorPosition[Z] > 0)
+          if (pulsesToPrev[Z] <= 0)
           {
              positionWasUpdated = true;
              simulatorPosition[Z]--;

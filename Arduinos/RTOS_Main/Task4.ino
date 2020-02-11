@@ -9,9 +9,9 @@
  * reached the zero point.
  */
 
-#define X_AXIS_LIMIT 1000
-#define Y_AXIS_LIMIT 600
-#define Z_AXIS_LIMIT 200
+#define X_AXIS_LIMIT 160000
+#define Y_AXIS_LIMIT 96000
+#define Z_AXIS_LIMIT 32000
 
 static void MyTask4(void* pvParameters)
 {  
@@ -26,27 +26,32 @@ static void MyTask4(void* pvParameters)
       digitalWrite(MOTOR_Z_DIR, LOW);
 
       // Move x-axis until we hit the zeroing switch
-      int i;
+      unsigned long int i;
       bool hitXZeroingSwitch = false;
       for (i=0; i<X_AXIS_LIMIT; i++)
       {
+        if (digitalRead(ZEROING_X) != HIGH)
+        {
+          // Stop moving if the zeroing switch is hit
+          hitXZeroingSwitch = true;
+          break;
+        }
+
+        if (digitalRead(OVER_POSITION) != HIGH)
+        {
+          break;
+        }
+        
         digitalWrite(MOTOR_X1_PLS, HIGH);
         digitalWrite(MOTOR_X2_PLS, HIGH);
         vTaskDelay(1/portTICK_PERIOD_MS/4);
         digitalWrite(MOTOR_X1_PLS, LOW);
         digitalWrite(MOTOR_X2_PLS, LOW);
         vTaskDelay(1/portTICK_PERIOD_MS/4);
-
-        if (digitalRead(ZEROING_X) != HIGH)
-        {
-          // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
-          hitXZeroingSwitch = true;
-          break;
-        }
       }
 
-      // Break if move more than the max distance without hitting the switch
-      if (!hitXZeroingSwitch || digitalRead(OVER_POSITION) == HIGH)
+      // Break if we move more than the max distance or hit the over-position switch without hitting the zeroing switch
+      if (!hitXZeroingSwitch)
       {
         Serial.println("ErrorFailedToHitXZeroingSwitch");
         continue; 
@@ -56,20 +61,26 @@ static void MyTask4(void* pvParameters)
       bool hitYZeroingSwitch = false;
       for (i=0; i<Y_AXIS_LIMIT; i++)
       {
+        if (digitalRead(ZEROING_Y) != HIGH)
+        {
+          // Stop moving if the zeroing switch is hit
+          hitYZeroingSwitch = true;
+          break;
+        }
+
+        if (digitalRead(OVER_POSITION) != HIGH)
+        {
+          break;
+        }
+        
         digitalWrite(MOTOR_Y_PLS, HIGH);
         vTaskDelay(1/portTICK_PERIOD_MS/4);
         digitalWrite(MOTOR_Y_PLS, LOW);
         vTaskDelay(1/portTICK_PERIOD_MS/4);
-
-        if (digitalRead(ZEROING_Y) != HIGH)
-        {
-          // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
-          hitYZeroingSwitch = true;
-          break;
-        }
       }
 
-      if (!hitYZeroingSwitch || digitalRead(OVER_POSITION) == HIGH)
+      // Break if we move more than the max distance or hit the over-position switch without hitting the zeroing switch
+      if (!hitYZeroingSwitch)
       {
         Serial.println("ErrorFailedToHitYZeroingSwitch");
         continue; 
@@ -78,20 +89,26 @@ static void MyTask4(void* pvParameters)
       bool hitZZeroingSwitch = false;
       for (i=0; i<Z_AXIS_LIMIT; i++)
       {
+        if (digitalRead(ZEROING_Z) != HIGH)
+        {
+          // Stop moving if the zeroing switch is hit
+          hitZZeroingSwitch = true;
+          break;
+        }
+
+        if (digitalRead(OVER_POSITION) != HIGH)
+        {
+          break;
+        }
+        
         digitalWrite(MOTOR_Z_PLS, HIGH);
         vTaskDelay(1/portTICK_PERIOD_MS/4);
         digitalWrite(MOTOR_Z_PLS, LOW);
         vTaskDelay(1/portTICK_PERIOD_MS/4);
-
-        if (digitalRead(ZEROING_Z) != HIGH)
-        {
-          // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
-          hitZZeroingSwitch = true;
-          break;
-        }
       }
 
-      if (!hitZZeroingSwitch || digitalRead(OVER_POSITION) == HIGH)
+      // Break if we move more than the max distance or hit the over-position switch without hitting the zeroing switch
+      if (!hitZZeroingSwitch)
       {
         Serial.println("ErrorFailedToHitZZeroingSwitch");
         continue; 
