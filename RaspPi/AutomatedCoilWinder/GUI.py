@@ -1,23 +1,27 @@
 # imports
 from guizero import App, Window, Text, TextBox, PushButton, Combo
+from main import *
 
 
-# ----------------------- Main Window Functions ------------------------ #
+# ----------------------- Main Window Functions ---------------------------------------------------------------------- #
 
 class GUI:
-    # --------------------- Tooth Variables --------------------- #
+    # --------------------- Tooth Variables -------------------------------------------------------------------------- #
     statorToothLength = None
     statorToothHeight = None
     statorWindHeight = None
     statorToothWidth = None
-    statorShoe = None
+    statorShoeWidth = None
     numberStatorTeeth = None
     numberWinds = None
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
 
-    # --------------------- GUI Construction Variables --------------------- #
+    # --------------------- Main Control Variables ------------------------------------------------------------------- #
+    mainController = None
+
+    # --------------------- GUI Construction Variables --------------------------------------------------------------- #
     app = None
     parameterWindow = None
     windingWindow = None
@@ -42,8 +46,8 @@ class GUI:
     enteredStatorWindHeight = None
     askStatorToothWidth = None
     enteredStatorToothWidth = None
-    askStatorShoe = None
-    enteredStatorShoe = None
+    askStatorShoeWidth = None
+    enteredStatorShoeWidth = None
     askNumberStatorTeeth = None
     enteredNumberStatorTeeth = None
     askNumberWinds = None
@@ -69,7 +73,7 @@ class GUI:
     windingSafetyMessage = None
     windingSafetyTroubleshootMessage = None
 
-    # --------------------- Functions --------------------- #
+    # --------------------- Functions -------------------------------------------------------------------------------- #
     # function for opening parameterWindow and halting other window activity
     def openParameterWindow(self):
         self.parameterWindow.show(wait=True)
@@ -109,23 +113,31 @@ class GUI:
     def postWindingButtonPressed(self):
         self.openPostWindingWindow()
 
-    # ----------------------- Param Window Functions ------------------------ #
+    # ----------------------- Param Window Functions ----------------------------------------------------------------- #
 
     def doneEnteringParamsButtonPressed(self):
         self.closeParameterWindow()
         # Set tooth parameters
-        self.statorToothLength = self.enteredStatorToothLength.value
-        self.statorToothHeight = self.enteredStatorToothHeight.value
-        self.statorWindHeight = self.enteredStatorWindHeight.value
-        self.statorToothWidth = self.enteredStatorToothWidth.value
-        self.statorShoe = self.enteredStatorShoe.value
-        self.numberStatorTeeth = self.enteredNumberStatorTeeth.value
-        self.numberWinds = self.enteredNumberWinds.value
-        self.wireGauge = self.enteredWireGauge.value
+        self.statorToothLength = float(self.enteredStatorToothLength.value)
+        self.statorToothHeight = float(self.enteredStatorToothHeight.value)
+        self.statorWindHeight = float(self.enteredStatorWindHeight.value)
+        self.statorToothWidth = float(self.enteredStatorToothWidth.value)
+        self.statorShoeWidth = float(self.enteredStatorShoeWidth.value)
+        self.numberStatorTeeth = float(self.enteredNumberStatorTeeth.value)
+        self.numberWinds = float(self.enteredNumberWinds.value)
+        self.wireGauge = float(self.enteredWireGauge.value)
         self.wireMaterial = self.enteredWireMaterial.value
-        self.distanceBetweenTeeth = self.enteredDistanceBetweenTeeth.value
+        self.distanceBetweenTeeth = float(self.enteredDistanceBetweenTeeth.value)
 
-    # ----------------------- User Interface Creation ------------------------ #
+        # TODO: Instantiate Main and call the function for building gcode
+        self.mainController = MainController()
+        self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
+                                       self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
+                                       self.numberWinds,
+                                       self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth)
+        # TODO: Update predicted values
+
+    # ----------------------- User Interface Creation ---------------------------------------------------------------- #
 
     def __init__(self):
         """Construct a new UserInterface
@@ -175,8 +187,8 @@ class GUI:
                                         align="left")
         self.enteredStatorToothWidth = TextBox(self.parameterWindow, width=40, grid=[1, 3], align="left")
 
-        self.askStatorShoe = Text(self.parameterWindow, text="Stator shoe width (mm):", grid=[0, 4], align="left")
-        self.enteredStatorShoe = TextBox(self.parameterWindow, width=40, grid=[1, 4], align="left")
+        self.askStatorShoeWidth = Text(self.parameterWindow, text="Stator shoe width (mm):", grid=[0, 4], align="left")
+        self.enteredStatorShoeWidth = TextBox(self.parameterWindow, width=40, grid=[1, 4], align="left")
 
         self.askNumberStatorTeeth = Text(self.parameterWindow, text="Number stator teeth:", grid=[0, 5], align="left")
         self.enteredNumberStatorTeeth = TextBox(self.parameterWindow, width=40, grid=[1, 5], align="left")
@@ -199,14 +211,14 @@ class GUI:
                                                    text="Done",
                                                    grid=[0, 10], align="left")
 
-        # ----------------------- Winding Window Event Loop ------------------------ #
+        # ----------------------- Winding Window Event Loop ---------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
         self.windingStatorMessage = Text(self.windingWindow, text="Winding stator", size=40, font="Times New Roman",
                                          color="green")
         self.windingWindowCloseMessage = Text(self.windingWindow, text="Window will close when winding is complete",
                                               font="Times New Roman")
 
-        # ----------------------- Post Winding Window Event Loop ------------------------ #
+        # ----------------------- Post Winding Window Event Loop ----------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
         self.postWindingTitle = Text(self.postWindingWindow, text="Post Winding Results ", size=20,
                                      font="Times New Roman",
@@ -221,7 +233,7 @@ class GUI:
                                       align="left")
         self.doneViewingPostWindingButton = PushButton(self.postWindingWindow, text="Done", grid=[0, 4], align="left")
 
-        # ----------------------- Safety Interrupt Window Event Loop ------------------------ #
+        # ----------------------- Safety Interrupt Window Event Loop ------------------------------------------------- #
         self.windingSafetyTitleMessage = Text(self.safetyInterruptWindow, text="Safety Error", size=40,
                                               font="Times New Roman",
                                               color="red")

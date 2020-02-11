@@ -17,7 +17,7 @@ from WindingReader import *
 from WindingTester import *
 
 
-class Main:
+class MainController:
     arduinoMegaSerial = None
     arduinoMegaPort = "/dev/ttyACM0"
     arduinoMegaRate = "9600"
@@ -42,9 +42,9 @@ class Main:
         """Construct a new Main by setting up serial connection
                 """
         # Create serial connection for arduinos
-        self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
-        self.arduinoMegaSerial.flushInput()
-        self.statorToothLength = None  # dummy so can have an init w/o connecting to Arduino
+        #self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
+        #self.arduinoMegaSerial.flushInput()
+        return
 
     def buildGCode(self, statorToothLength,
                    statorToothHeight,
