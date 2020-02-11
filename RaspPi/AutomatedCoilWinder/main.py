@@ -42,8 +42,8 @@ class MainController:
         """Construct a new Main by setting up serial connection
                 """
         # Create serial connection for arduinos
-        #self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
-        #self.arduinoMegaSerial.flushInput()
+        # self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
+        # self.arduinoMegaSerial.flushInput()
         return
 
     def buildGCode(self, statorToothLength,
@@ -131,13 +131,18 @@ class MainController:
         fillFactor = 100 * (self.numberWinds / maxNumberWinds)
         return fillFactor
 
-    def predictResistance(self):
+    def getPredictedResistance(self):
         # TODO: Implement for Beta demo
         return 0
 
     def getPostWindingResult(self):
         # TODO: Implement to get stuff from winding Tester - Dan
         return 0
+
+    def sendZeroCommand(self):
+        # Send the command for the Arduino to zero the machine
+        self.windingReader.zeroMachine()
+        return
 
 
 '''

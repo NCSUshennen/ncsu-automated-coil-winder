@@ -14,6 +14,7 @@
 # imports
 import serial
 
+
 class WindingReader:
     # --------------------- Variables --------------------- #
     serialConnection = None
@@ -67,18 +68,29 @@ class WindingReader:
                         self.serialConnection.write(line.encode())
                         readyReceived = True
 
-
-
         # Close opened path file
         pathFile.close()
         print("Done reading gcode")
 
     def zeroMachine(self, ui):
-        """Zeros the machine
+        """Sends the command to zero the machine
         """
-        # --------------------- Variables --------------------- #
-        # exampleParam = None
+        zeroCommand = "beginZeroing\n"
+        readyReceived = False
+        while not readyReceived:
+            if self.serialConnection.inWaiting() > 0:
+                inputValue = ""
+                inputValue = self.serialConnection.readline().decode()
+                # print("in: " + inputValue)
+                if inputValue == self.arduinoReadyForCommand:
+                    # Give Gcode command
+                    # print("ReadyReceived\n")
+                    self.serialConnection.write(zeroCommand.encode())
+                    readyReceived = True
+        return
 
+        '''
+        # Old code for making the machine go away for Fall 2019 Demo day
         windingPathCmd = "beginWindingPath\n"
         self.serialConnection.write(windingPathCmd.encode())
 
@@ -119,3 +131,4 @@ class WindingReader:
 
         line = "%\n"
         self.serialConnection.write(line.encode())
+        '''

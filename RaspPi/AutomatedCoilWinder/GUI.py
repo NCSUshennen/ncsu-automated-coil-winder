@@ -105,6 +105,11 @@ class GUI:
     def parameterButtonPressed(self):
         self.openParameterWindow()
 
+    # function for zeroing the machine when the zero button is pressed
+    def zeroButtonPressed(self):
+        # Have main send the zeroing signal to the arduino
+        self.mainController.sendZeroCommand()
+
     # function for opening windingWindow when button pressed and starting winding process
     def windingButtonPressed(self):
         # TODO: Winding stuff -> call other function
@@ -129,13 +134,21 @@ class GUI:
         self.wireMaterial = self.enteredWireMaterial.value
         self.distanceBetweenTeeth = float(self.enteredDistanceBetweenTeeth.value)
 
-        # TODO: Instantiate Main and call the function for building gcode
+        # Instantiate Main and call the function for building gcode
         self.mainController = MainController()
         self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
                                        self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
                                        self.numberWinds,
                                        self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth)
         # TODO: Update predicted values
+        self.predictedTimeMessage.clear()
+        self.predictedTimeMessage.append("Predicted time: " + str(self.mainController.getPredictedTime()) + " secs")
+        self.predictedFillFactorMessage.clear()
+        self.predictedTimeMessage.append(
+            "Predicted fill factor: " + str(self.mainController.getPredictedFillFactor()) + " %")
+        self.predictedWindingResistanceMessage.clear()
+        self.predictedWindingResistanceMessage.append(
+            "Predicted winding resistance: " + str(self.mainController.getPredictedResistance()) + " Ohms")
 
     # ----------------------- User Interface Creation ---------------------------------------------------------------- #
 
@@ -155,9 +168,10 @@ class GUI:
         self.safetyInterruptWindow = Window(self.app, title="Safety interrupt window")
         self.safetyInterruptWindow.hide()
 
-        # ----------------------- Main Window Event Loop ------------------------ #
+        # ----------------------- Main Window Event Loop ------------------------------------------------------------- #
         # Event loop - Coil winder GUI Main window widget (text, text boxes, buttons, etc) code here
         self.parameterButton = PushButton(self.app, command=self.parameterButtonPressed, text="Enter Stator Parameters")
+        self.zeroButton = PushButton(self.app, command=self.zeroButtonPressed, text="Zero the machine")
         self.windingButton = PushButton(self.app, command=self.windingButtonPressed, text="Start winding")
         self.postWindingButton = PushButton(self.app, command=self.postWindingButtonPressed,
                                             text="Start post winding test")
@@ -169,7 +183,7 @@ class GUI:
         self.actualTimeMessage = Text(self.app, text="Actual time: None (wind a coil)")
         self.elongationMessage = Text(self.app, text="Elongation: None (wind a coil)")
 
-        # ----------------------- Parameter Window Event Loop ------------------------ #
+        # ----------------------- Parameter Window Event Loop -------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
         self.askStatorToothLength = Text(self.parameterWindow, text="Stator tooth length (mm):", grid=[0, 0],
                                          align="left")
