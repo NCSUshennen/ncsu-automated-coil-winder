@@ -44,7 +44,7 @@ class WindingReader:
         #       with a newline char at end (readline)
         #       When reach end of file, close out
 
-        # Ask if ardiuno is ready for command, then send winding command
+        # Ask if arduino is ready for command, then send winding command
         self.serialConnection.write(windingPathCmd.encode())
         while True:
             # read next line

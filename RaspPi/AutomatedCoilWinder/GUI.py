@@ -142,13 +142,13 @@ class GUI:
                                        self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth)
         # TODO: Update predicted values
         self.predictedTimeMessage.clear()
-        self.predictedTimeMessage.append("Predicted time: " + str(self.mainController.getPredictedTime()) + " secs")
+        self.predictedTimeMessage.append("Predicted time: " + str(self.mainController.getPredictedTime()) + " secs\n")
         self.predictedFillFactorMessage.clear()
         self.predictedTimeMessage.append(
-            "Predicted fill factor: " + str(self.mainController.getPredictedFillFactor()) + " %")
+            "Predicted fill factor: " + str(self.mainController.getPredictedFillFactor()) + " %\n")
         self.predictedWindingResistanceMessage.clear()
         self.predictedWindingResistanceMessage.append(
-            "Predicted winding resistance: " + str(self.mainController.getPredictedResistance()) + " Ohms")
+            "Predicted winding resistance: " + str(self.mainController.getPredictedResistance()) + " Ohms\n")
 
     # ----------------------- User Interface Creation ---------------------------------------------------------------- #
 
