@@ -24,6 +24,19 @@ class WindingWriter:
     wireMaterial = None
     distanceBetweenTeeth = None
 
+    # --------------------- Distance traveled/Time measurement values --------------------- #
+    totalMillimetersTraveled = None
+    totalTimeTaken = None
+    xRateTime = 0.0095
+    xOffsetTime = 0.185
+    yRateTime = 0.008
+    yOffsetTime = 0.268
+    zRateTime = 0.0058
+    zOffsetTime = 0.485
+    prevX = None;
+    prevY = None;
+    prevZ = None;
+
     # --------------------- Winding head values --------------------- #
     # TODO: update with actual head clearances later
     headClearanceX = 8.5
@@ -72,6 +85,7 @@ class WindingWriter:
     currentPostLowerLeftY = None
 
     # --------------------- Functions --------------------- #
+    # --------------------- Constructor --------------------- #
     def __init__(self, statorToothLength, statorToothHeight, statorWindHeight,
                  statorToothWidth, statorShoeWidth, numberStatorTeeth,
                  numberWinds, wireGauge, wireMaterial,
@@ -104,6 +118,43 @@ class WindingWriter:
         self.currentCornerX = float(self.startingCornerX - (0.5 * self.statorToothWidth) + (
                 0.5 * self.statorShoeWidth) + self.headClearanceX)
         self.currentCornerY = float(self.startingCornerY - self.headClearanceY)
+
+        # Initialize all distance parameters to 0
+        self.totalMillimetersTraveled = 0
+        self.totalTimeTaken = 0
+        self.prevX = 0
+        self.prevY = 0
+        self.prevZ = 0
+
+    # --------------------- Distance counting --------------------- #
+    def calculateDistanceTraveled(self, newX, newY, newZ):
+        xDistance = abs(self.prevX - newX)
+        yDistance = abs(self.prevY - newY)
+        zDistance = abs(self.prevZ - newZ)
+        self.totalMillimetersTraveled += xDistance + yDistance + zDistance
+        if xDistance != 0:
+            self.totalTimeTaken += (self.xRateTime * xDistance) + self.xOffsetTime
+        if yDistance != 0:
+            self.totalTimeTaken += (self.yRateTime * yDistance) + self.yOffsetTime
+        if zDistance != 0:
+            self.totalTimeTaken += (self.zRateTime * zDistance) + self.zOffsetTime
+
+        # Set previous values to current values for next reading
+        self.prevX = newX
+        self.prevY = newY
+        self.prevZ = newZ
+        return
+
+    def getPredictedTotalTime(self):
+        return self.totalTimeTaken
+
+    def getTotalMillimetersTraveled(self):
+        return self.totalMillimetersTraveled
+
+    def getMaxNumZWinds(self):
+        return self.maxNumZWinds
+
+    # --------------------- Path generation --------------------- #
 
     def calculateValues(self):
         self.ylength = float(self.statorToothLength + (2 * self.headClearanceY))
@@ -167,25 +218,37 @@ class WindingWriter:
 
         # Go to upper left corner of next post
         pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostUpperLeftY, self.prevZ)
         pathFile.write("G0 X" + str(self.currentPostUpperLeftX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostUpperLeftX, self.prevY, self.prevZ)
 
         # Go down to correct z
         pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, self.currentCornerZ)
 
         # Wind once
         pathFile.write("G0 X" + str(self.currentPostUpperRightX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostUpperRightX, self.prevY, self.prevZ)
         pathFile.write("G0 Y" + str(self.currentPostLowerRightY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostLowerRightY, self.prevZ)
         pathFile.write("G0 X" + str(self.currentPostLowerLeftX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostLowerLeftX, self.prevY, self.prevZ)
         pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostUpperLeftY, self.prevZ)
 
         # Go up a wireGauge length
         pathFile.write("G0 Z" + str(self.currentCornerZ + self.wireDiameter) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, self.currentCornerZ + self.wireDiameter)
 
         # Wind once again
         pathFile.write("G0 X" + str(self.currentPostUpperRightX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostUpperRightX, self.prevY, self.prevZ)
         pathFile.write("G0 Y" + str(self.currentPostLowerRightY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostLowerRightY, self.prevZ)
         pathFile.write("G0 X" + str(self.currentPostLowerLeftX) + "\n")
+        self.calculateDistanceTraveled(self.currentPostLowerLeftX, self.prevY, self.prevZ)
         pathFile.write("G0 Y" + str(self.currentPostUpperLeftY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentPostUpperLeftY, self.prevZ)
 
         # Increase the post we are currently on
         self.currentPost += 1
@@ -194,12 +257,16 @@ class WindingWriter:
     def windRect(self, pathFile):
         # Go forward in the y direction parameter ylength
         pathFile.write("G0 Y" + str(self.currentCornerY + self.ylength) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentCornerY + self.ylength, self.prevZ)
         # Go forward in the x direction parameter xlength
         pathFile.write("G0 X" + str(self.currentCornerX + self.xlength) + "\n")
+        self.calculateDistanceTraveled(self.currentCornerX + self.xlength, self.prevY, self.prevZ)
         # Go backwards in the ydirection ylength
         pathFile.write("G0 Y" + str(self.currentCornerY) + "\n")
+        self.calculateDistanceTraveled(self.prevX, self.currentCornerY, self.prevZ)
         # Go backwards in the xdirection xlength
         pathFile.write("G0 X" + str(self.currentCornerX) + "\n")
+        self.calculateDistanceTraveled(self.currentCornerX, self.prevY, self.prevZ)
         return
 
     def generatePath(self, fileName):
@@ -229,6 +296,7 @@ class WindingWriter:
 
         # Move diagonally to start of block
         pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
+        self.calculateDistanceTraveled(self.currentCornerX, self.currentCornerY, self.prevZ)
 
         # Keep winding until you've wound the last tooth
         while self.numTeethWound < self.numberStatorTeeth:
@@ -240,6 +308,7 @@ class WindingWriter:
             while self.numTimesWound < self.numberWinds:
                 # Go to next current Z
                 pathFile.write("G0 Z" + str(self.currentZ) + "\n")
+                self.calculateDistanceTraveled(self.prevX, self.prevY, self.currentZ)
 
                 # Wind the next rectangle
                 self.windRect(pathFile)
@@ -267,14 +336,19 @@ class WindingWriter:
             if self.numTeethWound <= self.numberStatorTeeth:
                 self.currentCornerX += self.distanceBetweenTeeth + self.statorToothWidth
                 pathFile.write("G0 X" + str(self.currentCornerX) + " Y" + str(self.currentCornerY) + "\n")
+                self.calculateDistanceTraveled(self.currentCornerX, self.currentCornerY, self.prevZ)
                 self.currentZ = self.currentCornerZ
                 # pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
 
         # TODO: Wind the last post and zero without hitting posts
         pathFile.write("G0 X15.0\n")
+        self.calculateDistanceTraveled(15, self.prevY, self.prevZ)
         pathFile.write("G0 Y0.0\n")
+        self.calculateDistanceTraveled(self.prevX, 0, self.prevZ)
         pathFile.write("G0 X0.0\n")
+        self.calculateDistanceTraveled(0, self.prevY, self.prevZ)
         pathFile.write("G0 Z0.0\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, 0)
 
         # % for Telling arduino this gcode is done
         pathFile.write("%\n")

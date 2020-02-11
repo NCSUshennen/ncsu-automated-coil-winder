@@ -15,7 +15,25 @@ from UserInterface import *
 from WindingWriter import *
 from WindingReader import *
 from WindingTester import *
+
+
 # from SensorReader import *
+
+# Returns the total predicted time in seconds given the distance traveled
+def predictTime(totalMillimetersTraveled):
+    timePerMillimeter = 0.01
+    time = totalMillimetersTraveled * timePerMillimeter
+    return time
+
+
+def predictFillFactor(numberWinds, maxNumZWinds):
+    numberLayers = 2
+    # Calculate max winds (number of layers times the number of winds per height)
+    maxNumberWinds = numberLayers * maxNumZWinds
+    # Fill factor is the ratio of number of winds completed over max number of winds possible
+    fillFactor = 100 * (numberWinds / maxNumberWinds)
+    return fillFactor
+
 
 def main():
     """Begin and run the coil winding program."""
@@ -32,7 +50,7 @@ def main():
     statorToothHeight = None
     statorWindHeight = None
     statorToothWidth = None
-    statorShoe= None
+    statorShoe = None
     numberStatorTeeth = None
     numberWinds = None
     wireGauge = None
@@ -42,8 +60,8 @@ def main():
     # ------------------- Declarations -------------------- #
 
     # Create serial connection for arduinos
-    #arduinoMegaSerial = serial.Serial(arduinoMegaPort, arduinoMegaRate)
-    #arduinoMegaSerial.flushInput()
+    # arduinoMegaSerial = serial.Serial(arduinoMegaPort, arduinoMegaRate)
+    # arduinoMegaSerial.flushInput()
 
     # ----------------------- Main ------------------------ #
 
@@ -73,7 +91,7 @@ def main():
                                   wireGauge,
                                   wireMaterial,
                                   distanceBetweenTeeth)
-    #windingReader = WindingReader(arduinoMegaSerial)
+    # windingReader = WindingReader(arduinoMegaSerial)
     windingTester = WindingTester(statorToothLength,
                                   statorToothHeight,
                                   statorToothWidth,
@@ -94,6 +112,9 @@ def main():
     # Generate path
     ui.displayMessage("\nGenerating the path")
     windingWriter.generatePath("pathFile.txt")
+    ui.displayMessage("Total mm: " + str(windingWriter.getTotalMillimetersTraveled()))
+    ui.displayMessage("Predicted Time: " + str(windingWriter.getPredictedTotalTime()) + " secs")
+    ui.displayMessage("Fill factor: " + str(predictFillFactor(numberWinds, windingWriter.getMaxNumZWinds())) + "%")
     # TODO: instantiate windingReader, giving it the file name of generated path
 
     # Zero machine with WindingReader -> function for zeroing w/ SensorReader
@@ -110,6 +131,7 @@ def main():
     windingTester.postWindingTest("postWindingTests.csv")
 
     ui.displayMessage("Program completed.")
+
 
 # do stuff in main
 main()
