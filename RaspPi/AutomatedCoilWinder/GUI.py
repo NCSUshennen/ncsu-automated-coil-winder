@@ -9,14 +9,16 @@ class GUI:
     # --------------------- Tooth Variables -------------------------------------------------------------------------- #
     statorToothLength = None
     statorToothHeight = None
-    statorWindHeight = None
     statorToothWidth = None
+    statorWindHeight = None
+    statorWindWidth = None
     statorShoeWidth = None
+    distanceBetweenTeeth = None
+    statorDiameter = None
     numberStatorTeeth = None
     numberWinds = None
     wireGauge = None
     wireMaterial = None
-    distanceBetweenTeeth = None
 
     # --------------------- Main Control Variables ------------------------------------------------------------------- #
     mainController = None
@@ -58,6 +60,10 @@ class GUI:
     enteredWireMaterial = None
     askDistanceBetweenTeeth = None
     enteredDistanceBetweenTeeth = None
+    askStatorWindWidth = None
+    enteredStatorWindWidth = None
+    askStatorDiameter = None
+    enteredStatorDiameter = None
     doneEnteringParamsButton = None
 
     windingStatorMessage = None
@@ -125,21 +131,24 @@ class GUI:
         # Set tooth parameters
         self.statorToothLength = float(self.enteredStatorToothLength.value)
         self.statorToothHeight = float(self.enteredStatorToothHeight.value)
-        self.statorWindHeight = float(self.enteredStatorWindHeight.value)
         self.statorToothWidth = float(self.enteredStatorToothWidth.value)
+        self.statorWindHeight = float(self.enteredStatorWindHeight.value)
+        self.statorWindWidth = float(self.enteredStatorWindWidth.value)
         self.statorShoeWidth = float(self.enteredStatorShoeWidth.value)
+        self.distanceBetweenTeeth = float(self.enteredDistanceBetweenTeeth.value)
+        self.statorDiameter = float(self.enteredStatorDiameter.value)
         self.numberStatorTeeth = float(self.enteredNumberStatorTeeth.value)
         self.numberWinds = float(self.enteredNumberWinds.value)
         self.wireGauge = float(self.enteredWireGauge.value)
         self.wireMaterial = self.enteredWireMaterial.value
-        self.distanceBetweenTeeth = float(self.enteredDistanceBetweenTeeth.value)
+
 
         # Instantiate Main and call the function for building gcode
         self.mainController = MainController()
         self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
                                        self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
                                        self.numberWinds,
-                                       self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth)
+                                       self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth, self.statorWindWidth, self.statorDiameter)
         # TODO: Update predicted values
         self.predictedTimeMessage.clear()
         self.predictedTimeMessage.append("Predicted time: " + str(self.mainController.getPredictedTime()) + " secs\n")
@@ -185,45 +194,66 @@ class GUI:
 
         # ----------------------- Parameter Window Event Loop -------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
-        self.askStatorToothLength = Text(self.parameterWindow, text="Stator tooth length (mm):", grid=[0, 0],
+        i = 0
+        self.askStatorToothLength = Text(self.parameterWindow, text="Stator tooth length (mm):", grid=[0, i],
                                          align="left")
-        self.enteredStatorToothLength = TextBox(self.parameterWindow, width=40, grid=[1, 0], align="left")
+        self.enteredStatorToothLength = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i+=1
 
-        self.askStatorToothHeight = Text(self.parameterWindow, text="Stator tooth height (mm):", grid=[0, 1],
+        self.askStatorToothHeight = Text(self.parameterWindow, text="Stator tooth height (mm):", grid=[0, i],
                                          align="left")
-        self.enteredStatorToothHeight = TextBox(self.parameterWindow, width=40, grid=[1, 1], align="left")
+        self.enteredStatorToothHeight = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
 
-        self.askStatorWindHeight = Text(self.parameterWindow, text="Stator wind height (mm):", grid=[0, 2],
+        self.askStatorToothWidth = Text(self.parameterWindow, text="Stator tooth width (mm):", grid=[0, i],
                                         align="left")
-        self.enteredStatorWindHeight = TextBox(self.parameterWindow, width=40, grid=[1, 2], align="left")
+        self.enteredStatorToothWidth = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
 
-        self.askStatorToothWidth = Text(self.parameterWindow, text="Stator tooth width (mm):", grid=[0, 3],
+        self.askStatorWindHeight = Text(self.parameterWindow, text="Stator wind height (mm):", grid=[0, i],
                                         align="left")
-        self.enteredStatorToothWidth = TextBox(self.parameterWindow, width=40, grid=[1, 3], align="left")
+        self.enteredStatorWindHeight = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
 
-        self.askStatorShoeWidth = Text(self.parameterWindow, text="Stator shoe width (mm):", grid=[0, 4], align="left")
-        self.enteredStatorShoeWidth = TextBox(self.parameterWindow, width=40, grid=[1, 4], align="left")
+        self.askStatorWindWidth = Text(self.parameterWindow, text="Stator wind width (mm):", grid=[0, i],
+                                       align="left")
+        self.enteredStatorWindWidth = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
 
-        self.askNumberStatorTeeth = Text(self.parameterWindow, text="Number stator teeth:", grid=[0, 5], align="left")
-        self.enteredNumberStatorTeeth = TextBox(self.parameterWindow, width=40, grid=[1, 5], align="left")
+        self.askStatorShoeWidth = Text(self.parameterWindow, text="Stator shoe width (mm):", grid=[0, i], align="left")
+        self.enteredStatorShoeWidth = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
 
-        self.askNumberWinds = Text(self.parameterWindow, text="Number winds per tooth:", grid=[0, 6], align="left")
-        self.enteredNumberWinds = TextBox(self.parameterWindow, width=40, grid=[1, 6], align="left")
-
-        self.askWireGauge = Text(self.parameterWindow, text="Wire gauge:", grid=[0, 7], align="left")
-        self.enteredWireGauge = Combo(self.parameterWindow, options=["13", "14", "15", "16", "17", "18"], grid=[1, 7],
-                                      align="left")
-
-        self.askWireMaterial = Text(self.parameterWindow, text="Wire material:", grid=[0, 8], align="left")
-        self.enteredWireMaterial = Combo(self.parameterWindow, options=["Copper"], grid=[1, 8], align="left")
-
-        self.askDistanceBetweenTeeth = Text(self.parameterWindow, text="Distance between teeth: (mm)", grid=[0, 9],
+        self.askDistanceBetweenTeeth = Text(self.parameterWindow, text="Distance between teeth: (mm)", grid=[0, i],
                                             align="left")
-        self.enteredDistanceBetweenTeeth = TextBox(self.parameterWindow, width=40, grid=[1, 9], align="left")
+        self.enteredDistanceBetweenTeeth = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
+
+        self.askStatorDiameter = Text(self.parameterWindow, text="Stator diameter:", grid=[0, i], align="left")
+        self.enteredStatorDiameter = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
+
+        self.askNumberStatorTeeth = Text(self.parameterWindow, text="Number stator teeth:", grid=[0, i], align="left")
+        self.enteredNumberStatorTeeth = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
+
+        self.askNumberWinds = Text(self.parameterWindow, text="Number winds per tooth:", grid=[0, i], align="left")
+        self.enteredNumberWinds = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
+        i += 1
+
+        self.askWireGauge = Text(self.parameterWindow, text="Wire gauge:", grid=[0, i], align="left")
+        self.enteredWireGauge = Combo(self.parameterWindow, options=["13", "14", "15", "16", "17", "18"], grid=[1, i],
+                                      align="left")
+        i += 1
+
+        self.askWireMaterial = Text(self.parameterWindow, text="Wire material:", grid=[0, i], align="left")
+        self.enteredWireMaterial = Combo(self.parameterWindow, options=["Copper"], grid=[1, i], align="left")
+        i += 1
 
         self.doneEnteringParamsButton = PushButton(self.parameterWindow, command=self.doneEnteringParamsButtonPressed,
                                                    text="Done",
-                                                   grid=[0, 10], align="left")
+                                                   grid=[0, i], align="left")
+        i += 1
 
         # ----------------------- Winding Window Event Loop ---------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here

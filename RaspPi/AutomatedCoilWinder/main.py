@@ -33,6 +33,8 @@ class MainController:
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
+    statorWindWidth = None
+    statorDiameter = None
 
     windingWriter = None
     windingReader = None
@@ -55,7 +57,7 @@ class MainController:
                    numberWinds,
                    wireGauge,
                    wireMaterial,
-                   distanceBetweenTeeth):
+                   distanceBetweenTeeth, statorWindWidth, statorDiameter):
         """Construct a new Main
 
                         Keyword arguments:
@@ -79,6 +81,8 @@ class MainController:
         self.wireGauge = wireGauge
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth
+        self.statorWindWidth = statorWindWidth
+        self.statorDiameter = statorDiameter
 
         # Instantiate WindingWriter, WindingReader, WindingTester
         self.windingWriter = WindingWriter(statorToothLength,
@@ -123,6 +127,23 @@ class MainController:
     def getPredictedFillFactor(self):
         """Returns calculated fill factor
                                 """
+        radius1 = (0.5 * self.statorDiameter) - (self.statorToothHeight - self.statorWindHeight)
+        radius2 = radius1 - self.statorWindHeight
+        rectangleArea = self.statorWindHeight * self.statorWindWidth
+        windTotalArea = 3.14 * ((radius1 * radius1) - (radius2 * radius2))
+        windLeftoverArea = windTotalArea - (rectangleArea * self.numberStatorTeeth)
+        wireArea = 3.14 * (self.windingWriter.getWireDiameter() / 2) * (self.windingWriter.getWireDiameter() / 2) * (
+                2 * self.numberWinds * self.numberStatorTeeth)
+        fillFactor = 100*(wireArea / windLeftoverArea);
+
+        print(str(radius1) + "\n")
+        print(str(radius2) + "\n")
+        print(str(rectangleArea) + "\n")
+        print(str(windTotalArea) + "\n")
+        print(str(windLeftoverArea) + "\n")
+        print(str(wireArea) + "\n")
+        return fillFactor
+        '''
         numberLayers = 2
         # Calculate max winds (number of layers times the number of winds per height)
         maxNumZWinds = self.windingWriter.getMaxNumZWinds()
@@ -130,6 +151,7 @@ class MainController:
         # Fill factor is the ratio of number of winds completed over max number of winds possible
         fillFactor = 100 * (self.numberWinds / maxNumberWinds)
         return fillFactor
+        '''
 
     def getPredictedResistance(self):
         # TODO: Implement for Beta demo
