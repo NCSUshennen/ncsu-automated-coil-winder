@@ -134,7 +134,7 @@ class MainController:
         windLeftoverArea = windTotalArea - (rectangleArea * self.numberStatorTeeth)
         wireArea = 3.14 * (self.windingWriter.getWireDiameter() / 2) * (self.windingWriter.getWireDiameter() / 2) * (
                 2 * self.numberWinds * self.numberStatorTeeth)
-        fillFactor = 100*(wireArea / windLeftoverArea);
+        fillFactor = 100 * (wireArea / windLeftoverArea)
 
         print(str(radius1) + "\n")
         print(str(radius2) + "\n")
