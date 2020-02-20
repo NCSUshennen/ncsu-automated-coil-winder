@@ -80,6 +80,15 @@ class GUI:
     windingSafetyTroubleshootMessage = None
 
     # --------------------- Functions -------------------------------------------------------------------------------- #
+    # Float truncation
+    def truncate(self, f, n):
+        '''Truncates/pads a float f to n decimal places without rounding'''
+        s = '{}'.format(f)
+        if 'e' in s or 'E' in s:
+            return '{0:.{1}f}'.format(f, n)
+        i, p, d = s.partition('.')
+        return '.'.join([i, (d + '0' * n)[:n]])
+
     # function for opening parameterWindow and halting other window activity
     def openParameterWindow(self):
         self.parameterWindow.show(wait=True)
@@ -121,7 +130,11 @@ class GUI:
         # TODO: Winding stuff -> call other function
         self.openWindingWindow()
 
+        # Enable postWinding button after winding is completed
+        self.postWindingButton.enable()
+
     def postWindingButtonPressed(self):
+        # TODO: PostWindingCall to Main
         self.openPostWindingWindow()
 
     # ----------------------- Param Window Functions ----------------------------------------------------------------- #
@@ -142,22 +155,31 @@ class GUI:
         self.wireGauge = float(self.enteredWireGauge.value)
         self.wireMaterial = self.enteredWireMaterial.value
 
-
         # Instantiate Main and call the function for building gcode
         self.mainController = MainController()
         self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
                                        self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
                                        self.numberWinds,
-                                       self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth, self.statorWindWidth, self.statorDiameter)
-        # TODO: Update predicted values
+                                       self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth,
+                                       self.statorWindWidth, self.statorDiameter)
+        # Update predicted values
         self.predictedTimeMessage.clear()
-        self.predictedTimeMessage.append("Predicted time: " + str(self.mainController.getPredictedTime()) + " secs\n")
+        timeHours, timeSec = divmod(self.mainController.getPredictedTime(), 3600)
+        timeMin, timeSec = divmod(timeSec, 60)
+        self.predictedTimeMessage.append(
+            "Predicted time: " + str(
+                str(self.truncate(timeHours, 0)) + " hour " + str(self.truncate(timeMin, 0)) + " min " + str(
+                    self.truncate(timeSec, 3)) + " secs\n"))
         self.predictedFillFactorMessage.clear()
         self.predictedTimeMessage.append(
-            "Predicted fill factor: " + str(self.mainController.getPredictedFillFactor()) + " %\n")
+            "Predicted fill factor: " + str(self.truncate(self.mainController.getPredictedFillFactor(), 3) + " %\n"))
         self.predictedWindingResistanceMessage.clear()
         self.predictedWindingResistanceMessage.append(
-            "Predicted winding resistance: " + str(self.mainController.getPredictedResistance()) + " Ohms\n")
+            "Predicted winding resistance: " + str(self.truncate(self.mainController.getPredictedResistance(),
+                                                                 3) + " Ohms\n"))
+
+        # Enable winding button
+        self.windingButton.enable()
 
     # ----------------------- User Interface Creation ---------------------------------------------------------------- #
 
@@ -192,13 +214,17 @@ class GUI:
         self.actualTimeMessage = Text(self.app, text="Actual time: None (wind a coil)")
         self.elongationMessage = Text(self.app, text="Elongation: None (wind a coil)")
 
+        # Disable other buttons except enter stator parameters
+        self.windingButton.disable()
+        self.postWindingButton.disable()
+
         # ----------------------- Parameter Window Event Loop -------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
         i = 0
         self.askStatorToothLength = Text(self.parameterWindow, text="Stator tooth length (mm):", grid=[0, i],
                                          align="left")
         self.enteredStatorToothLength = TextBox(self.parameterWindow, width=40, grid=[1, i], align="left")
-        i+=1
+        i += 1
 
         self.askStatorToothHeight = Text(self.parameterWindow, text="Stator tooth height (mm):", grid=[0, i],
                                          align="left")
