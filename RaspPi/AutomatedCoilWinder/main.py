@@ -112,7 +112,7 @@ class MainController:
     def startWinding(self):
         """Sends the path with the Arduino with the windingReader
                 """
-        self.windingReader.sendPath("pathFile.txt")
+        # self.windingReader.sendPath("pathFile.txt")
 
     def startPostWindingTest(self):
         """Starts the post winding test
@@ -166,6 +166,14 @@ class MainController:
         self.windingReader.zeroMachine()
         return
 
+    def getResistance(self):
+        return self.windingTester.getResistance()
+
+    def getCapacitance(self):
+        return self.windingTester.getCapacitance()
+
+    def getInductance(self):
+        return self.windingTester.getInductance()
 
 '''
 # Old main

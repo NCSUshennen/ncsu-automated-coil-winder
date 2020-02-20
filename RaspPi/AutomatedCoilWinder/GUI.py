@@ -65,6 +65,7 @@ class GUI:
     askStatorDiameter = None
     enteredStatorDiameter = None
     doneEnteringParamsButton = None
+    parameterErrorMessage = None
 
     windingStatorMessage = None
     windingWindowCloseMessage = None
@@ -95,7 +96,6 @@ class GUI:
 
     # function for closing parameterWindow
     def closeParameterWindow(self):
-        # TODO: Make winding thing next to be pressed
         self.parameterWindow.hide()
 
     # function for opening windingWindow and halting other window activity
@@ -104,7 +104,6 @@ class GUI:
 
     # function for closing windingWindow
     def closeWindingWindow(self):
-        # TODO: call this in program when things are done winding
         self.windingWindow.hide()
 
     # function for opening postWindingWindow and halting other window activity
@@ -113,11 +112,18 @@ class GUI:
 
     # function for closing postWindingWindow
     def closePostWindingWindow(self):
-        # TODO: call this in program when things are done winding
         self.postWindingWindow.hide()
 
     # function for opening parameterWindow when button pressed
     def parameterButtonPressed(self):
+        # Disable buttons
+        self.parameterButton.disable()
+        self.zeroButton.disable()
+        self.windingButton.disable()
+        self.postWindingButton.disable()
+
+        self.parameterErrorMessage.clear()
+
         self.openParameterWindow()
 
     # function for zeroing the machine when the zero button is pressed
@@ -127,59 +133,109 @@ class GUI:
 
     # function for opening windingWindow when button pressed and starting winding process
     def windingButtonPressed(self):
-        # TODO: Winding stuff -> call other function
         self.openWindingWindow()
 
-        # Enable postWinding button after winding is completed
+        # Disable buttons
+        self.parameterButton.disable()
+        self.zeroButton.disable()
+        self.windingButton.disable()
+        self.postWindingButton.disable()
+
+        # Wind
+        self.mainController.startWinding()
+
+        # Enable buttons after winding is completed
+        self.parameterButton.enable()
+        self.zeroButton.enable()
+        self.windingButton.enable()
         self.postWindingButton.enable()
 
+        # Close Window
+        self.closeWindingWindow()
+
     def postWindingButtonPressed(self):
-        # TODO: PostWindingCall to Main
+        self.mainController.startPostWindingTest()
+
+        # Update Messages
+        self.resistanceMessage.clear()
+        self.resistanceMessage.append(str(self.mainController.getResistance()) + " Ohms")
+        self.capacitanceMessage.clear()
+        self.capacitanceMessage.append(str(self.mainController.getCapacitance()) + " F")
+        self.inductanceMessage.clear()
+        self.inductanceMessage.append(str(self.mainController.getInductance()) + " H")
+
+        # Disable buttons
+        self.parameterButton.disable()
+        self.zeroButton.disable()
+        self.windingButton.disable()
+        self.postWindingButton.disable()
+
+        # Open window
         self.openPostWindingWindow()
+
+    def doneViewingPostWindingButtonPressed(self):
+        # Enable buttons
+        self.parameterButton.enable()
+        self.zeroButton.enable()
+        self.windingButton.enable()
+        self.postWindingButton.enable()
+
+        self.closePostWindingWindow()
 
     # ----------------------- Param Window Functions ----------------------------------------------------------------- #
 
     def doneEnteringParamsButtonPressed(self):
-        self.closeParameterWindow()
-        # Set tooth parameters
-        self.statorToothLength = float(self.enteredStatorToothLength.value)
-        self.statorToothHeight = float(self.enteredStatorToothHeight.value)
-        self.statorToothWidth = float(self.enteredStatorToothWidth.value)
-        self.statorWindHeight = float(self.enteredStatorWindHeight.value)
-        self.statorWindWidth = float(self.enteredStatorWindWidth.value)
-        self.statorShoeWidth = float(self.enteredStatorShoeWidth.value)
-        self.distanceBetweenTeeth = float(self.enteredDistanceBetweenTeeth.value)
-        self.statorDiameter = float(self.enteredStatorDiameter.value)
-        self.numberStatorTeeth = float(self.enteredNumberStatorTeeth.value)
-        self.numberWinds = float(self.enteredNumberWinds.value)
-        self.wireGauge = float(self.enteredWireGauge.value)
-        self.wireMaterial = self.enteredWireMaterial.value
+        try:
+            # Set tooth parameters
+            self.statorToothLength = float(self.enteredStatorToothLength.value)
+            self.statorToothHeight = float(self.enteredStatorToothHeight.value)
+            self.statorToothWidth = float(self.enteredStatorToothWidth.value)
+            self.statorWindHeight = float(self.enteredStatorWindHeight.value)
+            self.statorWindWidth = float(self.enteredStatorWindWidth.value)
+            self.statorShoeWidth = float(self.enteredStatorShoeWidth.value)
+            self.distanceBetweenTeeth = float(self.enteredDistanceBetweenTeeth.value)
+            self.statorDiameter = float(self.enteredStatorDiameter.value)
+            self.numberStatorTeeth = float(self.enteredNumberStatorTeeth.value)
+            self.numberWinds = float(self.enteredNumberWinds.value)
+            self.wireGauge = float(self.enteredWireGauge.value)
+            self.wireMaterial = self.enteredWireMaterial.value
 
-        # Instantiate Main and call the function for building gcode
-        self.mainController = MainController()
-        self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
-                                       self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
-                                       self.numberWinds,
-                                       self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth,
-                                       self.statorWindWidth, self.statorDiameter)
-        # Update predicted values
-        self.predictedTimeMessage.clear()
-        timeHours, timeSec = divmod(self.mainController.getPredictedTime(), 3600)
-        timeMin, timeSec = divmod(timeSec, 60)
-        self.predictedTimeMessage.append(
-            "Predicted time: " + str(
-                str(self.truncate(timeHours, 0)) + " hour " + str(self.truncate(timeMin, 0)) + " min " + str(
-                    self.truncate(timeSec, 3)) + " secs\n"))
-        self.predictedFillFactorMessage.clear()
-        self.predictedTimeMessage.append(
-            "Predicted fill factor: " + str(self.truncate(self.mainController.getPredictedFillFactor(), 3) + " %\n"))
-        self.predictedWindingResistanceMessage.clear()
-        self.predictedWindingResistanceMessage.append(
-            "Predicted winding resistance: " + str(self.truncate(self.mainController.getPredictedResistance(),
-                                                                 3) + " Ohms\n"))
+            # Instantiate Main and call the function for building gcode
+            self.mainController = MainController()
+            self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
+                                           self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
+                                           self.numberWinds,
+                                           self.wireGauge, self.wireMaterial, self.distanceBetweenTeeth,
+                                           self.statorWindWidth, self.statorDiameter)
+            # Update predicted values
+            self.predictedTimeMessage.clear()
+            timeHours, timeSec = divmod(self.mainController.getPredictedTime(), 3600)
+            timeMin, timeSec = divmod(timeSec, 60)
+            self.predictedTimeMessage.append(
+                "Predicted time: " + str(
+                    str(self.truncate(timeHours, 0)) + " hour " + str(self.truncate(timeMin, 0)) + " min " + str(
+                        self.truncate(timeSec, 3)) + " secs\n"))
+            self.predictedFillFactorMessage.clear()
+            self.predictedTimeMessage.append(
+                "Predicted fill factor: " + str(
+                    self.truncate(self.mainController.getPredictedFillFactor(), 3) + " %\n"))
+            self.predictedWindingResistanceMessage.clear()
+            self.predictedWindingResistanceMessage.append(
+                "Predicted winding resistance: " + str(self.truncate(self.mainController.getPredictedResistance(),
+                                                                     3) + " Ohms\n"))
 
-        # Enable winding button
-        self.windingButton.enable()
+            # Enable winding button
+            self.parameterButton.enable()
+            self.zeroButton.enable()
+            self.windingButton.enable()
+
+            # Close
+            self.closeParameterWindow()
+
+        except:
+            self.parameterErrorMessage.clear()
+            self.parameterErrorMessage.append("Non-valid parameters entered")
+            self.parameterButton.enable()
 
     # ----------------------- User Interface Creation ---------------------------------------------------------------- #
 
@@ -281,6 +337,10 @@ class GUI:
                                                    grid=[0, i], align="left")
         i += 1
 
+        self.parameterErrorMessage = Text(self.parameterWindow, text="", grid=[0, i],
+                                          align="left")
+        i += 1
+
         # ----------------------- Winding Window Event Loop ---------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
         self.windingStatorMessage = Text(self.windingWindow, text="Winding stator", size=40, font="Times New Roman",
@@ -301,7 +361,9 @@ class GUI:
                                        align="left")
         self.inductanceMessage = Text(self.postWindingWindow, text="Inductance: ", font="Times New Roman", grid=[0, 3],
                                       align="left")
-        self.doneViewingPostWindingButton = PushButton(self.postWindingWindow, text="Done", grid=[0, 4], align="left")
+        self.doneViewingPostWindingButton = PushButton(self.postWindingWindow,
+                                                       command=self.doneViewingPostWindingButtonPressed, text="Done",
+                                                       grid=[0, 4], align="left")
 
         # ----------------------- Safety Interrupt Window Event Loop ------------------------------------------------- #
         self.windingSafetyTitleMessage = Text(self.safetyInterruptWindow, text="Safety Error", size=40,
