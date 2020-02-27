@@ -163,9 +163,7 @@ class GUI:
     # function for zeroing the machine when the zero button is pressed
     def zeroButtonPressed(self):
         # Have main send the zeroing signal to the arduino
-        print("Zero button pressed\n")
         errorCode = self.mainController.sendZeroCommand()
-        print(errorCode)
 
         # Use error code to print error message if needed
         if errorCode != 0:

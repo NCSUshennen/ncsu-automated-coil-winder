@@ -100,12 +100,12 @@ class WindingReader:
                 if self.serialConnection.inWaiting() > 0:
                     inputValue = ""
                     inputValue = self.serialConnection.readline().decode()
-                    print("in: " + inputValue)
+                    # print("in: " + inputValue)
 
                     if inputValue == self.arduinoReadyForCommand:
                         # Give Gcode command
-                        print("ReadyReceived\n")
-                        print(line)
+                        # print("ReadyReceived\n")
+                        # print(line)
                         self.serialConnection.write(line.encode())
                         readyReceived = True
                     elif inputValue == self.arduinoErrorOverPosition:
@@ -198,21 +198,19 @@ class WindingReader:
 
         # Close opened path file
         pathFile.close()
-        print("Done reading gcode")
         return 0
 
     def zeroMachine(self):
         """Sends the command to zero the machine
         """
         zeroCommand = "beginZeroing\n"
-        print("Reached zeroing")
         self.serialConnection.write(zeroCommand.encode())
         readyReceived = False
         while not readyReceived:
             if self.serialConnection.inWaiting() > 0:
                 inputValue = ""
                 inputValue = self.serialConnection.readline().decode()
-                print("in: " + inputValue)
+                # print("in: " + inputValue)
                 #TODO: Error checking here
                 if inputValue == self.arduinoReadyForCommand:
                     # Give Gcode command
@@ -220,90 +218,62 @@ class WindingReader:
                     self.serialConnection.write(zeroCommand.encode())
                     readyReceived = True
                 elif inputValue == self.arduinoErrorOverPosition:
-                    print("-1")
                     return -1
                 elif inputValue == self.arduinoErrorZeroSwitchX:
-                    print("-1")
                     return -2
                 elif inputValue == self.arduinoErrorZeroSwitchY:
-                    print("-1")
                     return -3
                 elif inputValue == self.arduinoErrorZeroSwitchZ:
-                    print("-1")
                     return -4
                 elif inputValue == self.arduinoErrorOutOfBounds:
-                    print("-1")
                     return -5
                 elif inputValue == self.arduinoErrorX1OverCurrent:
-                    print("-1")
                     return -6
                 elif inputValue == self.arduinoErrorX1VoltageRef:
-                    print("-1")
                     return -7
                 elif inputValue == self.arduinoErrorX1Param:
-                    print("-1")
                     return -8
                 elif inputValue == self.arduinoErrorX1OverVolt:
-                    print("-1")
                     return -9
                 elif inputValue == self.arduinoErrorX1OverPosition:
-                    print("-1")
                     return -10
                 elif inputValue == self.arduinoErrorX2OverCurrent:
-                    print("-1")
                     return -11
                 elif inputValue == self.arduinoErrorX2VoltageRef:
-                    print("-1")
                     return -12
                 elif inputValue == self.arduinoErrorX2Param:
-                    print("-1")
                     return -13
                 elif inputValue == self.arduinoErrorX2OverVolt:
-                    print("-1")
                     return -14
                 elif inputValue == self.arduinoErrorX2OverPosition:
-                    print("-1")
                     return -15
                 elif inputValue == self.arduinoErrorYOverCurrent:
-                    print("-1")
                     return -16
                 elif inputValue == self.arduinoErrorYVoltageRef:
-                    print("-1")
                     return -17
                 elif inputValue == self.arduinoErrorYParam:
-                    print("-1")
                     return -18
                 elif inputValue == self.arduinoErrorYOverVolt:
-                    print("-1")
                     return -19
                 elif inputValue == self.arduinoErrorYOverPosition:
-                    print("-1")
                     return -20
                 elif inputValue == self.arduinoErrorZOverCurrent:
                     return -21
                 elif inputValue == self.arduinoErrorZVoltageRef:
-                    print("-1")
                     return -22
                 elif inputValue == self.arduinoErrorZParam:
-                    print("-1")
                     return -23
                 elif inputValue == self.arduinoErrorZOverVolt:
-                    print("-1")
                     return -24
                 elif inputValue == self.arduinoErrorZOverPosition:
-                    print("-1")
                     return -25
                 elif inputValue == self.arduinoErrorFailedZeroSwitchX:
-                    print("-1")
                     return -26
                 elif inputValue == self.arduinoErrorFailedZeroSwitchY:
-                    print("-1")
                     return -27
                 elif inputValue == self.arduinoErrorFailedZeroSwitchZ:
-                    print("-1")
                     return -28
                 elif inputValue == self.arduinoErrorBadCommand:
-                    print("-1")
                     return -29
         return 0
 
