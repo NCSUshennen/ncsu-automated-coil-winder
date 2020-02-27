@@ -44,8 +44,9 @@ class MainController:
         """Construct a new Main by setting up serial connection
                 """
         # Create serial connection for arduinos
-        # self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
-        # self.arduinoMegaSerial.flushInput()
+        self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
+        self.arduinoMegaSerial.flushInput()
+        self.windingReader = WindingReader(self.arduinoMegaSerial)
         return
 
     def buildGCode(self, statorToothLength,
@@ -95,7 +96,6 @@ class MainController:
                                            wireGauge,
                                            wireMaterial,
                                            distanceBetweenTeeth)
-        windingReader = WindingReader(self.arduinoMegaSerial)
         self.windingTester = WindingTester(statorToothLength,
                                            statorToothHeight,
                                            statorToothWidth,
@@ -112,7 +112,7 @@ class MainController:
     def startWinding(self):
         """Sends the path with the Arduino with the windingReader
                 """
-        # return self.windingReader.sendPath("pathFile.txt")
+        return self.windingReader.sendPath("pathFile.txt")
 
     def startPostWindingTest(self):
         """Starts the post winding test
@@ -163,6 +163,7 @@ class MainController:
 
     def sendZeroCommand(self):
         # Send the command for the Arduino to zero the machine
+        print("Reached zeroing main")
         return self.windingReader.zeroMachine()
 
     def getResistance(self):
