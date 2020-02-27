@@ -26,6 +26,10 @@ class WindingTester:
     wireMaterial = None
     distanceBetweenTeeth = None
 
+    resistance = 0
+    capacitance = 0
+    inductance = 0
+
     # --------------------- Functions --------------------- #
     def __init__(self, statorToothLength, statorToothHeight,
                  statorToothWidth, statorShoeWidth, numberStatorTeeth,
@@ -66,7 +70,7 @@ class WindingTester:
           ["Stator Tooth Height: ", self.statorToothHeight],
           ["Stator Tooth Width: ", self.statorToothWidth],
           ["Stator Shoe Width: ", self.statorShoeWidth],
-          ["Number of Turns: ", self.numberTurns],
+          ["Number of Winds: ", self.numberWinds],
           ["Wire Gauge: ", self.wireGauge],
           ["Wire Material: ", self.wireMaterial],
           ["Distance Between Teeth: ", self.distanceBetweenTeeth]]
@@ -82,3 +86,11 @@ class WindingTester:
 
         print("Post winding writing complete")
 
+    def getResistance(self):
+        return self.resistance
+
+    def getCapacitance(self):
+        return self.capacitance
+
+    def getInductance(self):
+        return self.inductance

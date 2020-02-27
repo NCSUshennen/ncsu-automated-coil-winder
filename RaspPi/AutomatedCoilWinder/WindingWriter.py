@@ -154,6 +154,9 @@ class WindingWriter:
     def getMaxNumZWinds(self):
         return self.maxNumZWinds
 
+    def getWireDiameter(self):
+        return self.wireDiameter
+
     # --------------------- Path generation --------------------- #
 
     def calculateValues(self):
@@ -189,7 +192,8 @@ class WindingWriter:
     def createPosts(self):
         # TODO: update with actual post values later
         self.postXValues = [462, 478, 494, 510, 526, 542, 558, 574, 590, 606, 622, 638, 654, 670, 686, 702, 718, 734,
-                            750, 766, 782, 798]
+                            750, 766, 782, 798, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800,
+                            800, 800, 800, 800, 800, 800]
         self.currentPost = 0
         return
 
