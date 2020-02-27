@@ -126,10 +126,63 @@ class GUI:
 
         self.openParameterWindow()
 
+    def getErrorMessage(self, lookupCode):
+        errorMessage = {
+            -1: "",
+            -2: "",
+            -3: "",
+            -4: "",
+            -5: "",
+            -6: "",
+            -7: "",
+            -8: "",
+            -9: "",
+            -10: "",
+            -11: "",
+            -12: "",
+            -13: "",
+            -14: "",
+            -15: "",
+            -16: "",
+            -17: "",
+            -18: "",
+            -19: "",
+            -20: "",
+            -21: "",
+            -22: "",
+            -23: "",
+            -24: "",
+            -25: "",
+            -26: "",
+            -27: "",
+            -28: ""
+        }
+        return errorMessage.get(lookupCode)
+
     # function for zeroing the machine when the zero button is pressed
     def zeroButtonPressed(self):
         # Have main send the zeroing signal to the arduino
-        self.mainController.sendZeroCommand()
+        errorCode = self.mainController.sendZeroCommand()
+
+        # Use error code to print error message if needed
+        if errorCode != 0:
+            safetyMessage = self.getErrorMessage(errorCode)
+
+            # Update message on safety window
+            self.windingSafetyMessage.clear()
+            self.windingSafetyMessage.append(safetyMessage)
+
+            # Display safety screen and lock out everything else
+            self.safetyInterruptWindow.show()
+            self.parameterWindow.hide()
+            self.windingWindow.hide()
+            self.postWindingWindow.hide()
+
+            # Disable buttons
+            self.parameterButton.disable()
+            self.zeroButton.disable()
+            self.windingButton.disable()
+            self.postWindingButton.disable()
 
     # function for opening windingWindow when button pressed and starting winding process
     def windingButtonPressed(self):
@@ -142,16 +195,36 @@ class GUI:
         self.postWindingButton.disable()
 
         # Wind
-        self.mainController.startWinding()
+        errorCode = self.mainController.startWinding()
 
-        # Enable buttons after winding is completed
-        self.parameterButton.enable()
-        self.zeroButton.enable()
-        self.windingButton.enable()
-        self.postWindingButton.enable()
+        # Use error code to print error message
+        if errorCode != 0:
+            safetyMessage = self.getErrorMessage(errorCode)
 
-        # Close Window
-        self.closeWindingWindow()
+            # Update message on safety window
+            self.windingSafetyMessage.clear()
+            self.windingSafetyMessage.append(safetyMessage)
+
+            # Display safety screen and lock out everything else
+            self.safetyInterruptWindow.show()
+            self.parameterWindow.hide()
+            self.windingWindow.hide()
+            self.postWindingWindow.hide()
+
+            # Disable buttons
+            self.parameterButton.disable()
+            self.zeroButton.disable()
+            self.windingButton.disable()
+            self.postWindingButton.disable()
+        else:
+            # Enable buttons after winding is completed
+            self.parameterButton.enable()
+            self.zeroButton.enable()
+            self.windingButton.enable()
+            self.postWindingButton.enable()
+
+            # Close Window
+            self.closeWindingWindow()
 
     def postWindingButtonPressed(self):
         self.mainController.startPostWindingTest()

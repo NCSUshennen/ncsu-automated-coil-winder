@@ -20,6 +20,44 @@ class WindingReader:
     serialConnection = None
     arduinoReadyForCommand = "ready\n"
 
+    # Error codes here
+    arduinoErrorOverPosition = "ErrorHitOverPositionSwitch\n"
+
+    arduinoErrorZeroSwitchX = "ErrorHitXZeroingSwitch\n"
+    arduinoErrorZeroSwitchY = "ErrorHitYZeroingSwitch\n"
+    arduinoErrorZeroSwitchZ = "ErrorHitZZeroingSwitch\n"
+
+    arduinoErrorOutOfBounds = "ErrorDestinationOutOfBounds\n"
+
+    arduinoErrorX1OverCurrent = "ErrorAlarmX1OverCurrent\n"
+    arduinoErrorX1VoltageRef = "ErrorAlarmX1VoltageReference\n"
+    arduinoErrorX1Param = "ErrorAlarmX1Parameters\n"
+    arduinoErrorX1OverVolt = "ErrorAlarmX1OverVoltage\n"
+    arduinoErrorX1OverPosition = "ErrorAlarmX1OverPosition\n"
+
+    arduinoErrorX2OverCurrent = "ErrorAlarmX2OverCurrent\n"
+    arduinoErrorX2VoltageRef = "ErrorAlarmX2VoltageReference\n"
+    arduinoErrorX2Param = "ErrorAlarmX2Parameters\n"
+    arduinoErrorX2OverVolt = "ErrorAlarmX2OverVoltage\n"
+    arduinoErrorX2OverPosition = "ErrorAlarmX2OverPosition\n"
+
+    arduinoErrorYOverCurrent = "ErrorAlarmYOverCurrent\n"
+    arduinoErrorYVoltageRef = "ErrorAlarmYVoltageReference\n"
+    arduinoErrorYParam = "ErrorAlarmYParameters\n"
+    arduinoErrorYOverVolt = "ErrorAlarmYOverVoltage\n"
+    arduinoErrorYOverPosition = "ErrorAlarmYOverPosition\n"
+
+    arduinoErrorZOverCurrent = "ErrorAlarmZOverCurrent\n"
+    arduinoErrorZVoltageRef = "ErrorAlarmZVoltageReference\n"
+    arduinoErrorZParam = "ErrorAlarmZParameters\n"
+    arduinoErrorZOverVolt = "ErrorAlarmZOverVoltage\n"
+    arduinoErrorZOverPosition = "ErrorAlarmZOverPosition\n"
+
+    arduinoErrorFailedZeroSwitchX = "ErrorFailedToHitXZeroingSwitch\n" # Specifically for zeroing circuit
+    arduinoErrorFailedZeroSwitchY = "ErrorFailedToHitYZeroingSwitch\n"
+    arduinoErrorFailedZeroSwitchZ = "ErrorFailedToHitZZeroingSwitch\n"
+
+
     # --------------------- Functions --------------------- #
     def __init__(self, arduinoSerial):
         """Construct a new WindingReader
@@ -36,11 +74,11 @@ class WindingReader:
         # --------------------- Variables --------------------- #
         windingPathCmd = "beginWindingPath\n"
 
-        # TODO: Send the path stored in the given file name
+        # Send the path stored in the given file name
         # Open the path file for reading and sending
         pathFile = open(fileName, "r")
 
-        # TODO: Store each line in a string and send that string to the arduino
+        # Store each line in a string and send that string to the arduino
         #       with a newline char at end (readline)
         #       When reach end of file, close out
 
@@ -61,16 +99,30 @@ class WindingReader:
                     inputValue = ""
                     inputValue = self.serialConnection.readline().decode()
                     print("in: " + inputValue)
+
                     if inputValue == self.arduinoReadyForCommand:
                         # Give Gcode command
                         print("ReadyReceived\n")
                         print(line)
                         self.serialConnection.write(line.encode())
                         readyReceived = True
+                    elif inputValue == self.arduinoErrorOverPosition:
+                        pathFile.close()
+                        return -1
+                    elif inputValue == self.arduinoErrorZeroSwitchX:
+                        pathFile.close()
+                        return -2
+                    elif inputValue == self.arduinoErrorOutOfBounds:
+                        pathFile.close()
+                        return -3
+                    elif inputValue == self.arduinoErrorOutOfBounds:
+                        pathFile.close()
+                        return -3
 
         # Close opened path file
         pathFile.close()
         print("Done reading gcode")
+        return 0
 
     def zeroMachine(self, ui):
         """Sends the command to zero the machine
@@ -82,12 +134,15 @@ class WindingReader:
                 inputValue = ""
                 inputValue = self.serialConnection.readline().decode()
                 # print("in: " + inputValue)
+                #TODO: Error checking here
                 if inputValue == self.arduinoReadyForCommand:
                     # Give Gcode command
                     # print("ReadyReceived\n")
                     self.serialConnection.write(zeroCommand.encode())
                     readyReceived = True
-        return
+                elif inputValue == self.arduinoErrorFailedZeroSwitch:
+                    return -4
+        return 0
 
         '''
         # Old code for making the machine go away for Fall 2019 Demo day
