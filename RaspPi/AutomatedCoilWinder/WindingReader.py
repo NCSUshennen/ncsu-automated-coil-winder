@@ -57,6 +57,8 @@ class WindingReader:
     arduinoErrorFailedZeroSwitchY = "ErrorFailedToHitYZeroingSwitch\n"
     arduinoErrorFailedZeroSwitchZ = "ErrorFailedToHitZZeroingSwitch\n"
 
+    arduinoErrorBadCommand = "ErrorBadCommand\n"
+
 
     # --------------------- Functions --------------------- #
     def __init__(self, arduinoSerial):
@@ -190,6 +192,9 @@ class WindingReader:
                     elif inputValue == self.arduinoErrorFailedZeroSwitchZ:
                         pathFile.close()
                         return -28
+                    elif inputValue == self.arduinoErrorBadCommand:
+                        pathFile.close()
+                        return -29
 
         # Close opened path file
         pathFile.close()
@@ -268,6 +273,8 @@ class WindingReader:
                     return -27
                 elif inputValue == self.arduinoErrorFailedZeroSwitchZ:
                     return -28
+                elif inputValue == self.arduinoErrorBadCommand:
+                    return -29
         return 0
 
         '''

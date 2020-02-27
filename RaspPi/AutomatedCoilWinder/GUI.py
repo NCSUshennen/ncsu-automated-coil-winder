@@ -155,7 +155,8 @@ class GUI:
             -25: "ErrorAlarmZOverPosition\n",
             -26: "ErrorFailedToHitXZeroingSwitch\n",
             -27: "ErrorFailedToHitYZeroingSwitch\n",
-            -28: "ErrorFailedToHitZZeroingSwitch\n"
+            -28: "ErrorFailedToHitZZeroingSwitch\n",
+            -29: "ErrorBadCommand\n"
         }
         return errorMessage.get(lookupCode)
 
