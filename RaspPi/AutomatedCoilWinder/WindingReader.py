@@ -112,12 +112,84 @@ class WindingReader:
                     elif inputValue == self.arduinoErrorZeroSwitchX:
                         pathFile.close()
                         return -2
-                    elif inputValue == self.arduinoErrorOutOfBounds:
+                    elif inputValue == self.arduinoErrorZeroSwitchY:
                         pathFile.close()
                         return -3
+                    elif inputValue == self.arduinoErrorZeroSwitchZ:
+                        pathFile.close()
+                        return -4
                     elif inputValue == self.arduinoErrorOutOfBounds:
                         pathFile.close()
-                        return -3
+                        return -5
+                    elif inputValue == self.arduinoErrorX1OverCurrent:
+                        pathFile.close()
+                        return -6
+                    elif inputValue == self.arduinoErrorX1VoltageRef:
+                        pathFile.close()
+                        return -7
+                    elif inputValue == self.arduinoErrorX1Param:
+                        pathFile.close()
+                        return -8
+                    elif inputValue == self.arduinoErrorX1OverVolt:
+                        pathFile.close()
+                        return -9
+                    elif inputValue == self.arduinoErrorX1OverPosition:
+                        pathFile.close()
+                        return -10
+                    elif inputValue == self.arduinoErrorX2OverCurrent:
+                        pathFile.close()
+                        return -11
+                    elif inputValue == self.arduinoErrorX2VoltageRef:
+                        pathFile.close()
+                        return -12
+                    elif inputValue == self.arduinoErrorX2Param:
+                        pathFile.close()
+                        return -13
+                    elif inputValue == self.arduinoErrorX2OverVolt:
+                        pathFile.close()
+                        return -14
+                    elif inputValue == self.arduinoErrorX2OverPosition:
+                        pathFile.close()
+                        return -15
+                    elif inputValue == self.arduinoErrorYOverCurrent:
+                        pathFile.close()
+                        return -16
+                    elif inputValue == self.arduinoErrorYVoltageRef:
+                        pathFile.close()
+                        return -17
+                    elif inputValue == self.arduinoErrorYParam:
+                        pathFile.close()
+                        return -18
+                    elif inputValue == self.arduinoErrorYOverVolt:
+                        pathFile.close()
+                        return -19
+                    elif inputValue == self.arduinoErrorYOverPosition:
+                        pathFile.close()
+                        return -20
+                    elif inputValue == self.arduinoErrorZOverCurrent:
+                        pathFile.close()
+                        return -21
+                    elif inputValue == self.arduinoErrorZVoltageRef:
+                        pathFile.close()
+                        return -22
+                    elif inputValue == self.arduinoErrorZParam:
+                        pathFile.close()
+                        return -23
+                    elif inputValue == self.arduinoErrorZOverVolt:
+                        pathFile.close()
+                        return -24
+                    elif inputValue == self.arduinoErrorZOverPosition:
+                        pathFile.close()
+                        return -25
+                    elif inputValue == self.arduinoErrorFailedZeroSwitchX:
+                        pathFile.close()
+                        return -26
+                    elif inputValue == self.arduinoErrorFailedZeroSwitchY:
+                        pathFile.close()
+                        return -27
+                    elif inputValue == self.arduinoErrorFailedZeroSwitchZ:
+                        pathFile.close()
+                        return -28
 
         # Close opened path file
         pathFile.close()
@@ -140,8 +212,62 @@ class WindingReader:
                     # print("ReadyReceived\n")
                     self.serialConnection.write(zeroCommand.encode())
                     readyReceived = True
-                elif inputValue == self.arduinoErrorFailedZeroSwitch:
+                elif inputValue == self.arduinoErrorOverPosition:
+                    return -1
+                elif inputValue == self.arduinoErrorZeroSwitchX:
+                    return -2
+                elif inputValue == self.arduinoErrorZeroSwitchY:
+                    return -3
+                elif inputValue == self.arduinoErrorZeroSwitchZ:
                     return -4
+                elif inputValue == self.arduinoErrorOutOfBounds:
+                    return -5
+                elif inputValue == self.arduinoErrorX1OverCurrent:
+                    return -6
+                elif inputValue == self.arduinoErrorX1VoltageRef:
+                    return -7
+                elif inputValue == self.arduinoErrorX1Param:
+                    return -8
+                elif inputValue == self.arduinoErrorX1OverVolt:
+                    return -9
+                elif inputValue == self.arduinoErrorX1OverPosition:
+                    return -10
+                elif inputValue == self.arduinoErrorX2OverCurrent:
+                    return -11
+                elif inputValue == self.arduinoErrorX2VoltageRef:
+                    return -12
+                elif inputValue == self.arduinoErrorX2Param:
+                    return -13
+                elif inputValue == self.arduinoErrorX2OverVolt:
+                    return -14
+                elif inputValue == self.arduinoErrorX2OverPosition:
+                    return -15
+                elif inputValue == self.arduinoErrorYOverCurrent:
+                    return -16
+                elif inputValue == self.arduinoErrorYVoltageRef:
+                    return -17
+                elif inputValue == self.arduinoErrorYParam:
+                    return -18
+                elif inputValue == self.arduinoErrorYOverVolt:
+                    return -19
+                elif inputValue == self.arduinoErrorYOverPosition:
+                    return -20
+                elif inputValue == self.arduinoErrorZOverCurrent:
+                    return -21
+                elif inputValue == self.arduinoErrorZVoltageRef:
+                    return -22
+                elif inputValue == self.arduinoErrorZParam:
+                    return -23
+                elif inputValue == self.arduinoErrorZOverVolt:
+                    return -24
+                elif inputValue == self.arduinoErrorZOverPosition:
+                    return -25
+                elif inputValue == self.arduinoErrorFailedZeroSwitchX:
+                    return -26
+                elif inputValue == self.arduinoErrorFailedZeroSwitchY:
+                    return -27
+                elif inputValue == self.arduinoErrorFailedZeroSwitchZ:
+                    return -28
         return 0
 
         '''
