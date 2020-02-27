@@ -275,7 +275,6 @@ class GUI:
             self.wireMaterial = self.enteredWireMaterial.value
 
             # Instantiate Main and call the function for building gcode
-            self.mainController = MainController()
             self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
                                            self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
                                            self.numberWinds,
@@ -316,6 +315,7 @@ class GUI:
     def __init__(self):
         """Construct a new UserInterface
         """
+        self.mainController = MainController()
         # Creates the GUI named app and appropriate windows
         self.app = App(title="Main window")
         self.parameterWindow = Window(self.app, title="Parameter window", layout="grid")

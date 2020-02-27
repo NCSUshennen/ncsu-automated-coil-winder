@@ -163,7 +163,6 @@ class MainController:
 
     def sendZeroCommand(self):
         # Send the command for the Arduino to zero the machine
-        print("Reached zeroing main")
         return self.windingReader.zeroMachine()
 
     def getResistance(self):
