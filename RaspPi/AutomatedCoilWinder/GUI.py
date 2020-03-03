@@ -1,4 +1,5 @@
 # imports
+import time
 from guizero import App, Window, Text, TextBox, PushButton, Combo
 from main import *
 
@@ -126,10 +127,66 @@ class GUI:
 
         self.openParameterWindow()
 
+    def getErrorMessage(self, lookupCode):
+        errorMessage = {
+            -1: "ErrorHitOverPositionSwitch\n",
+            -2: "ErrorHitXZeroingSwitch\n",
+            -3: "ErrorHitYZeroingSwitch\n",
+            -4: "ErrorHitZZeroingSwitch\n",
+            -5: "ErrorDestinationOutOfBounds\n",
+            -6: "ErrorAlarmX1OverCurrent\n",
+            -7: "ErrorAlarmX1VoltageReference\n",
+            -8: "ErrorAlarmX1Parameters\n",
+            -9: "ErrorAlarmX1OverVoltage\n",
+            -10: "ErrorAlarmX1OverPosition\n",
+            -11: "ErrorAlarmX2OverCurrent\n",
+            -12: "ErrorAlarmX2VoltageReference\n",
+            -13: "ErrorAlarmX2Parameters\n",
+            -14: "ErrorAlarmX2OverVoltage\n",
+            -15: "ErrorAlarmX2OverPosition\n",
+            -16: "ErrorAlarmYOverCurrent\n",
+            -17: "ErrorAlarmYVoltageReference\n",
+            -18: "ErrorAlarmYParameters\n",
+            -19: "ErrorAlarmYOverVoltage\n",
+            -20: "ErrorAlarmYOverPosition\n",
+            -21: "ErrorAlarmZOverCurrent\n",
+            -22: "ErrorAlarmZVoltageReference\n",
+            -23: "ErrorAlarmZParameters\n",
+            -24: "ErrorAlarmZOverVoltage\n",
+            -25: "ErrorAlarmZOverPosition\n",
+            -26: "ErrorFailedToHitXZeroingSwitch\n",
+            -27: "ErrorFailedToHitYZeroingSwitch\n",
+            -28: "ErrorFailedToHitZZeroingSwitch\n",
+            -29: "ErrorBadCommand\n"
+        }
+        return errorMessage.get(lookupCode)
+
     # function for zeroing the machine when the zero button is pressed
     def zeroButtonPressed(self):
         # Have main send the zeroing signal to the arduino
-        self.mainController.sendZeroCommand()
+        errorCode = self.mainController.sendZeroCommand()
+
+        # Use error code to print error message if needed
+        if errorCode != 0:
+            safetyMessage = self.getErrorMessage(errorCode)
+
+            # Update message on safety window
+            self.windingSafetyMessage.clear()
+            self.windingSafetyMessage.append(safetyMessage)
+
+            # Display safety screen and lock out everything else
+            self.safetyInterruptWindow.show()
+            self.parameterWindow.hide()
+            self.windingWindow.hide()
+            self.postWindingWindow.hide()
+
+            # Disable buttons
+            self.parameterButton.disable()
+            self.zeroButton.disable()
+            self.windingButton.disable()
+            self.postWindingButton.disable()
+        else:
+            return
 
     # function for opening windingWindow when button pressed and starting winding process
     def windingButtonPressed(self):
@@ -142,16 +199,36 @@ class GUI:
         self.postWindingButton.disable()
 
         # Wind
-        self.mainController.startWinding()
+        errorCode = self.mainController.startWinding()
 
-        # Enable buttons after winding is completed
-        self.parameterButton.enable()
-        self.zeroButton.enable()
-        self.windingButton.enable()
-        self.postWindingButton.enable()
+        # Use error code to print error message
+        if errorCode != 0:
+            safetyMessage = self.getErrorMessage(errorCode)
 
-        # Close Window
-        self.closeWindingWindow()
+            # Update message on safety window
+            self.windingSafetyMessage.clear()
+            self.windingSafetyMessage.append(safetyMessage)
+
+            # Display safety screen and lock out everything else
+            self.safetyInterruptWindow.show()
+            self.parameterWindow.hide()
+            self.windingWindow.hide()
+            self.postWindingWindow.hide()
+
+            # Disable buttons
+            self.parameterButton.disable()
+            self.zeroButton.disable()
+            self.windingButton.disable()
+            self.postWindingButton.disable()
+        else:
+            # Enable buttons after winding is completed
+            self.parameterButton.enable()
+            self.zeroButton.enable()
+            self.windingButton.enable()
+            self.postWindingButton.enable()
+
+            # Close Window
+            self.closeWindingWindow()
 
     def postWindingButtonPressed(self):
         self.mainController.startPostWindingTest()
@@ -201,7 +278,6 @@ class GUI:
             self.wireMaterial = self.enteredWireMaterial.value
 
             # Instantiate Main and call the function for building gcode
-            self.mainController = MainController()
             self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
                                            self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
                                            self.numberWinds,
@@ -242,6 +318,7 @@ class GUI:
     def __init__(self):
         """Construct a new UserInterface
         """
+        self.mainController = MainController()
         # Creates the GUI named app and appropriate windows
         self.app = App(title="Main window")
         self.parameterWindow = Window(self.app, title="Parameter window", layout="grid")

@@ -19,7 +19,7 @@ from WindingTester import *
 
 class MainController:
     arduinoMegaSerial = None
-    arduinoMegaPort = "/dev/ttyACM0"
+    arduinoMegaPort = "/dev/ttyACM1"
     arduinoMegaRate = "9600"
     arduinoReadyForCommand = "ready\n"
 
@@ -44,8 +44,9 @@ class MainController:
         """Construct a new Main by setting up serial connection
                 """
         # Create serial connection for arduinos
-        # self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
-        # self.arduinoMegaSerial.flushInput()
+        self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
+        self.arduinoMegaSerial.flushInput()
+        self.windingReader = WindingReader(self.arduinoMegaSerial)
         return
 
     def buildGCode(self, statorToothLength,
@@ -95,7 +96,6 @@ class MainController:
                                            wireGauge,
                                            wireMaterial,
                                            distanceBetweenTeeth)
-        windingReader = WindingReader(self.arduinoMegaSerial)
         self.windingTester = WindingTester(statorToothLength,
                                            statorToothHeight,
                                            statorToothWidth,
@@ -112,7 +112,7 @@ class MainController:
     def startWinding(self):
         """Sends the path with the Arduino with the windingReader
                 """
-        # self.windingReader.sendPath("pathFile.txt")
+        return self.windingReader.sendPath("pathFile.txt")
 
     def startPostWindingTest(self):
         """Starts the post winding test
@@ -135,13 +135,6 @@ class MainController:
         wireArea = 3.14 * (self.windingWriter.getWireDiameter() / 2) * (self.windingWriter.getWireDiameter() / 2) * (
                 2 * self.numberWinds * self.numberStatorTeeth)
         fillFactor = 100 * (wireArea / windLeftoverArea)
-
-        print(str(radius1) + "\n")
-        print(str(radius2) + "\n")
-        print(str(rectangleArea) + "\n")
-        print(str(windTotalArea) + "\n")
-        print(str(windLeftoverArea) + "\n")
-        print(str(wireArea) + "\n")
         return fillFactor
         '''
         numberLayers = 2
@@ -163,8 +156,8 @@ class MainController:
 
     def sendZeroCommand(self):
         # Send the command for the Arduino to zero the machine
-        self.windingReader.zeroMachine()
-        return
+        errorCode = self.windingReader.zeroMachine()
+        return errorCode
 
     def getResistance(self):
         return self.windingTester.getResistance()
