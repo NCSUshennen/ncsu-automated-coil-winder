@@ -135,13 +135,6 @@ class MainController:
         wireArea = 3.14 * (self.windingWriter.getWireDiameter() / 2) * (self.windingWriter.getWireDiameter() / 2) * (
                 2 * self.numberWinds * self.numberStatorTeeth)
         fillFactor = 100 * (wireArea / windLeftoverArea)
-
-        print(str(radius1) + "\n")
-        print(str(radius2) + "\n")
-        print(str(rectangleArea) + "\n")
-        print(str(windTotalArea) + "\n")
-        print(str(windLeftoverArea) + "\n")
-        print(str(wireArea) + "\n")
         return fillFactor
         '''
         numberLayers = 2
@@ -164,7 +157,6 @@ class MainController:
     def sendZeroCommand(self):
         # Send the command for the Arduino to zero the machine
         errorCode = self.windingReader.zeroMachine()
-        print("sendZeroCommand")
         return errorCode
 
     def getResistance(self):
