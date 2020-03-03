@@ -91,7 +91,7 @@
 #define Z 2
 
 // Used to enable or disable the zeroing switches in the winding algorithm
-#define ENABLE_ZEROING 1
+#define ENABLE_ZEROING 0
 
 // Commands
 #define SERIAL_TEST "Hello There!"
@@ -118,6 +118,9 @@
 #define ZEROING_Z_ERROR "ErrorHitZZeroingSwitch\n"
 #define ZEROING_Y_ERROR "ErrorHitYZeroingSwitch\n"
 #define ZEROING_X_ERROR "ErrorHitXZeroingSwitch\n"
+#define FAILED_ZEROING_Z_ERROR "ErrorFailedToHitZZeroingSwitch\n"
+#define FAILED_ZEROING_Y_ERROR "ErrorFailedToHitYZeroingSwitch\n"
+#define FAILED_ZEROING_X_ERROR "ErrorFailedToHitXZeroingSwitch\n"
 
 uint8_t task = 0; // 0 indicates Idle
 bool askedForReady = false;

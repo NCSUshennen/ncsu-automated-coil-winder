@@ -56,7 +56,7 @@ static void MyTask4(void* pvParameters)
       // Break if we move more than the max distance or hit the over-position switch without hitting the zeroing switch
       if (!hitXZeroingSwitch)
       {
-        Serial.println("ErrorFailedToHitXZeroingSwitch");
+        Serial.print(FAILED_ZEROING_X_ERROR);
         continue; 
       }
 
@@ -85,7 +85,7 @@ static void MyTask4(void* pvParameters)
       // Break if we move more than the max distance or hit the over-position switch without hitting the zeroing switch
       if (!hitYZeroingSwitch)
       {
-        Serial.println("ErrorFailedToHitYZeroingSwitch");
+        Serial.print(FAILED_ZEROING_Y_ERROR);
         continue; 
       }
 
@@ -113,11 +113,11 @@ static void MyTask4(void* pvParameters)
       // Break if we move more than the max distance or hit the over-position switch without hitting the zeroing switch
       if (!hitZZeroingSwitch)
       {
-        Serial.println("ErrorFailedToHitZZeroingSwitch");
+        Serial.print(FAILED_ZEROING_Z_ERROR);
         continue; 
       }
       
-      Serial.println("Ta-da!");
+      Serial.print("Ta-da!\n");
       
       // Reset this position as (0, 0, 0)
       currentPosition[X] = 0;

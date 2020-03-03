@@ -37,8 +37,6 @@
 #define Y_AXIS_LIMIT 600.0
 #define Z_AXIS_LIMIT 200.0
 
-int currentErrorValue = -1;
-
 float currentPosition[3] = {0, 0, 0};
 
 static void MyTask1(void* pvParameters)
@@ -47,131 +45,7 @@ static void MyTask1(void* pvParameters)
   while(1)
   { 
     if (xSemaphoreTake(xSemaphore1, portMAX_DELAY) == pdTRUE)
-    {
-      // This switch statement is used for testing Sarah's error processing and NEEDS TO BE REMOVED when finished with that test
-      switch(currentErrorValue)
-      {
-        case -1:
-          Serial.print(OVER_POSITION_ERROR);
-          currentErrorValue--;
-          break;
-        case -2:
-          Serial.print(ZEROING_X_ERROR);
-          currentErrorValue--;
-          break;
-        case -3:
-          Serial.print(ZEROING_Y_ERROR);
-          currentErrorValue--;
-          break;
-        case -4:
-          Serial.print(ZEROING_Z_ERROR);
-          currentErrorValue--;
-          break;
-        case -5:
-          Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
-          currentErrorValue--;
-          break;
-        case -6:
-          Serial.print("ErrorAlarmX1OverCurrent\n");
-          currentErrorValue--;
-          break;
-        case -7:
-          Serial.print("ErrorAlarmX1VoltageReference\n");
-          currentErrorValue--;
-          break;
-        case -8:
-          Serial.print("ErrorAlarmX1Parameters\n");
-          currentErrorValue--;
-          break;
-        case -9:
-          Serial.print("ErrorAlarmX1OverVoltage\n");
-          currentErrorValue--;
-          break;
-        case -10:
-          Serial.print("ErrorAlarmX1OverPosition\n");
-          currentErrorValue--;
-          break;
-        case -11:
-          Serial.print("ErrorAlarmX2OverCurrent\n");
-          currentErrorValue--;
-          break;
-        case -12:
-          Serial.print("ErrorAlarmX2VoltageReference\n");
-          currentErrorValue--;
-          break;
-        case -13:
-          Serial.print("ErrorAlarmX2Parameters\n");
-          currentErrorValue--;
-          break;
-        case -14:
-          Serial.print("ErrorAlarmX2OverVoltage\n");
-          currentErrorValue--;
-          break;
-        case -15:
-          Serial.print("ErrorAlarmX2OverPosition\n");
-          currentErrorValue--;
-          break;
-        case -16:
-          Serial.print("ErrorAlarmYOverCurrent\n");
-          currentErrorValue--;
-          break;
-        case -17:
-          Serial.print("ErrorAlarmYVoltageReference\n");
-          currentErrorValue--;
-          break;
-        case -18:
-          Serial.print("ErrorAlarmYParameters\n");
-          currentErrorValue--;
-          break;
-        case -19:
-          Serial.print("ErrorAlarmYOverVoltage\n");
-          currentErrorValue--;
-          break;
-        case -20:
-          Serial.print("ErrorAlarmYOverPosition\n");
-          currentErrorValue--;
-          break;
-        case -21:
-          Serial.print("ErrorAlarmZOverCurrent\n");
-          currentErrorValue--;
-          break;
-        case -22:
-          Serial.print("ErrorAlarmZVoltageReference\n");
-          currentErrorValue--;
-          break;
-        case -23:
-          Serial.print("ErrorAlarmZParameters\n");
-          currentErrorValue--;
-          break;
-        case -24:
-          Serial.print("ErrorAlarmZOverVoltage\n");
-          currentErrorValue--;
-          break;
-        case -25:
-          Serial.print("ErrorAlarmZOverPosition\n");
-          currentErrorValue--;
-          break;
-        case -26:
-          Serial.print("ErrorFailedToHitXZeroingSwitch\n");
-          currentErrorValue--;
-          break;
-        case -27:
-          Serial.print("ErrorFailedToHitYZeroingSwitch\n");
-          currentErrorValue--;
-          break;
-        case -28:
-          Serial.print("ErrorFailedToHitZZeroingSwitch\n");
-          currentErrorValue--;
-          break;
-        case -29:
-          Serial.print(BAD_COMMAND_ERROR);
-          currentErrorValue = -1;
-          break;
-        default:
-          currentErrorValue = -1;
-          break;
-      }
-      
+    { 
       task = 1;
       digitalWrite(TASK_1,HIGH);
       digitalWrite(TASK_2,LOW); 
@@ -188,9 +62,7 @@ static void MyTask1(void* pvParameters)
       Serial.print("ready\n");
       
       // Await 1st %
-
-      //Change this back from 0 to portMAX_DELAY ASAP
-      if (xSemaphoreTake(xSemaphorePercent, 0) == pdTRUE)
+      if (xSemaphoreTake(xSemaphorePercent, portMAX_DELAY) == pdTRUE)
       {
         task = 1;
         digitalWrite(TASK_1,HIGH);
@@ -629,6 +501,14 @@ static void MyTask1(void* pvParameters)
             bool overPositionSwitchOpen = true;
             for (i=0; i<totalPulses[X]; i++)
             { 
+               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+               if (!overPositionSwitchOpen)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  overPositionSwitchOpen = true;
+                  break;
+               }
 #if ENABLE_ZEROING
                // Check to see if a contact switch has been hit and react accordingly
                xZeroingSwitchOpen = (digitalRead(ZEROING_X) == HIGH);
@@ -671,6 +551,13 @@ static void MyTask1(void* pvParameters)
               break;
             }
 #endif
+            if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              hitOverPositionSwitch = false;
+              break;
+            }
+            
             bool hitYZeroingSwitch = false;
             bool yZeroingSwitchOpen = true;
             overPositionSwitchOpen = true;
@@ -680,6 +567,15 @@ static void MyTask1(void* pvParameters)
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
                digitalWrite(MOTOR_Y_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+
+               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+               if (!overPositionSwitchOpen)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  overPositionSwitchOpen = true;
+                  break;
+               }
 
 #if ENABLE_ZEROING
                // Check to see if a contact switch has been hit and react accordingly
@@ -713,6 +609,13 @@ static void MyTask1(void* pvParameters)
             }
 #endif
             
+            if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              hitOverPositionSwitch = false;
+              break;
+            }
+            
             bool hitZZeroingSwitch = false;
             bool zZeroingSwitchOpen = true;
             overPositionSwitchOpen = true;
@@ -722,6 +625,15 @@ static void MyTask1(void* pvParameters)
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
                digitalWrite(MOTOR_Z_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+
+               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+               if (!overPositionSwitchOpen)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  overPositionSwitchOpen = true;
+                  break;
+               }
 
 #if ENABLE_ZEROING
                // Check to see if a contact switch has been hit and react accordingly
@@ -755,6 +667,13 @@ static void MyTask1(void* pvParameters)
             }
 #endif
 
+            if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              hitOverPositionSwitch = false;
+              break;
+            }
+            
             // Set all direction values low
             digitalWrite(MOTOR_X1_DIR, LOW);
             digitalWrite(MOTOR_X2_DIR, LOW);
