@@ -212,22 +212,24 @@ class WindingReader:
             if self.serialConnection.inWaiting() > 0:
                 inputValue = ""
                 inputValue = self.serialConnection.readline().decode()
-                # print("in: " + inputValue)
+                print("in: " + inputValue)
                 if inputValue == self.arduinoReadyForCommand:
                     # Give Zeroing command
-                    # print("ReadyReceived\n")
+                    print("ReadyReceived\n")
                     self.serialConnection.write(zeroCommand.encode())
                     readyReceived = True
 
+        print("zeroing0")
         tadaReceived = False
         while not tadaReceived:
             if self.serialConnection.inWaiting() > 0:
+                print("zeroing1")
                 inputValue = ""
                 inputValue = self.serialConnection.readline().decode()
-                # print("in: " + inputValue)
+                print("in: " + inputValue)
                 # Error checking here
                 if inputValue == self.arduinoTadaCommand:
-                    # print("TadaReceived\n")
+                    print("TadaReceived\n")
                     tadaReceived = True
                 elif inputValue == self.arduinoErrorOverPosition:
                     return -1

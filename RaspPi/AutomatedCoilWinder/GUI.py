@@ -167,9 +167,10 @@ class GUI:
     def zeroButtonPressed(self):
         # Have main send the zeroing signal to the arduino
         errorCode = self.mainController.sendZeroCommand()
+        print("errorCode: " + str(errorCode))
 
         # Use error code to print error message if needed
-        if errorCode != 0:
+        if (errorCode != 0):
             safetyMessage = self.getErrorMessage(errorCode)
 
             # Update message on safety window
@@ -203,9 +204,10 @@ class GUI:
         # Wind
         start = timer()
         errorCode = self.mainController.startWinding()
+        print("errorCode: " + str(errorCode))
 
         # Use error code to print error message
-        if (errorCode != 0) or (errorCode != None):
+        if (errorCode != 0):
             safetyMessage = self.getErrorMessage(errorCode)
 
             # Update message on safety window
@@ -230,7 +232,7 @@ class GUI:
 
             # Update actual time message
             self.actualTimeMessage.clear()
-            self.actualTimeMessage.append(str(actualTime) + " sec")
+            self.actualTimeMessage.append("Actual time: " + str(actualTime) + " sec")
 
             # Enable buttons after winding is completed
             self.parameterButton.enable()
