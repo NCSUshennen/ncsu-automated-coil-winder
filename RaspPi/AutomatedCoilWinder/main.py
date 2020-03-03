@@ -19,7 +19,7 @@ from WindingTester import *
 
 class MainController:
     arduinoMegaSerial = None
-    arduinoMegaPort = "/dev/ttyACM0"
+    arduinoMegaPort = "/dev/ttyACM1"
     arduinoMegaRate = "9600"
     arduinoReadyForCommand = "ready\n"
 
@@ -163,7 +163,9 @@ class MainController:
 
     def sendZeroCommand(self):
         # Send the command for the Arduino to zero the machine
-        return self.windingReader.zeroMachine()
+        errorCode = self.windingReader.zeroMachine()
+        print("sendZeroCommand")
+        return errorCode
 
     def getResistance(self):
         return self.windingTester.getResistance()

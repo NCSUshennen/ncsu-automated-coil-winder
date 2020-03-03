@@ -19,6 +19,7 @@ class WindingReader:
     # --------------------- Variables --------------------- #
     serialConnection = None
     arduinoReadyForCommand = "ready\n"
+    arduinoTadaCommand = "Ta-da!\r\n"
 
     # Error codes here
     arduinoErrorOverPosition = "ErrorHitOverPositionSwitch\n"
@@ -203,20 +204,36 @@ class WindingReader:
     def zeroMachine(self):
         """Sends the command to zero the machine
         """
+        print("zeroMachine1")
         zeroCommand = "beginZeroing\n"
-        self.serialConnection.write(zeroCommand.encode())
+        isArduinoReadyCommand = "isArduinoReady\n"
+        print("zeroMachine2")
+        self.serialConnection.write(isArduinoReadyCommand.encode())
         readyReceived = False
         while not readyReceived:
             if self.serialConnection.inWaiting() > 0:
+                print("zeroMachine3")
                 inputValue = ""
                 inputValue = self.serialConnection.readline().decode()
-                # print("in: " + inputValue)
-                #TODO: Error checking here
+                print("in: " + inputValue)
                 if inputValue == self.arduinoReadyForCommand:
                     # Give Gcode command
-                    # print("ReadyReceived\n")
+                    print("ReadyReceived\n")
                     self.serialConnection.write(zeroCommand.encode())
                     readyReceived = True
+
+        tadaReceived = False
+        while not tadaReceived:
+            if self.serialConnection.inWaiting() > 0:
+                print("zeroMachine4")
+                inputValue = ""
+                inputValue = self.serialConnection.readline().decode()
+                print("in: " + inputValue)
+                #TODO: Error checking here
+                if inputValue == self.arduinoTadaCommand:
+                    # Give Gcode command
+                    print("TadaReceived\n")
+                    tadaReceived = True
                 elif inputValue == self.arduinoErrorOverPosition:
                     return -1
                 elif inputValue == self.arduinoErrorZeroSwitchX:

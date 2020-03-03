@@ -184,6 +184,8 @@ class GUI:
             self.zeroButton.disable()
             self.windingButton.disable()
             self.postWindingButton.disable()
+        else:
+            return
 
     # function for opening windingWindow when button pressed and starting winding process
     def windingButtonPressed(self):
