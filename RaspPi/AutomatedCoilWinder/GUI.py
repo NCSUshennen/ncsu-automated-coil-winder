@@ -1,4 +1,5 @@
 # imports
+import time
 from guizero import App, Window, Text, TextBox, PushButton, Combo
 from main import *
 
