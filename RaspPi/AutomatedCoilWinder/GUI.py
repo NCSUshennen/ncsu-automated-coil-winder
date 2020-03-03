@@ -1,5 +1,5 @@
 # imports
-import time
+from timeit import default_timer as timer
 from guizero import App, Window, Text, TextBox, PushButton, Combo
 from main import *
 
@@ -80,6 +80,8 @@ class GUI:
     windingSafetyTitleMessage = None
     windingSafetyMessage = None
     windingSafetyTroubleshootMessage = None
+
+    actualTime = None
 
     # --------------------- Functions -------------------------------------------------------------------------------- #
     # Float truncation
@@ -199,10 +201,11 @@ class GUI:
         self.postWindingButton.disable()
 
         # Wind
+        start = timer()
         errorCode = self.mainController.startWinding()
 
         # Use error code to print error message
-        if errorCode != 0:
+        if (errorCode != 0) or (errorCode != None):
             safetyMessage = self.getErrorMessage(errorCode)
 
             # Update message on safety window
@@ -221,6 +224,14 @@ class GUI:
             self.windingButton.disable()
             self.postWindingButton.disable()
         else:
+            # End windingTimer
+            end = timer()
+            actualTime = end-start
+
+            # Update actual time message
+            self.actualTimeMessage.clear()
+            self.actualTimeMessage.append(str(actualTime) + " sec")
+
             # Enable buttons after winding is completed
             self.parameterButton.enable()
             self.zeroButton.enable()
