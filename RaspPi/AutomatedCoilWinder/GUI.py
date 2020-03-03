@@ -197,7 +197,9 @@ class GUI:
 
     # function for opening windingWindow when button pressed and starting winding process
     def windingButtonPressed(self):
-        self.openWindingWindow()
+        #self.openWindingWindow()
+        self.windingMessage.clear()
+        self.windingMessage.append("Winding the stator")
 
         # Disable buttons
         self.parameterButton.disable()
@@ -250,7 +252,10 @@ class GUI:
             self.postWindingButton.enable()
 
             # Close Window
-            self.closeWindingWindow()
+            # self.closeWindingWindow()
+
+        self.windingMessage.clear()
+        self.windingMessage.append("Winding complete")
         return
 
     def postWindingButtonPressed(self):
@@ -369,6 +374,7 @@ class GUI:
                                                       text="Predicted winding resistance: None (enter parameters)")
         self.actualTimeMessage = Text(self.app, text="Actual time: None (wind a coil)")
         self.elongationMessage = Text(self.app, text="Elongation: None (wind a coil)")
+        self.windingMessage = Text(self.app, text="")
 
         # Disable other buttons except enter stator parameters
         self.windingButton.disable()
