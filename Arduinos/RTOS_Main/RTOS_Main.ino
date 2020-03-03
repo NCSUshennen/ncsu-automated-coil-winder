@@ -14,7 +14,7 @@
 #include "semphr.h"
 #include "message_buffer.h"
 
-// Needed to for semaphore configuration
+// Needed for semaphore configuration
 #define INCLUDE_vTaskSuspend 1
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
 
@@ -50,11 +50,16 @@
 #define WIRE_LENGTH_SW 48
 #define WIRE_PRESENCE 52
 
-#define OVER_POSITION 40
+#define OVER_POSITION1 40
+#define OVER_POSITION2 A11
+#define OVER_POSITION3 A12
+#define OVER_POSITION4 A13
+#define OVER_POSITION5 A14
+#define OVER_POSITION6 A15
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
-#define USE_MOTOR_SIMULATOR 1
+#define USE_MOTOR_SIMULATOR 0
 
 #define X_INTERRUPT 18
 #define Y_INTERRUPT 19
@@ -65,7 +70,11 @@
 #define SENSOR_2 A2
 
 // Pins used in Task 3
-#define TEST_SIGNAL_RANDC 36
+#define TEST_SIGNAL_RANDC1 28
+#define TEST_SIGNAL_RANDC2 30
+#define TEST_SIGNAL_RANDC3 32
+#define TEST_SIGNAL_RANDC4 34
+#define TEST_SIGNAL_RANDC5 36
 #define TEST_SIGNAL_L 38
 #define OUTPUT_SIGNAL A0
 #define INPUT_VOLTAGE A7
@@ -80,6 +89,9 @@
 #define X 0
 #define Y 1
 #define Z 2
+
+// Used to enable or disable the zeroing switches in the winding algorithm
+#define ENABLE_ZEROING 1
 
 // Commands
 #define SERIAL_TEST "Hello There!"
@@ -99,6 +111,9 @@
 #define TASK_4_COMMAND "beginZeroing"
 
 // Error Messages
+#define BAD_COMMAND_ERROR "ErrorBadCommand\n"
+#define OVER_CURRENT_ERROR "ErrorOverCurrent\n"
+#define DESTINATION_OUT_OF_BOUNDS_ERROR "ErrorDestinationOutOfBounds\n"
 #define OVER_POSITION_ERROR "ErrorHitOverPositionSwitch\n"
 #define ZEROING_Z_ERROR "ErrorHitZZeroingSwitch\n"
 #define ZEROING_Y_ERROR "ErrorHitYZeroingSwitch\n"
@@ -183,6 +198,17 @@ void Init_Pins()
   pinMode(MOTOR_X2_DIR, OUTPUT);
   pinMode(MOTOR_X2_ALM, INPUT);
 
+  pinMode(ZEROING_X, INPUT);
+  pinMode(ZEROING_Y, INPUT);
+  pinMode(ZEROING_Z, INPUT);
+  
+  pinMode(OVER_POSITION1, INPUT);
+  pinMode(OVER_POSITION2, INPUT);
+  pinMode(OVER_POSITION3, INPUT);
+  pinMode(OVER_POSITION4, INPUT);
+  pinMode(OVER_POSITION5, INPUT);
+  pinMode(OVER_POSITION6, INPUT);
+
 #if USE_MOTOR_SIMULATOR
   pinMode(X_INTERRUPT, INPUT);
   attachInterrupt(digitalPinToInterrupt(X_INTERRUPT), xMotorISR, RISING);
@@ -200,7 +226,11 @@ void Init_Pins()
   pinMode(SENSOR_1, INPUT);
   pinMode(SENSOR_2, INPUT);
 
-  pinMode(TEST_SIGNAL_RANDC, OUTPUT);
+  pinMode(TEST_SIGNAL_RANDC1, OUTPUT);
+  pinMode(TEST_SIGNAL_RANDC2, OUTPUT);
+  pinMode(TEST_SIGNAL_RANDC3, OUTPUT);
+  pinMode(TEST_SIGNAL_RANDC4, OUTPUT);
+  pinMode(TEST_SIGNAL_RANDC5, OUTPUT);
   pinMode(TEST_SIGNAL_L, OUTPUT);
   pinMode(OUTPUT_SIGNAL, INPUT); // That is, this is the output of the system, which the Arduino is measuring
   pinMode(INPUT_VOLTAGE, INPUT);
@@ -227,7 +257,11 @@ void Init_Pins()
   digitalWrite(MOTOR_X2_PLS, LOW);
   digitalWrite(MOTOR_X2_DIR, LOW);
 
-  digitalWrite(TEST_SIGNAL_RANDC, LOW);
+  digitalWrite(TEST_SIGNAL_RANDC1, LOW);
+  digitalWrite(TEST_SIGNAL_RANDC2, LOW);
+  digitalWrite(TEST_SIGNAL_RANDC3, LOW);
+  digitalWrite(TEST_SIGNAL_RANDC4, LOW);
+  digitalWrite(TEST_SIGNAL_RANDC5, LOW);
   digitalWrite(TEST_SIGNAL_L, LOW);
 }
 
@@ -284,7 +318,7 @@ void Init_Tasks()
   
   xTaskCreate(MyTask1, "Task1", 100, NULL, 1, NULL);
   xTaskCreate(MyTask2, "Task2", 100, NULL, 2, NULL);
-  xTaskCreate(MyTask3, "Task3", 100, NULL, 3, NULL);
+  xTaskCreate(MyTask3, "Task3", 200, NULL, 3, NULL);
   xTaskCreate(MyTask4, "Task4", 100, NULL, 4, NULL);
   xTaskCreate(MotorSimulator, "MotorSimulator", 200, NULL, 5, NULL);
   xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 100, NULL, 6, NULL);
@@ -298,12 +332,24 @@ float ADCToVoltage(int adcValue)
 {
   /**
    * Takes the 10-bit integer value as read by the ADC and returns a floating-point decimal
-   * corresponding to the voltage.
+   * corresponding to the voltage, assuming a 5V reference.
    * 
    * Returns: the corresponding voltage level read by the ADC
    */
 
    return adcValue/204.6;
+}
+
+double ADCToVoltage1V1(int adcValue)
+{
+  /**
+   * Takes the 10-bit integer value as read by the ADC and returns a floating-point decimal
+   * corresponding to the voltage, assuming a 1.1V reference.
+   * 
+   * Returns: the corresponding voltage level read by the ADC
+   */
+
+   return adcValue/930.0;
 }
 
 void toggleLED(int ledPort)

@@ -35,7 +35,7 @@ static void MyTask2(void* pvParameters)
           break;
         case 1:
           //Sensor 1 process
-          voltage = ADCToVoltage(analogRead(SENSOR_1));
+          voltage = analogRead(SENSOR_1);
           Serial.println(voltage);
           break;
         case 2:

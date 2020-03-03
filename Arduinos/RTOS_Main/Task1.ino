@@ -33,6 +33,11 @@
  */
 
 #define PULSES_PER_MM 160
+#define X_AXIS_LIMIT 1000.0
+#define Y_AXIS_LIMIT 600.0
+#define Z_AXIS_LIMIT 200.0
+
+int currentErrorValue = -1;
 
 float currentPosition[3] = {0, 0, 0};
 
@@ -43,6 +48,130 @@ static void MyTask1(void* pvParameters)
   { 
     if (xSemaphoreTake(xSemaphore1, portMAX_DELAY) == pdTRUE)
     {
+      // This switch statement is used for testing Sarah's error processing and NEEDS TO BE REMOVED when finished with that test
+      switch(currentErrorValue)
+      {
+        case -1:
+          Serial.print(OVER_POSITION_ERROR);
+          currentErrorValue--;
+          break;
+        case -2:
+          Serial.print(ZEROING_X_ERROR);
+          currentErrorValue--;
+          break;
+        case -3:
+          Serial.print(ZEROING_Y_ERROR);
+          currentErrorValue--;
+          break;
+        case -4:
+          Serial.print(ZEROING_Z_ERROR);
+          currentErrorValue--;
+          break;
+        case -5:
+          Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
+          currentErrorValue--;
+          break;
+        case -6:
+          Serial.print("ErrorAlarmX1OverCurrent\n");
+          currentErrorValue--;
+          break;
+        case -7:
+          Serial.print("ErrorAlarmX1VoltageReference\n");
+          currentErrorValue--;
+          break;
+        case -8:
+          Serial.print("ErrorAlarmX1Parameters\n");
+          currentErrorValue--;
+          break;
+        case -9:
+          Serial.print("ErrorAlarmX1OverVoltage\n");
+          currentErrorValue--;
+          break;
+        case -10:
+          Serial.print("ErrorAlarmX1OverPosition\n");
+          currentErrorValue--;
+          break;
+        case -11:
+          Serial.print("ErrorAlarmX2OverCurrent\n");
+          currentErrorValue--;
+          break;
+        case -12:
+          Serial.print("ErrorAlarmX2VoltageReference\n");
+          currentErrorValue--;
+          break;
+        case -13:
+          Serial.print("ErrorAlarmX2Parameters\n");
+          currentErrorValue--;
+          break;
+        case -14:
+          Serial.print("ErrorAlarmX2OverVoltage\n");
+          currentErrorValue--;
+          break;
+        case -15:
+          Serial.print("ErrorAlarmX2OverPosition\n");
+          currentErrorValue--;
+          break;
+        case -16:
+          Serial.print("ErrorAlarmYOverCurrent\n");
+          currentErrorValue--;
+          break;
+        case -17:
+          Serial.print("ErrorAlarmYVoltageReference\n");
+          currentErrorValue--;
+          break;
+        case -18:
+          Serial.print("ErrorAlarmYParameters\n");
+          currentErrorValue--;
+          break;
+        case -19:
+          Serial.print("ErrorAlarmYOverVoltage\n");
+          currentErrorValue--;
+          break;
+        case -20:
+          Serial.print("ErrorAlarmYOverPosition\n");
+          currentErrorValue--;
+          break;
+        case -21:
+          Serial.print("ErrorAlarmZOverCurrent\n");
+          currentErrorValue--;
+          break;
+        case -22:
+          Serial.print("ErrorAlarmZVoltageReference\n");
+          currentErrorValue--;
+          break;
+        case -23:
+          Serial.print("ErrorAlarmZParameters\n");
+          currentErrorValue--;
+          break;
+        case -24:
+          Serial.print("ErrorAlarmZOverVoltage\n");
+          currentErrorValue--;
+          break;
+        case -25:
+          Serial.print("ErrorAlarmZOverPosition\n");
+          currentErrorValue--;
+          break;
+        case -26:
+          Serial.print("ErrorFailedToHitXZeroingSwitch\n");
+          currentErrorValue--;
+          break;
+        case -27:
+          Serial.print("ErrorFailedToHitYZeroingSwitch\n");
+          currentErrorValue--;
+          break;
+        case -28:
+          Serial.print("ErrorFailedToHitZZeroingSwitch\n");
+          currentErrorValue--;
+          break;
+        case -29:
+          Serial.print(BAD_COMMAND_ERROR);
+          currentErrorValue = -1;
+          break;
+        default:
+          currentErrorValue = -1;
+          break;
+      }
+      
       task = 1;
       digitalWrite(TASK_1,HIGH);
       digitalWrite(TASK_2,LOW); 
@@ -59,7 +188,9 @@ static void MyTask1(void* pvParameters)
       Serial.print("ready\n");
       
       // Await 1st %
-      if (xSemaphoreTake(xSemaphorePercent, portMAX_DELAY) == pdTRUE)
+
+      //Change this back from 0 to portMAX_DELAY ASAP
+      if (xSemaphoreTake(xSemaphorePercent, 0) == pdTRUE)
       {
         task = 1;
         digitalWrite(TASK_1,HIGH);
@@ -110,6 +241,10 @@ static void MyTask1(void* pvParameters)
           int xIndex = gCodeString.indexOf("X");
           int yIndex = gCodeString.indexOf("Y");
           int zIndex = gCodeString.indexOf("Z");
+
+          // Debugging statement
+          Serial.print("You entered: ");
+          Serial.println(gCodeString);
           
           if (g0 && notG01)
           {
@@ -176,16 +311,48 @@ static void MyTask1(void* pvParameters)
             {
               magnitudeString += gCodeString.charAt(i);
             }
+
+            float prospectiveDestinationX = 0.0;
             
             if (isFloat(magnitudeString))
             {
-              destination[X] = magnitudeString.toFloat();
+              prospectiveDestinationX = magnitudeString.toFloat();
             }
             else
             {
               badCommands++;
               continue;
             }
+
+            // Check to see if the destination would send the head out of bounds, and prevent that from happening
+            if (absPositioning)
+            {
+              // Check if destination is in bounds
+              if (prospectiveDestinationX >= 0 && prospectiveDestinationX <= X_AXIS_LIMIT)
+              {
+                destination[X] = prospectiveDestinationX;
+              }
+              else
+              {
+                Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
+                badCommands++;
+                continue;
+              }
+            }
+            else
+            {
+              // Check if destination plus current position is in bounds
+              if (prospectiveDestinationX + currentPosition[X] >= 0 && prospectiveDestinationX + currentPosition[X] <= X_AXIS_LIMIT)
+              {
+                destination[X] = prospectiveDestinationX;
+              }
+              else
+              {
+                Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
+                badCommands++;
+                continue;
+              }
+            } 
           }
           else if (!g28)
           {
@@ -223,15 +390,47 @@ static void MyTask1(void* pvParameters)
             {
               magnitudeString += gCodeString.charAt(i);
             }
+
+            float prospectiveDestinationY = 0.0;
             
             if (isFloat(magnitudeString))
             {
-              destination[Y] = magnitudeString.toFloat();
+              prospectiveDestinationY = magnitudeString.toFloat();
             }
             else
             {
               badCommands++;
               continue;
+            }
+
+            // Check to see if the destination would send the head out of bounds, and prevent that from happening
+            if (absPositioning)
+            {
+              // Check if destination is in bounds
+              if (prospectiveDestinationY >= 0 && prospectiveDestinationY <= Y_AXIS_LIMIT)
+              {
+                destination[Y] = prospectiveDestinationY;
+              }
+              else
+              {
+                Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
+                badCommands++;
+                continue;
+              }
+            }
+            else
+            {
+              // Check if destination plus current position is in bounds
+              if (prospectiveDestinationY + currentPosition[Y] >= 0 && prospectiveDestinationY + currentPosition[Y] <= Y_AXIS_LIMIT)
+              {
+                destination[Y] = prospectiveDestinationY;
+              }
+              else
+              {
+                Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
+                badCommands++;
+                continue;
+              }
             }
           }
           else if (!g28)
@@ -270,15 +469,47 @@ static void MyTask1(void* pvParameters)
             {
               magnitudeString += gCodeString.charAt(i);
             }
+
+            float prospectiveDestinationZ = 0.0;
             
             if (isFloat(magnitudeString))
             {
-              destination[Z] = magnitudeString.toInt();
+              prospectiveDestinationZ = magnitudeString.toFloat();
             }
             else
             {
               badCommands++;
               continue;
+            }
+
+            // Check to see if the destination would send the head out of bounds, and prevent that from happening
+            if (absPositioning)
+            {
+              // Check if destination is in bounds
+              if (prospectiveDestinationZ >= 0 && prospectiveDestinationZ <= Z_AXIS_LIMIT)
+              {
+                destination[Z] = prospectiveDestinationZ;
+              }
+              else
+              {
+                Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
+                badCommands++;
+                continue;
+              }
+            }
+            else
+            {
+              // Check if destination plus current position is in bounds
+              if (prospectiveDestinationZ + currentPosition[Z] >= 0 && prospectiveDestinationZ + currentPosition[Z] <= Z_AXIS_LIMIT)
+              {
+                destination[Z] = prospectiveDestinationZ;
+              }
+              else
+              {
+                Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
+                badCommands++;
+                continue;
+              }
             }
           }
           else if (!g28)
@@ -302,7 +533,7 @@ static void MyTask1(void* pvParameters)
             badCommands = 0;
           }
           else
-          {
+          { 
             // Movement in at least one direction needs to occur
             unsigned long int totalPulses[3] = {0, 0, 0};
             bool xMovementNegative = false;
@@ -394,46 +625,55 @@ static void MyTask1(void* pvParameters)
             unsigned long int i;
             bool hitXZeroingSwitch = false;
             bool hitOverPositionSwitch = false;
+            bool xZeroingSwitchOpen = true;
+            bool overPositionSwitchOpen = true;
             for (i=0; i<totalPulses[X]; i++)
-            {
+            { 
+#if ENABLE_ZEROING
+               // Check to see if a contact switch has been hit and react accordingly
+               xZeroingSwitchOpen = (digitalRead(ZEROING_X) == HIGH);
+               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+               if (!xZeroingSwitchOpen && xMovementNegative)
+               {
+                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
+                  hitXZeroingSwitch = true;
+                  xZeroingSwitchOpen = true;
+                  break;
+               }
+               else if (!overPositionSwitchOpen)
+               {
+                  // Always stop movement if the over-position switch has been hit
+                  hitOverPositionSwitch = true;
+                  overPositionSwitchOpen = true;
+                  break;
+               }
+#endif
+               
                digitalWrite(MOTOR_X1_PLS, HIGH);
                digitalWrite(MOTOR_X2_PLS, HIGH);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
                digitalWrite(MOTOR_X1_PLS, LOW);
                digitalWrite(MOTOR_X2_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-//#if USE_MOTOR_SIMULATOR
-//#else
-               // Check to see if a contact switch has been hit and react accordingly
-               if (digitalRead(ZEROING_X) != HIGH && xMovementNegative)
-               {
-                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
-                  hitXZeroingSwitch = true;
-                  break;
-               }
-               else if (digitalRead(OVER_POSITION) != HIGH)
-               {
-                  // Always stop movement if the over-position switch has been hit
-                  hitOverPositionSwitch = true;
-                  break;
-               }
-//#endif
             }
 
-//#if USE_MOTOR_SIMULATOR
-//#else
+#if ENABLE_ZEROING
             if (hitXZeroingSwitch)
             {
               Serial.print(ZEROING_X_ERROR);
+              hitXZeroingSwitch = false;
               break;  
             }
             else if (hitOverPositionSwitch)
             {
               Serial.print(OVER_POSITION_ERROR);
+              hitOverPositionSwitch = false;
               break;
             }
-//#endif
+#endif
             bool hitYZeroingSwitch = false;
+            bool yZeroingSwitchOpen = true;
+            overPositionSwitchOpen = true;
             for (i=0; i<totalPulses[Y]; i++)
             {
                digitalWrite(MOTOR_Y_PLS, HIGH);
@@ -441,26 +681,26 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_Y_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
 
-//#if USE_MOTOR_SIMULATOR
-//#else
+#if ENABLE_ZEROING
                // Check to see if a contact switch has been hit and react accordingly
-               if (digitalRead(ZEROING_Y) != HIGH && yMovementNegative)
+               yZeroingSwitchOpen = (digitalRead(ZEROING_Y) == HIGH);
+               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+               if (!yZeroingSwitchOpen && yMovementNegative)
                {
                   // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Y-Direction
                   hitYZeroingSwitch = true;
                   break;
                }
-               else if (digitalRead(OVER_POSITION) != HIGH)
+               else if (!overPositionSwitchOpen)
                {
                   // Always stop movement if the over-position switch has been hit
                   hitOverPositionSwitch = true;
                   break;
                }
-//#endif
+#endif
             }
 
-//#if USE_MOTOR_SIMULATOR
-//#else
+#if ENABLE_ZEROING
             if (hitYZeroingSwitch)
             {
               Serial.print(ZEROING_Y_ERROR);
@@ -471,9 +711,11 @@ static void MyTask1(void* pvParameters)
               Serial.print(OVER_POSITION_ERROR);
               break;
             }
-//#endif
+#endif
             
             bool hitZZeroingSwitch = false;
+            bool zZeroingSwitchOpen = true;
+            overPositionSwitchOpen = true;
             for (i=0; i<totalPulses[Z]; i++)
             {
                digitalWrite(MOTOR_Z_PLS, HIGH);
@@ -481,26 +723,26 @@ static void MyTask1(void* pvParameters)
                digitalWrite(MOTOR_Z_PLS, LOW);
                vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
 
-//#if USE_MOTOR_SIMULATOR
-//#else
+#if ENABLE_ZEROING
                // Check to see if a contact switch has been hit and react accordingly
-               if (digitalRead(ZEROING_Z) != HIGH && zMovementNegative)
+               zZeroingSwitchOpen = (digitalRead(ZEROING_Z) == HIGH);
+               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+               if (!zZeroingSwitchOpen && zMovementNegative)
                {
                   // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Z-Direction
                   hitZZeroingSwitch = true;
                   break;
                }
-               else if (digitalRead(OVER_POSITION) != HIGH)
+               else if (!overPositionSwitchOpen)
                {
                   // Always stop movement if the over-position switch has been hit
                   hitOverPositionSwitch = true;
                   break;
                }
-//#endif
+#endif
             }
             
-//#if USE_MOTOR_SIMULATOR
-//#else
+#if ENABLE_ZEROING
             if (hitZZeroingSwitch)
             {
               Serial.print(ZEROING_Z_ERROR);
@@ -511,7 +753,7 @@ static void MyTask1(void* pvParameters)
               Serial.print(OVER_POSITION_ERROR);
               break;
             }
-//#endif
+#endif
 
             // Set all direction values low
             digitalWrite(MOTOR_X1_DIR, LOW);
@@ -532,11 +774,6 @@ static void MyTask1(void* pvParameters)
               currentPosition[Y] += destination[Y];
               currentPosition[Z] += destination[Z];
             }
-
-            /*// Clear additionalPulses
-            additionalPulses[X] = 0;
-            additionalPulses[Y] = 0;
-            additionalPulses[Z] = 0;*/
             
             badCommands = 0;
           }

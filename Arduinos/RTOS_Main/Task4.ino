@@ -9,26 +9,29 @@
  * reached the zero point.
  */
 
-#define X_AXIS_LIMIT 160000
-#define Y_AXIS_LIMIT 96000
-#define Z_AXIS_LIMIT 32000
+#define X_AXIS_LIMIT_PULSES 160000
+#define Y_AXIS_LIMIT_PULSES 96000
+#define Z_AXIS_LIMIT_PULSES 32000
 
 static void MyTask4(void* pvParameters)
 {  
   while(1)
   { 
     if (xSemaphoreTake(xSemaphore4, portMAX_DELAY) == pdTRUE)
-    {
+    { 
+#if ENABLE_ZEROING
       // Set all motors in the negative direction
       digitalWrite(MOTOR_X1_DIR, HIGH);
       digitalWrite(MOTOR_X2_DIR, HIGH);
       digitalWrite(MOTOR_Y_DIR, HIGH);
       digitalWrite(MOTOR_Z_DIR, LOW);
 
+      Serial.print("ready\n");
+
       // Move x-axis until we hit the zeroing switch
       unsigned long int i;
       bool hitXZeroingSwitch = false;
-      for (i=0; i<X_AXIS_LIMIT; i++)
+      for (i=0; i<X_AXIS_LIMIT_PULSES; i++)
       {
         if (digitalRead(ZEROING_X) != HIGH)
         {
@@ -37,7 +40,7 @@ static void MyTask4(void* pvParameters)
           break;
         }
 
-        if (digitalRead(OVER_POSITION) != HIGH)
+        if (digitalRead(OVER_POSITION1) != HIGH)
         {
           break;
         }
@@ -59,7 +62,7 @@ static void MyTask4(void* pvParameters)
 
       // Move y-axis until we hit the zeroing switch
       bool hitYZeroingSwitch = false;
-      for (i=0; i<Y_AXIS_LIMIT; i++)
+      for (i=0; i<Y_AXIS_LIMIT_PULSES; i++)
       {
         if (digitalRead(ZEROING_Y) != HIGH)
         {
@@ -68,7 +71,7 @@ static void MyTask4(void* pvParameters)
           break;
         }
 
-        if (digitalRead(OVER_POSITION) != HIGH)
+        if (digitalRead(OVER_POSITION1) != HIGH)
         {
           break;
         }
@@ -87,7 +90,7 @@ static void MyTask4(void* pvParameters)
       }
 
       bool hitZZeroingSwitch = false;
-      for (i=0; i<Z_AXIS_LIMIT; i++)
+      for (i=0; i<Z_AXIS_LIMIT_PULSES; i++)
       {
         if (digitalRead(ZEROING_Z) != HIGH)
         {
@@ -96,7 +99,7 @@ static void MyTask4(void* pvParameters)
           break;
         }
 
-        if (digitalRead(OVER_POSITION) != HIGH)
+        if (digitalRead(OVER_POSITION1) != HIGH)
         {
           break;
         }
@@ -125,6 +128,8 @@ static void MyTask4(void* pvParameters)
       digitalWrite(MOTOR_X2_DIR, LOW);
       digitalWrite(MOTOR_Y_DIR, LOW);
       digitalWrite(MOTOR_Z_DIR, LOW);
+
+#endif
     }
   }
 }
