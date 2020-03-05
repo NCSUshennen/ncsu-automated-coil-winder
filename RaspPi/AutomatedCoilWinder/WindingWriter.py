@@ -23,6 +23,7 @@ class WindingWriter:
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
+    statorWindWidth = None
 
     # --------------------- Distance traveled/Time measurement values --------------------- #
     totalMillimetersTraveled = None
@@ -65,11 +66,9 @@ class WindingWriter:
     ylength = None
     xlength = None
     wireDiameter = None
-    wireResistance = None # in Ohms/1000ft
+    wireResistance = None  # in Ohms/1000ft
     maxNumZWinds = None
     postWindDistance = None
-    distanceWoundPerTooth = None
-
     # --------------------- Misc. Post values --------------------- #
     postDiameter = 10
     currentPostCenterX = None
@@ -91,7 +90,7 @@ class WindingWriter:
     def __init__(self, statorToothLength, statorToothHeight, statorWindHeight,
                  statorToothWidth, statorShoeWidth, numberStatorTeeth,
                  numberWinds, wireGauge, wireMaterial,
-                 distanceBetweenTeeth):
+                 distanceBetweenTeeth, statorWindWidth):
         """Construct a new WindingWriter
 
         Keyword arguments:
@@ -115,6 +114,7 @@ class WindingWriter:
         self.wireGauge = wireGauge
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth
+        self.statorWindWidth = statorWindWidth
 
         # Starting corner
         self.currentCornerX = float(self.startingCornerX - (0.5 * self.statorToothWidth) + (
@@ -156,14 +156,14 @@ class WindingWriter:
     def getMaxNumZWinds(self):
         return self.maxNumZWinds
 
-    def getDistanceWoundPerTooth(self):
-        return self.distanceWoundPerTooth
-
     def getWireDiameter(self):
         return self.wireDiameter
 
     def getWireResistance(self):
         return self.wireResistance
+
+    def getDistanceWoundPerTooth(self):
+        return self.numberWinds * (2 * (self.statorToothLength + self.wireDiameter) + 2 * (self.statorWindWidth))
 
     # --------------------- Path generation --------------------- #
 
@@ -172,25 +172,28 @@ class WindingWriter:
         self.xlength = float(self.statorShoeWidth + float(2 * self.headClearanceX))
 
         # Resolution is 0.05 mm
-        if self.wireGauge == "18":
+        if self.wireGauge == 18.0:
+            print("Wire gauge 18")
             self.wireDiameter = 1.0
             self.wireResistance = 6.385
-        elif self.wireGauge == "17":
+        elif self.wireGauge == 17.0:
             self.wireDiameter = 1.15
             self.wireResistance = 5.064
-        elif self.wireGauge == "16":
+        elif self.wireGauge == 16.0:
             self.wireDiameter = 1.30
             self.wireResistance = 4.016
-        elif self.wireGauge == "15":
+        elif self.wireGauge == 15.0:
             self.wireDiameter = 1.45
             self.wireResistance = 3.184
-        elif self.wireGauge == "14":
+        elif self.wireGauge == 14.0:
             self.wireDiameter = 1.6
             self.wireResistance = 2.525
-        elif self.wireGauge == "13":
+        elif self.wireGauge == 13.0:
             self.wireDiameter = 1.8
             self.wireResistance = 2.003
         else:
+            print("Wire gauge unknown")
+            print(self.wireGauge)
             self.wireDiameter = 1
             self.wireResistance = 1
 
