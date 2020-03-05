@@ -2,7 +2,7 @@
  * RTOS_Main
  * 
  * Dan Hayduk
- * February 6, 2020
+ * March 5, 2020
  * 
  * This code establishes the RTOS System with working semaphores and message buffers. Tasks MyTask1, MyTask2, and MyTask3 
  * are set up to run the algorithms we originally assigned to Arduino 1, 2, and 3, respectively. An additional task has
@@ -57,6 +57,14 @@
 #define OVER_POSITION5 A14
 #define OVER_POSITION6 A15
 
+// Used to enable or disable the zeroing switches, over-position switches, and alarm detection in the winding algorithm
+// These should all be set to 1 in the final version, but for debugging, they can be set to 0 to avoid having to jump
+// wires when testing other components
+#define ENABLE_OUTOFBOUNDS_DETECTION 0
+#define ENABLE_OVERPOSITION 0
+#define ENABLE_ZEROING 0
+#define ENABLE_ALARMS 0
+
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
 #define USE_MOTOR_SIMULATOR 0
@@ -90,9 +98,6 @@
 #define Y 1
 #define Z 2
 
-// Used to enable or disable the zeroing switches in the winding algorithm
-#define ENABLE_ZEROING 0
-
 // Commands
 #define SERIAL_TEST "Hello There!"
 #define READY_ASK "isArduinoReady"
@@ -118,6 +123,10 @@
 #define ZEROING_Z_ERROR "ErrorHitZZeroingSwitch\n"
 #define ZEROING_Y_ERROR "ErrorHitYZeroingSwitch\n"
 #define ZEROING_X_ERROR "ErrorHitXZeroingSwitch\n"
+#define ALARM_X1_ERROR "ErrorAlarmX1\n"
+#define ALARM_X2_ERROR "ErrorAlarmX2\n"
+#define ALARM_Y_ERROR "ErrorAlarmY\n"
+#define ALARM_Z_ERROR "ErrorAlarmZ\n"
 #define FAILED_ZEROING_Z_ERROR "ErrorFailedToHitZZeroingSwitch\n"
 #define FAILED_ZEROING_Y_ERROR "ErrorFailedToHitYZeroingSwitch\n"
 #define FAILED_ZEROING_X_ERROR "ErrorFailedToHitXZeroingSwitch\n"
@@ -220,6 +229,11 @@ void Init_Pins()
   pinMode(Z_INTERRUPT, INPUT);
   attachInterrupt(digitalPinToInterrupt(Z_INTERRUPT), zMotorISR, RISING);
 #endif
+
+  pinMode(MOTOR_X1_ALM, INPUT);
+  pinMode(MOTOR_X2_ALM, INPUT);
+  pinMode(MOTOR_Y_ALM, INPUT);
+  pinMode(MOTOR_Z_ALM, INPUT);
 
   pinMode(X0_Y0, OUTPUT);
   pinMode(X1_Y0, OUTPUT);

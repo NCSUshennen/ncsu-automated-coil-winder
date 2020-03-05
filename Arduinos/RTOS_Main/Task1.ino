@@ -2,7 +2,7 @@
  * Task1
  * 
  * Dan Hayduk
- * January 30, 2020
+ * March 5, 2020
  * 
  * This task contains an algorithm to read G-Code, line by line, sent by the Raspberry Pi, and send the appropriate signals
  * to the X, Y and Z motors to accomplish movement.
@@ -13,8 +13,13 @@
  * from the switch. If any switch is hit unexpectedly, the Arduino will not have the correct position stored in the currentPosition
  * variable, so the winding head must be zeroed before another winding algorithm can be executed.
  * 
- * There are currently plans to implement a feature to preemptively predict if a G-Code command is about to send the winding head out of
- * bounds and stop the winding algorithm before it runs the movement. However, this has not yet been implemented.
+ * There is also functionality to read the alarm signals given by the motor drivers, and send an error to the Pi if any of the drivers
+ * indicate a problem.
+ * 
+ * There is now a feature to preemptively predict if a G-Code command is about to send the winding head out of
+ * bounds and stop the winding algorithm before it runs the movement. However, this needs to be updated once exact measurements are taken.
+ * 
+ * The zeroing switch, overposition, alarm, and out-of-bounds detection can all be disabled via the #defines in RTOS_Main.
  * 
  * The following G-Code commands can be entered:
  *  G0 or G00: Set rapid-motion mode off (off by default)
@@ -52,7 +57,6 @@ static void MyTask1(void* pvParameters)
       digitalWrite(TASK_3,LOW);
       digitalWrite(TASK_IDLE,LOW);
 
-      int badCommands = 0;
       bool rapidMotion = false;
       int motionDelay = 5;
       float destination[3] = {0, 0, 0};
@@ -75,13 +79,6 @@ static void MyTask1(void* pvParameters)
         while (true)
         {
           Serial.print("ready\n");
-          
-          // Keep reading G-Code lines until we get % or too many bad commands
-          if (badCommands >= 3)
-          {
-            Serial.print("ErrorTooManyBadCommands\n");
-            break; 
-          }
           
           gCodeString = "";
           do
@@ -113,10 +110,6 @@ static void MyTask1(void* pvParameters)
           int xIndex = gCodeString.indexOf("X");
           int yIndex = gCodeString.indexOf("Y");
           int zIndex = gCodeString.indexOf("Z");
-
-          // Debugging statement
-          Serial.print("You entered: ");
-          Serial.println(gCodeString);
           
           if (g0 && notG01)
           {
@@ -172,8 +165,8 @@ static void MyTask1(void* pvParameters)
             int endXIndex = minIndexOf2(lineXIndex, spaceXIndex);
             if (endXIndex < 0)
             {
-              badCommands++;
-              continue;
+              Serial.print(BAD_COMMAND_ERROR);
+              break;
             }
             
             // endXIndex is now the index of the nearest space, linefeed, or null character
@@ -192,10 +185,11 @@ static void MyTask1(void* pvParameters)
             }
             else
             {
-              badCommands++;
-              continue;
+              Serial.print(BAD_COMMAND_ERROR);
+              break;
             }
 
+#if ENABLE_OUTOFBOUNDS_DETECTION
             // Check to see if the destination would send the head out of bounds, and prevent that from happening
             if (absPositioning)
             {
@@ -207,8 +201,7 @@ static void MyTask1(void* pvParameters)
               else
               {
                 Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
-                badCommands++;
-                continue;
+                break;
               }
             }
             else
@@ -221,10 +214,13 @@ static void MyTask1(void* pvParameters)
               else
               {
                 Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
-                badCommands++;
-                continue;
+                break;
               }
             } 
+#else
+            destination[X] = prospectiveDestinationX;
+#endif
+       
           }
           else if (!g28)
           {
@@ -250,8 +246,8 @@ static void MyTask1(void* pvParameters)
 
             if (endYIndex < 0)
             {
-              badCommands++;
-              continue;
+              Serial.print(BAD_COMMAND_ERROR);
+              break;
             }
             
             // endYIndex is now the index of the nearest space, linefeed, or end of the string
@@ -271,10 +267,11 @@ static void MyTask1(void* pvParameters)
             }
             else
             {
-              badCommands++;
-              continue;
+              Serial.print(BAD_COMMAND_ERROR);
+              break;
             }
 
+#if ENABLE_OUTOFBOUNDS_DETECTION
             // Check to see if the destination would send the head out of bounds, and prevent that from happening
             if (absPositioning)
             {
@@ -286,8 +283,7 @@ static void MyTask1(void* pvParameters)
               else
               {
                 Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
-                badCommands++;
-                continue;
+                break;
               }
             }
             else
@@ -300,10 +296,12 @@ static void MyTask1(void* pvParameters)
               else
               {
                 Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
-                badCommands++;
-                continue;
+                break;
               }
             }
+#else
+              destination[Y] = prospectiveDestinationY;
+#endif
           }
           else if (!g28)
           {
@@ -329,8 +327,8 @@ static void MyTask1(void* pvParameters)
 
             if (endZIndex < 0)
             {
-              badCommands++;
-              continue;
+              Serial.print(BAD_COMMAND_ERROR);
+              break;
             }
             
             // endZIndex is now the index of the nearest space, linefeed, or end of the string
@@ -350,10 +348,11 @@ static void MyTask1(void* pvParameters)
             }
             else
             {
-              badCommands++;
-              continue;
+              Serial.print(BAD_COMMAND_ERROR);
+              break;
             }
 
+#if ENABLE_OUTOFBOUNDS_DETECTION
             // Check to see if the destination would send the head out of bounds, and prevent that from happening
             if (absPositioning)
             {
@@ -365,8 +364,7 @@ static void MyTask1(void* pvParameters)
               else
               {
                 Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
-                badCommands++;
-                continue;
+                break;
               }
             }
             else
@@ -379,10 +377,12 @@ static void MyTask1(void* pvParameters)
               else
               {
                 Serial.print(DESTINATION_OUT_OF_BOUNDS_ERROR);
-                badCommands++;
-                continue;
+                break;
               }
             }
+#else
+            destination[Z] = prospectiveDestinationZ;
+#endif          
           }
           else if (!g28)
           {
@@ -402,7 +402,6 @@ static void MyTask1(void* pvParameters)
           || (!absPositioning && destination[X]==0 && destination[Y]==0 && destination[Z]==0))
           {
             //Don't move
-            badCommands = 0;
           }
           else
           { 
@@ -497,46 +496,75 @@ static void MyTask1(void* pvParameters)
             unsigned long int i;
             bool hitXZeroingSwitch = false;
             bool hitOverPositionSwitch = false;
+            bool x1AlarmWentOff = false;
+            bool x2AlarmWentOff = false;
             bool xZeroingSwitchOpen = true;
             bool overPositionSwitchOpen = true;
+            bool x1AlarmDidntGoOff = true;
+            bool x2AlarmDidntGoOff = true;
             for (i=0; i<totalPulses[X]; i++)
             { 
-               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
-               if (!overPositionSwitchOpen)
-               {
-                  // Always stop movement if the over-position switch has been hit
-                  hitOverPositionSwitch = true;
-                  overPositionSwitchOpen = true;
-                  break;
-               }
-#if ENABLE_ZEROING
-               // Check to see if a contact switch has been hit and react accordingly
-               xZeroingSwitchOpen = (digitalRead(ZEROING_X) == HIGH);
-               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
-               if (!xZeroingSwitchOpen && xMovementNegative)
-               {
-                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
-                  hitXZeroingSwitch = true;
-                  xZeroingSwitchOpen = true;
-                  break;
-               }
-               else if (!overPositionSwitchOpen)
-               {
-                  // Always stop movement if the over-position switch has been hit
-                  hitOverPositionSwitch = true;
-                  overPositionSwitchOpen = true;
-                  break;
-               }
+              
+              // Poll the overposition and zeroing switches
+#if ENABLE_OVERPOSITION
+              overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+              if (!overPositionSwitchOpen)
+              {
+                 // Always stop movement if the over-position switch has been hit
+                 hitOverPositionSwitch = true;
+                 overPositionSwitchOpen = true;
+                 break;
+              }
 #endif
-               
-               digitalWrite(MOTOR_X1_PLS, HIGH);
-               digitalWrite(MOTOR_X2_PLS, HIGH);
-               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-               digitalWrite(MOTOR_X1_PLS, LOW);
-               digitalWrite(MOTOR_X2_PLS, LOW);
-               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+#if ENABLE_ZEROING
+              xZeroingSwitchOpen = (digitalRead(ZEROING_X) == HIGH);
+              if (!xZeroingSwitchOpen && xMovementNegative)
+              {
+                 // Only stop moving if the zeroing switch is hit if we are trying to go in the negative X-Direction
+                 hitXZeroingSwitch = true;
+                 xZeroingSwitchOpen = true;
+                 break;
+              }
+#endif
+
+              // Poll the X1 and X2 Alarms
+#if ENABLE_ALARMS
+              x1AlarmDidntGoOff = (digitalRead(MOTOR_X1_ALM) == HIGH);
+              if (!x1AlarmDidntGoOff)
+              {
+                 // Always stop movement if the alarm goes off
+                 x1AlarmWentOff = true;
+                 x1AlarmDidntGoOff = true;
+                 break;
+              }
+              x2AlarmDidntGoOff = (digitalRead(MOTOR_X2_ALM) == HIGH);
+              if (!x2AlarmDidntGoOff)
+              {
+                 // Always stop movement if the alarm goes off
+                 x2AlarmWentOff = true;
+                 x2AlarmDidntGoOff = true;
+                 break;
+              }
+#endif
+
+              // If the switches have not been contacted or have been disabled, send the pulse
+              digitalWrite(MOTOR_X1_PLS, HIGH);
+              digitalWrite(MOTOR_X2_PLS, HIGH);
+              vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+              digitalWrite(MOTOR_X1_PLS, LOW);
+              digitalWrite(MOTOR_X2_PLS, LOW);
+              vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
             }
 
+            // Throw an error if one of the enabled switches has been hit or an alarm has gone off                        
+#if ENABLE_OVERPOSITION
+            if (hitOverPositionSwitch)
+            {
+              Serial.print(OVER_POSITION_ERROR);
+              hitOverPositionSwitch = false;
+              break;
+            }
+#endif
 #if ENABLE_ZEROING
             if (hitXZeroingSwitch)
             {
@@ -544,135 +572,168 @@ static void MyTask1(void* pvParameters)
               hitXZeroingSwitch = false;
               break;  
             }
-            else if (hitOverPositionSwitch)
+#endif
+#if ENABLE_ALARMS
+            if (x1AlarmWentOff)
             {
-              Serial.print(OVER_POSITION_ERROR);
-              hitOverPositionSwitch = false;
+              Serial.print(ALARM_X1_ERROR);
+              x1AlarmWentOff = false;
+              break;
+            }
+            if (x2AlarmWentOff)
+            {
+              Serial.print(ALARM_X2_ERROR);
+              x2AlarmWentOff = false;
               break;
             }
 #endif
+            
+            bool hitYZeroingSwitch = false;
+            bool yAlarmWentOff = false;
+            bool yZeroingSwitchOpen = true;
+            bool yAlarmDidntGoOff = true;
+            overPositionSwitchOpen = true;
+            for (i=0; i<totalPulses[Y]; i++)
+            {
+              // Poll the overposition and zeroing switches
+#if ENABLE_OVERPOSITION
+              overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+              if (!overPositionSwitchOpen)
+              {
+                 // Always stop movement if the over-position switch has been hit
+                 hitOverPositionSwitch = true;
+                 overPositionSwitchOpen = true;
+                 break;
+              }
+#endif
+#if ENABLE_ZEROING
+              yZeroingSwitchOpen = (digitalRead(ZEROING_Y) == HIGH);
+              if (!yZeroingSwitchOpen && yMovementNegative)
+              {
+                 // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Y-Direction
+                 hitYZeroingSwitch = true;
+                 yZeroingSwitchOpen = true;
+                 break;
+              }
+#endif
+              // Poll the Y Alarm
+#if ENABLE_ALARMS
+              yAlarmDidntGoOff = (digitalRead(MOTOR_Y_ALM) == HIGH);
+              if (!yAlarmDidntGoOff)
+              {
+                 // Always stop movement if the alarm goes off
+                 yAlarmWentOff = true;
+                 yAlarmDidntGoOff = true;
+                 break;
+              }
+#endif
+
+              // If the switches have not been contacted or have been disabled, send the pulse
+              digitalWrite(MOTOR_Y_PLS, HIGH);
+              vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+              digitalWrite(MOTOR_Y_PLS, LOW);
+              vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+            }
+
+            
+            // Throw an error if one of the enabled switches has been hit or an alarm has gone off
+#if ENABLE_OVERPOSITION
             if (hitOverPositionSwitch)
             {
               Serial.print(OVER_POSITION_ERROR);
               hitOverPositionSwitch = false;
               break;
             }
-            
-            bool hitYZeroingSwitch = false;
-            bool yZeroingSwitchOpen = true;
-            overPositionSwitchOpen = true;
-            for (i=0; i<totalPulses[Y]; i++)
-            {
-               digitalWrite(MOTOR_Y_PLS, HIGH);
-               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-               digitalWrite(MOTOR_Y_PLS, LOW);
-               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-
-               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
-               if (!overPositionSwitchOpen)
-               {
-                  // Always stop movement if the over-position switch has been hit
-                  hitOverPositionSwitch = true;
-                  overPositionSwitchOpen = true;
-                  break;
-               }
-
-#if ENABLE_ZEROING
-               // Check to see if a contact switch has been hit and react accordingly
-               yZeroingSwitchOpen = (digitalRead(ZEROING_Y) == HIGH);
-               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
-               if (!yZeroingSwitchOpen && yMovementNegative)
-               {
-                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Y-Direction
-                  hitYZeroingSwitch = true;
-                  break;
-               }
-               else if (!overPositionSwitchOpen)
-               {
-                  // Always stop movement if the over-position switch has been hit
-                  hitOverPositionSwitch = true;
-                  break;
-               }
 #endif
-            }
-
 #if ENABLE_ZEROING
             if (hitYZeroingSwitch)
             {
               Serial.print(ZEROING_Y_ERROR);
+              hitYZeroingSwitch = false;
               break;  
             }
-            else if (hitOverPositionSwitch)
+#endif
+#if ENABLE_ALARMS
+            if (yAlarmWentOff)
             {
-              Serial.print(OVER_POSITION_ERROR);
+              Serial.print(ALARM_Y_ERROR);
+              yAlarmWentOff = false;
               break;
             }
 #endif
-            
+       
+            bool hitZZeroingSwitch = false;
+            bool zAlarmWentOff = false;
+            bool zZeroingSwitchOpen = true;
+            bool zAlarmDidntGoOff = true;
+            overPositionSwitchOpen = true;
+            for (i=0; i<totalPulses[Z]; i++)
+            {
+               // Poll the overposition and zeroing switches
+#if ENABLE_OVERPOSITION
+              overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+              if (!overPositionSwitchOpen)
+              {
+                 // Always stop movement if the over-position switch has been hit
+                 hitOverPositionSwitch = true;
+                 overPositionSwitchOpen = true;
+                 break;
+              }
+#endif
+#if ENABLE_ZEROING
+              zZeroingSwitchOpen = (digitalRead(ZEROING_Z) == HIGH);
+              if (!zZeroingSwitchOpen && zMovementNegative)
+              {
+                 // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Z-Direction
+                 hitZZeroingSwitch = true;
+                 zZeroingSwitchOpen = true;
+                 break;
+              }
+#endif
+              // Poll the Z Alarm
+#if ENABLE_ALARMS
+              zAlarmDidntGoOff = (digitalRead(MOTOR_Z_ALM) == HIGH);
+              if (!zAlarmDidntGoOff)
+              {
+                 // Always stop movement if the alarm goes off
+                 zAlarmWentOff = true;
+                 zAlarmDidntGoOff = true;
+                 break;
+              }
+#endif
+
+              // If the switches have not been contacted or have been disabled, send the pulse
+              digitalWrite(MOTOR_Z_PLS, HIGH);
+              vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+              digitalWrite(MOTOR_Z_PLS, LOW);
+              vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+            }
+
+            // Throw an error if one of the enabled switches has been hit or an alarm has gone off
+#if ENABLE_OVERPOSITION
             if (hitOverPositionSwitch)
             {
               Serial.print(OVER_POSITION_ERROR);
               hitOverPositionSwitch = false;
               break;
             }
-            
-            bool hitZZeroingSwitch = false;
-            bool zZeroingSwitchOpen = true;
-            overPositionSwitchOpen = true;
-            for (i=0; i<totalPulses[Z]; i++)
-            {
-               digitalWrite(MOTOR_Z_PLS, HIGH);
-               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-               digitalWrite(MOTOR_Z_PLS, LOW);
-               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
-
-               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
-               if (!overPositionSwitchOpen)
-               {
-                  // Always stop movement if the over-position switch has been hit
-                  hitOverPositionSwitch = true;
-                  overPositionSwitchOpen = true;
-                  break;
-               }
-
-#if ENABLE_ZEROING
-               // Check to see if a contact switch has been hit and react accordingly
-               zZeroingSwitchOpen = (digitalRead(ZEROING_Z) == HIGH);
-               overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
-               if (!zZeroingSwitchOpen && zMovementNegative)
-               {
-                  // Only stop moving if the zeroing switch is hit if we are trying to go in the negative Z-Direction
-                  hitZZeroingSwitch = true;
-                  break;
-               }
-               else if (!overPositionSwitchOpen)
-               {
-                  // Always stop movement if the over-position switch has been hit
-                  hitOverPositionSwitch = true;
-                  break;
-               }
 #endif
-            }
-            
 #if ENABLE_ZEROING
             if (hitZZeroingSwitch)
             {
               Serial.print(ZEROING_Z_ERROR);
+              hitZZeroingSwitch = false;
               break;  
             }
-            else if (hitOverPositionSwitch)
+#endif
+#if ENABLE_ALARMS
+            if (zAlarmWentOff)
             {
-              Serial.print(OVER_POSITION_ERROR);
+              Serial.print(ALARM_Z_ERROR);
+              zAlarmWentOff = false;
               break;
             }
 #endif
-
-            if (hitOverPositionSwitch)
-            {
-              Serial.print(OVER_POSITION_ERROR);
-              hitOverPositionSwitch = false;
-              break;
-            }
             
             // Set all direction values low
             digitalWrite(MOTOR_X1_DIR, LOW);
@@ -693,8 +754,6 @@ static void MyTask1(void* pvParameters)
               currentPosition[Y] += destination[Y];
               currentPosition[Z] += destination[Z];
             }
-            
-            badCommands = 0;
           }
         }
       }

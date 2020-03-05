@@ -29,22 +29,26 @@ static void MyTask2(void* pvParameters)
         case 0:
           //Process all sensors
           voltage = ADCToVoltage(analogRead(SENSOR_1));
-          Serial.println(voltage);
+          Serial.print(voltage);
+          Serial.print("\n");
           voltage = ADCToVoltage(analogRead(SENSOR_2));
-          Serial.println(voltage);
+          Serial.print(voltage);
+          Serial.print("\n");
           break;
         case 1:
           //Sensor 1 process
           voltage = analogRead(SENSOR_1);
-          Serial.println(voltage);
+          Serial.print(voltage);
+          Serial.print("\n");
           break;
         case 2:
           //Sensor 2 process
           voltage = ADCToVoltage(analogRead(SENSOR_2));
-          Serial.println(voltage);
+          Serial.print(voltage);
+          Serial.print("\n");
           break;
         default:
-          Serial.println("Error: invalid sensor chosen\n");
+          Serial.print("Error: invalid sensor chosen\n");
           break; 
       }
       //Serial.write("ready\n");
