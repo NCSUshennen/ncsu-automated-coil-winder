@@ -26,12 +26,14 @@ class WindingTester:
     wireMaterial = None
     distanceBetweenTeeth = None
 
+    serialConnection = None
+
     resistance = 0
     capacitance = 0
     inductance = 0
 
     # --------------------- Functions --------------------- #
-    def __init__(self, statorToothLength, statorToothHeight,
+    def __init__(self, arduinoSerial, statorToothLength, statorToothHeight,
                  statorToothWidth, statorShoeWidth, numberStatorTeeth,
                  numberWinds, wireGauge, wireMaterial,
                  distanceBetweenTeeth):
@@ -49,6 +51,7 @@ class WindingTester:
         distanceBetweenTeeth --
         fileName --
         """
+        self.serialConnection = arduinoSerial
         self.statorToothLength = statorToothLength
         self.statorToothHeight = statorToothHeight
         self.statorToothWidth = statorToothWidth
@@ -66,6 +69,37 @@ class WindingTester:
         # exampleParam = None
 
         # TODO: ask if ardiuno is ready for command, then send ppst Winding Command
+        firstCommand = "beginZeroing\n"
+        isArduinoReadyCommand = "isArduinoReady\n"
+
+        # Looks for ready
+        self.serialConnection.write(isArduinoReadyCommand.encode())
+        readyReceived = False
+        while not readyReceived:
+            if self.serialConnection.inWaiting() > 0:
+                inputValue = ""
+                inputValue = self.serialConnection.readline().decode()
+                print("in: " + inputValue)
+                if inputValue == self.arduinoReadyForCommand:
+                    # Give First command
+                    print("ReadyReceived\n")
+                    self.serialConnection.write(firstCommand.encode())
+                    readyReceived = True
+
+        allThreeReceived = False
+        while not allThreeReceived:
+            if self.serialConnection.inWaiting() > 0:
+                inputValue = ""
+                inputValue = self.serialConnection.readline().decode()
+                print("in: " + inputValue)
+                # Error checking here
+                if inputValue == self.arduinoTadaCommand:
+                    # Some kind of incrementer to set all three true or however you wanna handle it
+                    allThreeReceived = True
+
+
+
+
         myData = [["Stator Tooth Length: ", self.statorToothLength],
           ["Stator Tooth Height: ", self.statorToothHeight],
           ["Stator Tooth Width: ", self.statorToothWidth],
