@@ -19,7 +19,7 @@ from WindingTester import *
 
 class MainController:
     arduinoMegaSerial = None
-    arduinoMegaPort = "/dev/ttyACM2"
+    arduinoMegaPort = "/dev/ttyACM0"
     arduinoMegaRate = "9600"
     arduinoReadyForCommand = "ready\n"
 

@@ -82,6 +82,7 @@ class GUI:
     windingSafetyTroubleshootMessage = None
 
     actualTime = None
+    startWindingButton = None
 
     # --------------------- Functions -------------------------------------------------------------------------------- #
     # Float truncation
@@ -126,6 +127,7 @@ class GUI:
         self.postWindingButton.disable()
 
         self.parameterErrorMessage.clear()
+        self.windingMessage.clear()
 
         self.actualTimeMessage.clear()
         self.actualTimeMessage.append("Actual time: None (wind a coil)")
@@ -194,20 +196,7 @@ class GUI:
         else:
             return
 
-
-    # function for opening windingWindow when button pressed and starting winding process
-    def windingButtonPressed(self):
-        #self.openWindingWindow()
-        self.windingMessage.clear()
-        self.windingMessage.append("Winding the stator")
-
-        # Disable buttons
-        self.parameterButton.disable()
-        self.zeroButton.disable()
-        self.windingButton.disable()
-        self.postWindingButton.disable()
-
-
+    def startWindingButtonPressed(self):
         # Wind
         start = timer()
         errorCode = self.mainController.startWinding()
@@ -252,11 +241,21 @@ class GUI:
             self.postWindingButton.enable()
 
             # Close Window
-            # self.closeWindingWindow()
+            self.closeWindingWindow()
 
-        self.windingMessage.clear()
-        self.windingMessage.append("Winding complete")
         return
+
+    # function for opening windingWindow when button pressed and starting winding process
+    def windingButtonPressed(self):
+        self.openWindingWindow()
+        # self.windingMessage.clear()
+        # self.windingMessage.append("Winding the stator")
+
+        # Disable buttons
+        self.parameterButton.disable()
+        self.zeroButton.disable()
+        self.windingButton.disable()
+        self.postWindingButton.disable()
 
     def postWindingButtonPressed(self):
         self.mainController.startPostWindingTest()
@@ -450,7 +449,8 @@ class GUI:
         # ----------------------- Winding Window Event Loop ---------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
         self.windingStatorMessage = Text(self.windingWindow, text="Winding stator", size=40, color="green")
-        self.windingWindowCloseMessage = Text(self.windingWindow, text="Window will close when winding is complete")
+        self.windingWindowCloseMessage = Text(self.windingWindow, text="Pressed the button to start winding. Window will close when winding is complete")
+        self.startWindingButton = PushButton(self.windingWindow, command = self.startWindingButtonPressed, text = "Start winding")
 
         # ----------------------- Post Winding Window Event Loop ----------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
