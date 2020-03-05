@@ -35,10 +35,13 @@ class MainController:
     distanceBetweenTeeth = None
     statorWindWidth = None
     statorDiameter = None
+    wireResistance = None
 
     windingWriter = None
     windingReader = None
     windingTester = None
+
+    mmToFeet = 0.00328084
 
     def __init__(self):
         """Construct a new Main by setting up serial connection
@@ -148,7 +151,8 @@ class MainController:
 
     def getPredictedResistance(self):
         # TODO: Implement for Beta demo
-        return 0
+        predictedOhms = self.windingWriter.getDistanceWoundPerTooth() + self.mmToFeet + self.windingWriter.getWireResistance()
+        return predictedOhms
 
     def getPostWindingResult(self):
         # TODO: Implement to get stuff from winding Tester - Dan
