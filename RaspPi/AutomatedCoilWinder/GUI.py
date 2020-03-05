@@ -448,8 +448,8 @@ class GUI:
 
         # ----------------------- Winding Window Event Loop ---------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
-        self.windingStatorMessage = Text(self.windingWindow, text="Winding stator", size=40, color="green")
-        self.windingWindowCloseMessage = Text(self.windingWindow, text="Pressed the button to start winding. Window will close when winding is complete")
+        self.windingStatorMessage = Text(self.windingWindow, text="Winding", size=30, color="green")
+        self.windingWindowCloseMessage = Text(self.windingWindow, text="Press the button to start winding.\n Window will close when winding is complete.")
         self.startWindingButton = PushButton(self.windingWindow, command = self.startWindingButtonPressed, text = "Start winding")
 
         # ----------------------- Post Winding Window Event Loop ----------------------------------------------------- #
