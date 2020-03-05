@@ -54,12 +54,11 @@ class WindingReader:
     arduinoErrorZOverVolt = "ErrorAlarmZOverVoltage\n"
     arduinoErrorZOverPosition = "ErrorAlarmZOverPosition\n"
 
-    arduinoErrorFailedZeroSwitchX = "ErrorFailedToHitXZeroingSwitch\n" # Specifically for zeroing circuit
+    arduinoErrorFailedZeroSwitchX = "ErrorFailedToHitXZeroingSwitch\n"  # Specifically for zeroing circuit
     arduinoErrorFailedZeroSwitchY = "ErrorFailedToHitYZeroingSwitch\n"
     arduinoErrorFailedZeroSwitchZ = "ErrorFailedToHitZZeroingSwitch\n"
 
     arduinoErrorBadCommand = "ErrorBadCommand\n"
-
 
     # --------------------- Functions --------------------- #
     def __init__(self, arduinoSerial):

@@ -223,7 +223,7 @@ class GUI:
         else:
             # End windingTimer
             end = timer()
-            actualTime = end-start
+            actualTime = end - start
 
             # Update actual time message
             self.actualTimeMessage.clear()
@@ -449,8 +449,10 @@ class GUI:
         # ----------------------- Winding Window Event Loop ---------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
         self.windingStatorMessage = Text(self.windingWindow, text="Winding", size=30, color="green")
-        self.windingWindowCloseMessage = Text(self.windingWindow, text="Press the button to start winding.\n Window will close when winding is complete.")
-        self.startWindingButton = PushButton(self.windingWindow, command = self.startWindingButtonPressed, text = "Start winding")
+        self.windingWindowCloseMessage = Text(self.windingWindow,
+                                              text="Press the button to start winding.\n Window will close when winding is complete.")
+        self.startWindingButton = PushButton(self.windingWindow, command=self.startWindingButtonPressed,
+                                             text="Start winding")
 
         # ----------------------- Post Winding Window Event Loop ----------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here

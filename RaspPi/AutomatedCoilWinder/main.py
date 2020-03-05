@@ -168,6 +168,7 @@ class MainController:
     def getInductance(self):
         return self.windingTester.getInductance()
 
+
 '''
 # Old main
 # Returns the total predicted time in seconds given the distance traveled
