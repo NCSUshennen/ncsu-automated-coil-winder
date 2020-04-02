@@ -234,6 +234,11 @@ class GUI:
                     str(self.truncate(timeHours, 0)) + " hour " + str(self.truncate(timeMin, 0)) + " min " + str(
                         self.truncate(timeSec, 3)) + " secs\n"))
 
+            # Update elongation message
+            # TODO: Test with Arduino Mega connected
+            self.elongationMessage.clear()
+            self.elongationMessage.append(str((self.truncate(self.MainController.getElongation()), 2) + " %"))
+
             # Enable buttons after winding is completed
             self.parameterButton.enable()
             self.zeroButton.enable()
