@@ -339,6 +339,7 @@ class GUI:
             self.parameterErrorMessage.clear()
             self.parameterErrorMessage.append("Non-valid parameters entered")
             self.parameterButton.enable()
+            self.zeroButton.enable()
 
     # ----------------------- User Interface Creation ---------------------------------------------------------------- #
 
