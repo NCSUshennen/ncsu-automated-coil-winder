@@ -175,6 +175,9 @@ class MainController:
     def getInductance(self):
         return self.windingTester.getInductance()
 
+    def getPredictedElongation(self):
+        return 0
+
 
 '''
 # Old main
