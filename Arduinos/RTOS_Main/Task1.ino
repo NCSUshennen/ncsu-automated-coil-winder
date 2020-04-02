@@ -33,6 +33,7 @@
  *  Y#: Move in the Y-direction to this location (if absolute positioning) or this distance in the Y-direction (if relative/incremental positioning)
  *  Z#: Move in the Z-direction to this location (if absolute positioning) or this distance in the Z-direction (if relative/incremental positioning)
  *  
+ *  
  * Multiple commands can be entered in the same line, but unexpected behavior may occur if commands in the same line contradict one another
  * (Ex. "G27" and "G90" in the same line are fine since their functions are unrelated, but "X10" and "X5" will just read the first "X10" and ignore the "X5")
  */
@@ -74,6 +75,10 @@ static void MyTask1(void* pvParameters)
         digitalWrite(TASK_3,LOW);
         digitalWrite(TASK_IDLE,LOW);
 
+        enableRotaryEncoder = false;
+        counter = 0;
+        Distance = 0;
+        
         readingGCode = true;
         char receivedChar;
         while (true)
@@ -107,9 +112,15 @@ static void MyTask1(void* pvParameters)
           bool g28 = (gCodeString.indexOf("G28") >= 0);
           bool g90 = (gCodeString.indexOf("G90") >= 0);
           bool g91 = (gCodeString.indexOf("G91") >= 0);
+          bool startEncode = (gCodeString.indexOf("Start") >= 0);
+          bool stopEncode = (gCodeString.indexOf("Stop") >= 0);
           int xIndex = gCodeString.indexOf("X");
           int yIndex = gCodeString.indexOf("Y");
           int zIndex = gCodeString.indexOf("Z");
+
+          Serial.println(startEncode);
+          Serial.println(stopEncode);
+          Serial.println(gCodeString);
           
           if (g0 && notG01)
           {
@@ -154,6 +165,16 @@ static void MyTask1(void* pvParameters)
             absPositioning = false;
           }
 
+          if (startEncode)
+          {
+            enableRotaryEncoder = true;
+          }
+
+          if (stopEncode)
+          {
+            enableRotaryEncoder = false;  
+          }
+          
           // Read X input if there is any
           //unsigned int additionalPulses[3] = {0, 0, 0};
           if (xIndex >= 0)
@@ -759,5 +780,7 @@ static void MyTask1(void* pvParameters)
       }
     }
     readingGCode = false;
+    Serial.print(Distance);
+    Serial.print("\n");
   }
 }

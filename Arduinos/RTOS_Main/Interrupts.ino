@@ -206,3 +206,27 @@ void zMotorISR()
 
   xMessageBufferSendFromISR(xMessageBufferM, &motorMessage, sizeof(motorMessage), NULL);
 }
+
+void ai0()
+{
+  /**  
+   * Pulse received on the rotary encoder, update globals accordingly
+   */
+  
+  if (enableRotaryEncoder)
+  {
+    // ai0 is activated if DigitalPin 2 is going from LOW to HIGH
+    if (digitalRead(WIRE_LENGTH_B) == LOW)
+    {
+      counter++;
+      Distance = Distance + (200/PPR);
+      Serial.println("Bing!");
+    }
+    else
+    {
+      counter--;
+      Distance = Distance - (200/PPR);
+      Serial.println("Bong!");
+    }
+  }
+}

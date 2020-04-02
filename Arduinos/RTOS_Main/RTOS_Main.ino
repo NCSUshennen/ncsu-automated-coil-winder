@@ -45,9 +45,9 @@
 #define ZEROING_Y 51
 #define ZEROING_X 53
 
-#define WIRE_LENGTH_A 44
-#define WIRE_LENGTH_B 46
-#define WIRE_LENGTH_SW 48
+#define WIRE_LENGTH_A 2
+#define WIRE_LENGTH_B 3
+#define WIRE_LENGTH_SW 5
 #define WIRE_PRESENCE 52
 
 #define OVER_POSITION1 40
@@ -63,11 +63,11 @@
 #define ENABLE_OUTOFBOUNDS_DETECTION 0
 #define ENABLE_OVERPOSITION 0
 #define ENABLE_ZEROING 0
-#define ENABLE_ALARMS 0
+#define ENABLE_ALARMS 1
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
-#define USE_MOTOR_SIMULATOR 0
+#define USE_MOTOR_SIMULATOR 1
 
 #define X_INTERRUPT 18
 #define Y_INTERRUPT 19
@@ -131,6 +131,20 @@
 #define FAILED_ZEROING_Y_ERROR "ErrorFailedToHitYZeroingSwitch\n"
 #define FAILED_ZEROING_X_ERROR "ErrorFailedToHitXZeroingSwitch\n"
 
+// Rotary encoder pins
+#define A_PHASE 2
+#define B_PHASE 3
+#define RESET 5
+
+// Rotary encoder globals
+float pi = 3.14159; 
+float Distance = 0;
+float temp = 0;
+float wheelCircum = 200; //in mm 
+float PPR = 600;
+volatile unsigned int temp2, counter = 0; //This variable will increase or decrease depending on the rotation of encoder
+bool enableRotaryEncoder = false;
+
 uint8_t task = 0; // 0 indicates Idle
 bool askedForReady = false;
 bool readingGCode = false;
@@ -169,6 +183,15 @@ void setup()
   magnitudeString.reserve(20);
 
   //Serial.write("ready\n");
+
+  // Rotary encoder setup
+  pinMode(WIRE_LENGTH_A, INPUT_PULLUP); // internal pullup input pin 2 
+  pinMode(WIRE_LENGTH_B, INPUT_PULLUP); // internal pullup input pin 3
+  pinMode(WIRE_LENGTH_SW, INPUT); //reset switch 
+  
+  //Setting up interrupt
+  //A rising pulse from encoder activated ai0()
+  attachInterrupt(digitalPinToInterrupt(WIRE_LENGTH_A), ai0, RISING);
   
   Init_Pins();
   Init_SemaphoresAndMessageBuffers();
@@ -178,7 +201,7 @@ void setup()
 
 void loop()
 {
-  //There is no instruction in loop section of the code.
+  //There is no instruction in the loop section of the code.
 }
 
 void Init_Pins()
