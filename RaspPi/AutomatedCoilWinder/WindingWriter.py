@@ -278,6 +278,7 @@ class WindingWriter:
 
     def windRect(self, pathFile):
         # Go forward in the y direction parameter ylength
+        pathFile.write("(StartEncode)\n")
         pathFile.write("G0 Y" + str(self.currentCornerY + self.ylength) + "\n")
         self.calculateDistanceTraveled(self.prevX, self.currentCornerY + self.ylength, self.prevZ)
         # Go forward in the x direction parameter xlength
@@ -289,6 +290,7 @@ class WindingWriter:
         # Go backwards in the xdirection xlength
         pathFile.write("G0 X" + str(self.currentCornerX) + "\n")
         self.calculateDistanceTraveled(self.currentCornerX, self.prevY, self.prevZ)
+        pathFile.write("(StopEncode)\n")
         return
 
     def generatePath(self, fileName):
