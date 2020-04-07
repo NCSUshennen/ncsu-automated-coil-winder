@@ -176,7 +176,10 @@ class MainController:
         return self.windingTester.getInductance()
 
     def getElongation(self):
-        return 0
+        wireLengthUsed = (self.windingWriter.getDistanceWoundPerTooth() * self.numberStatorTeeth)
+        elongation = self.windingReader.getRotaryEncoderLength() - wireLengthUsed
+        elongationPercentage = elongation/wireLengthUsed * 100
+        return elongationPercentage
 
 
 '''
