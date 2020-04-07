@@ -60,6 +60,8 @@ class WindingReader:
 
     arduinoErrorBadCommand = "ErrorBadCommand\n"
 
+    rotaryEncoderLength = None
+
     # --------------------- Functions --------------------- #
     def __init__(self, arduinoSerial):
         """Construct a new WindingReader
@@ -69,6 +71,9 @@ class WindingReader:
 
         """
         self.serialConnection = arduinoSerial
+
+    def getRotaryEncoderLength(self):
+        return self.rotaryEncoderLength
 
     def sendPath(self, fileName):
         """Sends a gcode path from a text file to the given serial conenction
@@ -92,6 +97,14 @@ class WindingReader:
 
             # If the next line is the end of the file, break
             if line == "":
+                # Read the rotatry encoder value and then break while loop to stop reading to Arduino
+                valueReceived = False
+                while not valueReceived:
+                    if self.serialConnection.inWaiting() > 0:
+                        inputValue = ""
+                        inputValue = self.serialConnection.readline().decode()
+                        self.rotaryEncoderLength = inputValue
+                        valueReceived = True
                 break
 
             # send next line to arduino if ready
