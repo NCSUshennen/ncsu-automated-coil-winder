@@ -365,6 +365,8 @@ class WindingWriter:
                 # pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
 
         # TODO: Wind the last post and zero without hitting posts
+        pathFile.write("G0 Z50.0\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, 50)
         pathFile.write("G0 X15.0\n")
         self.calculateDistanceTraveled(15, self.prevY, self.prevZ)
         pathFile.write("G0 Y0.0\n")
