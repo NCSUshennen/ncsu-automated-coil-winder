@@ -46,8 +46,8 @@ class WindingWriter:
 
     # --------------------- Position values --------------------- #
     # TODO: update with actual starting values later
-    startingCornerX = 462.5
-    startingCornerY = 175
+    startingCornerX = 100
+    startingCornerY = 100
     currentCornerX = None
     currentCornerY = None
     currentCornerZ = None
@@ -209,9 +209,9 @@ class WindingWriter:
 
     def createPosts(self):
         # TODO: update with actual post values later
-        self.postXValues = [462, 478, 494, 510, 526, 542, 558, 574, 590, 606, 622, 638, 654, 670, 686, 702, 718, 734,
-                            750, 766, 782, 798, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800,
-                            800, 800, 800, 800, 800, 800]
+        self.postXValues = [100, 118, 136, 154, 172, 190, 208, 226, 244, 262, 280, 298, 316, 334, 352, 370, 388, 406,
+                            424, 442, 460, 478, 496, 514, 532, 550, 568, 586, 604, 622, 640, 658, 676, 694, 712, 730,
+                            748, 766, 784, 802, 820, 838, 856, 874, 892, 910, 928, 946, 964, 982]
         self.currentPost = 0
         return
 
