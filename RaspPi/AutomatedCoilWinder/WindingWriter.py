@@ -315,6 +315,9 @@ class WindingWriter:
         self.calculateValues()
         self.createPosts()
 
+        pathFile.write("G0 Z10.0\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, 10)
+
         # Wind first post
         self.windNextPost(pathFile)
 
