@@ -23,7 +23,6 @@ ISR(TIMER1_COMPB_vect)
    * This interrupt goes off every quarter second (currently not used)
    */
    xSemaphoreGiveFromISR(xSemaphoreTimerB, NULL);
-   Serial.println(TCNT1);
 }
 
 void serialEvent() 
@@ -212,7 +211,8 @@ void ai0()
   /**  
    * Pulse received on the rotary encoder, update globals accordingly
    */
-  
+   
+  rotaryEncoderMoved = true;
   if (enableRotaryEncoder)
   {
     // ai0 is activated if DigitalPin 2 is going from LOW to HIGH
@@ -220,13 +220,11 @@ void ai0()
     {
       counter++;
       Distance = Distance + (200/PPR);
-      Serial.println("Bing!");
     }
     else
     {
       counter--;
       Distance = Distance - (200/PPR);
-      Serial.println("Bong!");
     }
   }
 }
