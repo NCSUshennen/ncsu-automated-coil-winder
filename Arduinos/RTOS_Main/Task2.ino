@@ -11,7 +11,6 @@
 
 static void MyTask2(void* pvParameters)
 {  
-  //Task 2. We display the task label on Serial monitor.
   while(1)
   { 
     uint8_t receivedSensorNum;

@@ -21,6 +21,8 @@
  * 
  * The zeroing switch, overposition, alarm, and out-of-bounds detection can all be disabled via the #defines in RTOS_Main.
  * 
+ * Code needs to be added to check for wire presence, and stop and send an error if no wire is present.
+ * 
  * The following G-Code commands can be entered:
  *  G0 or G00: Set rapid-motion mode off (off by default)
  *  G1 or G01: Set rapid-motion mode on
@@ -32,7 +34,8 @@
  *  X#: Move in the X-direction to this location (if absolute positioning) or this distance in the X-direction (if relative/incremental positioning)
  *  Y#: Move in the Y-direction to this location (if absolute positioning) or this distance in the Y-direction (if relative/incremental positioning)
  *  Z#: Move in the Z-direction to this location (if absolute positioning) or this distance in the Z-direction (if relative/incremental positioning)
- *  
+ *  (StartEncode): Enable the encoder interrupt to take measurements of wire moving around stator teeth
+ *  (StopEncode): Disable the encoder interrupt to make it stop taking measurements, as wire is no longer being wound around stator teeth
  *  
  * Multiple commands can be entered in the same line, but unexpected behavior may occur if commands in the same line contradict one another
  * (Ex. "G27" and "G90" in the same line are fine since their functions are unrelated, but "X10" and "X5" will just read the first "X10" and ignore the "X5")
@@ -83,6 +86,12 @@ static void MyTask1(void* pvParameters)
         char receivedChar;
         while (true)
         {
+          task = 1;
+          digitalWrite(TASK_1,HIGH);
+          digitalWrite(TASK_2,LOW); 
+          digitalWrite(TASK_3,LOW);
+          digitalWrite(TASK_IDLE,LOW);
+          
           Serial.print("ready\n");
           
           gCodeString = "";
@@ -117,10 +126,6 @@ static void MyTask1(void* pvParameters)
           int xIndex = gCodeString.indexOf("X");
           int yIndex = gCodeString.indexOf("Y");
           int zIndex = gCodeString.indexOf("Z");
-
-          Serial.println(startEncode);
-          Serial.println(stopEncode);
-          Serial.println(gCodeString);
           
           if (g0 && notG01)
           {
@@ -176,7 +181,6 @@ static void MyTask1(void* pvParameters)
           }
           
           // Read X input if there is any
-          //unsigned int additionalPulses[3] = {0, 0, 0};
           if (xIndex >= 0)
           {
             
@@ -519,10 +523,12 @@ static void MyTask1(void* pvParameters)
             bool hitOverPositionSwitch = false;
             bool x1AlarmWentOff = false;
             bool x2AlarmWentOff = false;
+            bool wireIsGone = false;
             bool xZeroingSwitchOpen = true;
             bool overPositionSwitchOpen = true;
             bool x1AlarmDidntGoOff = true;
             bool x2AlarmDidntGoOff = true;
+            bool wireIsStillThere = true;
             for (i=0; i<totalPulses[X]; i++)
             { 
               
@@ -568,7 +574,18 @@ static void MyTask1(void* pvParameters)
               }
 #endif
 
-              // If the switches have not been contacted or have been disabled, send the pulse
+              // Check the IR sensor for wire presence
+#if ENABLE_PRESENCE_DETECTION
+              wireIsStillThere = (digitalRead(WIRE_PRESENCE) == HIGH);
+              if (!wireIsStillThere)
+              {
+                 // Always stop movement if wire is no longer detected
+                 wireIsGone = true;
+                 wireIsStillThere = true;
+                 break;
+              }
+#endif 
+              // If no issues, send the pulse
               digitalWrite(MOTOR_X1_PLS, HIGH);
               digitalWrite(MOTOR_X2_PLS, HIGH);
               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
@@ -577,7 +594,7 @@ static void MyTask1(void* pvParameters)
               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
             }
 
-            // Throw an error if one of the enabled switches has been hit or an alarm has gone off                        
+            // Throw an error if one of the enabled switches has been hit, an alarm has gone off, or the wire is missing
 #if ENABLE_OVERPOSITION
             if (hitOverPositionSwitch)
             {
@@ -608,7 +625,15 @@ static void MyTask1(void* pvParameters)
               break;
             }
 #endif
-            
+#if ENABLE_PRESENCE_DETECTION
+            if (wireIsGone)
+            {
+              Serial.print(WIRE_PRESENCE_ERROR);
+              wireIsGone = false;
+              break;
+            }
+#endif
+          
             bool hitYZeroingSwitch = false;
             bool yAlarmWentOff = false;
             bool yZeroingSwitchOpen = true;
@@ -648,16 +673,27 @@ static void MyTask1(void* pvParameters)
                  break;
               }
 #endif
+              // Check the IR sensor for wire presence
+#if ENABLE_PRESENCE_DETECTION
+              wireIsStillThere = (digitalRead(WIRE_PRESENCE) == HIGH);
+              if (!wireIsStillThere)
+              {
+                 // Always stop movement if wire is no longer detected
+                 wireIsGone = true;
+                 wireIsStillThere = true;
+                 break;
+              }
+#endif
 
-              // If the switches have not been contacted or have been disabled, send the pulse
+              // If no issues, send the pulse
               digitalWrite(MOTOR_Y_PLS, HIGH);
               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
               digitalWrite(MOTOR_Y_PLS, LOW);
-              vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
+              vTaskDelay(motionDelay/portTICK_PERIOD_MS/4); 
             }
 
             
-            // Throw an error if one of the enabled switches has been hit or an alarm has gone off
+            // Throw an error if one of the enabled switches has been hit, an alarm has gone off, or the wire is missing
 #if ENABLE_OVERPOSITION
             if (hitOverPositionSwitch)
             {
@@ -682,7 +718,15 @@ static void MyTask1(void* pvParameters)
               break;
             }
 #endif
-       
+#if ENABLE_PRESENCE_DETECTION
+            if (wireIsGone)
+            {
+              Serial.print(WIRE_PRESENCE_ERROR);
+              wireIsGone = false;
+              break;
+            }
+#endif
+      
             bool hitZZeroingSwitch = false;
             bool zAlarmWentOff = false;
             bool zZeroingSwitchOpen = true;
@@ -722,15 +766,26 @@ static void MyTask1(void* pvParameters)
                  break;
               }
 #endif
+              // Check the IR sensor for wire presence
+#if ENABLE_PRESENCE_DETECTION
+              wireIsStillThere = (digitalRead(WIRE_PRESENCE) == HIGH);
+              if (!wireIsStillThere)
+              {
+                 // Always stop movement if wire is no longer detected
+                 wireIsGone = true;
+                 wireIsStillThere = true;
+                 break;
+              }
+#endif
 
-              // If the switches have not been contacted or have been disabled, send the pulse
+              // If no issues, send the pulse
               digitalWrite(MOTOR_Z_PLS, HIGH);
               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
               digitalWrite(MOTOR_Z_PLS, LOW);
               vTaskDelay(motionDelay/portTICK_PERIOD_MS/4);
             }
 
-            // Throw an error if one of the enabled switches has been hit or an alarm has gone off
+            // Throw an error if one of the enabled switches has been hit, an alarm has gone off, or the wire is missing
 #if ENABLE_OVERPOSITION
             if (hitOverPositionSwitch)
             {
@@ -755,7 +810,15 @@ static void MyTask1(void* pvParameters)
               break;
             }
 #endif
-            
+#if ENABLE_PRESENCE_DETECTION
+            if (wireIsGone)
+            {
+              Serial.print(WIRE_PRESENCE_ERROR);
+              wireIsGone = false;
+              break;
+            }
+#endif
+          
             // Set all direction values low
             digitalWrite(MOTOR_X1_DIR, LOW);
             digitalWrite(MOTOR_X2_DIR, LOW);

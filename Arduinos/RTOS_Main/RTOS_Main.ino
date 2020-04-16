@@ -57,13 +57,13 @@
 #define OVER_POSITION5 A14
 #define OVER_POSITION6 A15
 
-// Used to enable or disable the zeroing switches, over-position switches, and alarm detection in the winding algorithm
-// These should all be set to 1 in the final version, but for debugging, they can be set to 0 to avoid having to jump
-// wires when testing other components
+// Used to enable or disable the zeroing switches, over-position switches, alarm detection, and presence detection in the winding algorithm
+// These should all be set to 1 in the final version, but for debugging, they can be set to 0 to avoid having to jump wires when testing other components
 #define ENABLE_OUTOFBOUNDS_DETECTION 0
 #define ENABLE_OVERPOSITION 0
 #define ENABLE_ZEROING 0
-#define ENABLE_ALARMS 1
+#define ENABLE_ALARMS 0
+#define ENABLE_PRESENCE_DETECTION 0
 
 // Pins for pulse interrupts for the Motor Simulator
 // Turn these off when not using the Motor Simulator
@@ -72,6 +72,7 @@
 #define X_INTERRUPT 18
 #define Y_INTERRUPT 19
 #define Z_INTERRUPT 20
+#define SIMULATOR_TO_ENCODER 22
 
 // Pins used in Task 2
 #define SENSOR_1 A1
@@ -130,11 +131,7 @@
 #define FAILED_ZEROING_Z_ERROR "ErrorFailedToHitZZeroingSwitch\n"
 #define FAILED_ZEROING_Y_ERROR "ErrorFailedToHitYZeroingSwitch\n"
 #define FAILED_ZEROING_X_ERROR "ErrorFailedToHitXZeroingSwitch\n"
-
-// Rotary encoder pins
-#define A_PHASE 2
-#define B_PHASE 3
-#define RESET 5
+#define WIRE_PRESENCE_ERROR "ErrorNoWireDetected\n"
 
 // Rotary encoder globals
 float pi = 3.14159; 
@@ -142,8 +139,9 @@ float Distance = 0;
 float temp = 0;
 float wheelCircum = 200; //in mm 
 float PPR = 600;
-volatile unsigned int temp2, counter = 0; //This variable will increase or decrease depending on the rotation of encoder
+volatile unsigned int temp2, counter = 0; // These variables will increase or decrease depending on the rotation of encoder
 bool enableRotaryEncoder = false;
+bool rotaryEncoderMoved = false;
 
 uint8_t task = 0; // 0 indicates Idle
 bool askedForReady = false;
@@ -181,17 +179,6 @@ void setup()
   inputString.reserve(100);
   gCodeString.reserve(100);
   magnitudeString.reserve(20);
-
-  //Serial.write("ready\n");
-
-  // Rotary encoder setup
-  pinMode(WIRE_LENGTH_A, INPUT_PULLUP); // internal pullup input pin 2 
-  pinMode(WIRE_LENGTH_B, INPUT_PULLUP); // internal pullup input pin 3
-  pinMode(WIRE_LENGTH_SW, INPUT); //reset switch 
-  
-  //Setting up interrupt
-  //A rising pulse from encoder activated ai0()
-  attachInterrupt(digitalPinToInterrupt(WIRE_LENGTH_A), ai0, RISING);
   
   Init_Pins();
   Init_SemaphoresAndMessageBuffers();
@@ -251,6 +238,8 @@ void Init_Pins()
   attachInterrupt(digitalPinToInterrupt(Y_INTERRUPT), yMotorISR, RISING);
   pinMode(Z_INTERRUPT, INPUT);
   attachInterrupt(digitalPinToInterrupt(Z_INTERRUPT), zMotorISR, RISING);
+  pinMode(SIMULATOR_TO_ENCODER, OUTPUT);
+  digitalWrite(SIMULATOR_TO_ENCODER, LOW);
 #endif
 
   pinMode(MOTOR_X1_ALM, INPUT);
@@ -265,6 +254,17 @@ void Init_Pins()
 
   pinMode(SENSOR_1, INPUT);
   pinMode(SENSOR_2, INPUT);
+
+  // Rotary encoder setup
+  pinMode(WIRE_LENGTH_A, INPUT_PULLUP); // internal pullup input pin 2 
+  pinMode(WIRE_LENGTH_B, INPUT_PULLUP); // internal pullup input pin 3
+  pinMode(WIRE_LENGTH_SW, INPUT); //reset switch 
+  
+  //Setting up interrupt
+  //A rising pulse from encoder activated ai0()
+  attachInterrupt(digitalPinToInterrupt(WIRE_LENGTH_A), ai0, RISING);
+
+  pinMode(WIRE_PRESENCE, INPUT);
 
   pinMode(TEST_SIGNAL_RANDC1, OUTPUT);
   pinMode(TEST_SIGNAL_RANDC2, OUTPUT);

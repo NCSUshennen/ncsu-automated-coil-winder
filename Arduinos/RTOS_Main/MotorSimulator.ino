@@ -10,18 +10,27 @@
  * simpler, but avoids the risk of damaging the motors or their drivers while testing the G-Code algorithm.
  * 
  * Note: To use the simulator, make sure to connect LEDs to pins 4-7 as specified in their macros and use jumper
- * wires to connect ports 37 and 18, 31 and 19, and 25 and 20.
+ * wires to connect pins 37 and 18, 31 and 19, and 25 and 20. To simulate the rotary encoder, connect pin 22 to pin
+ * 2 and pin 3 to GND.
  */
 
 #define TURN_RATE 800
 #define MM_RATE 160
 #define LED_CHANGE_RATE 8
 
+// Used for simulating a given elongation
+#define ELONGATION_PERCENT 1
+#define ENCODER_MM_RATE MM_RATE/(1+ELONGATION_PERCENT/100.0)
+
 int simulatorPosition[3] = {0, 0, 0};
 int simulatorPositionMM[3] = {0, 0, 0};
 unsigned int pulsesToNext[3] = {LED_CHANGE_RATE, LED_CHANGE_RATE, LED_CHANGE_RATE}; // Used to keep track of when to "move" the head on the LEDs
 unsigned int pulsesToPrev[3] = {LED_CHANGE_RATE, LED_CHANGE_RATE, LED_CHANGE_RATE};
 boolean positionWasUpdated = false;
+
+unsigned long int totalSimulatorPulses = 0;
+unsigned long int totalPulsesSentToEncoder = 0;
+unsigned long int pulsesIShouldHaveSent = 0;
 
 static void MotorSimulator(void* pvParameters)
 {
@@ -112,16 +121,29 @@ static void MotorSimulator(void* pvParameters)
           break;
       }
 
+      totalSimulatorPulses++;
+      pulsesIShouldHaveSent = totalSimulatorPulses/(ENCODER_MM_RATE/3.0); 
+      // Based on the total number of motor driver pulses so far, how many pulses should have been sent to pin 2 to simulate the encoder ticking?
+
+      if (pulsesIShouldHaveSent > totalPulsesSentToEncoder)
+      {
+        // Based on the total number of motor driver pulses so far, one more needs to be sent to pin 2 to accurately simulate the rotary encoder
+        digitalWrite(SIMULATOR_TO_ENCODER, HIGH);
+        vTaskDelay(1/portTICK_PERIOD_MS/4);
+        digitalWrite(SIMULATOR_TO_ENCODER, LOW);
+        totalPulsesSentToEncoder++;
+      }
+      
       if (positionWasUpdated)
       {
         // Calculate the simulator's position in millimeters and print it
 
-        Serial.print("Position:  X: ");
+        /*Serial.print("Position:  X: ");
         Serial.print(simulatorPosition[X]/20.0);
         Serial.print(", Y: ");
         Serial.print(simulatorPosition[Y]/20.0);
         Serial.print(", Z: ");
-        Serial.println(simulatorPosition[Z]/20.0);
+        Serial.println(simulatorPosition[Z]/20.0);*/
         positionWasUpdated = false;
       }
       
