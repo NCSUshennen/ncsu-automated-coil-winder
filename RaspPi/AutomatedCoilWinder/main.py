@@ -47,9 +47,9 @@ class MainController:
         """Construct a new Main by setting up serial connection
                 """
         # Create serial connection for arduinos
-        # self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
-        # self.arduinoMegaSerial.flushInput()
-        # self.windingReader = WindingReader(self.arduinoMegaSerial)
+        self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
+        self.arduinoMegaSerial.flushInput()
+        self.windingReader = WindingReader(self.arduinoMegaSerial)
         return
 
     def buildGCode(self, statorToothLength,
