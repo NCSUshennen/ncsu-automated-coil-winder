@@ -222,7 +222,7 @@ class GUI:
             # Update elongation message
             # TODO: Test with Arduino Mega connected
             self.elongationMessage.clear()
-            self.elongationMessage.append(str((self.truncate(self.mainController.getElongation()), 2) + " %"))
+            self.elongationMessage.append(str((self.truncate(self.mainController.getElongation(), 2)) + " %"))
 
             # Enable buttons after winding is completed
             self.parameterButton.enable()
