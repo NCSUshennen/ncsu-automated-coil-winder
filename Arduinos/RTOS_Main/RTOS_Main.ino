@@ -50,7 +50,7 @@
 #define WIRE_LENGTH_SW 5
 #define WIRE_PRESENCE 52
 
-#define OVER_POSITION1 40
+#define OVER_POSITION1 A10
 #define OVER_POSITION2 A11
 #define OVER_POSITION3 A12
 #define OVER_POSITION4 A13
@@ -83,10 +83,8 @@
 #define TEST_SIGNAL_RANDC2 30
 #define TEST_SIGNAL_RANDC3 32
 #define TEST_SIGNAL_RANDC4 34
-#define TEST_SIGNAL_RANDC5 36
-#define TEST_SIGNAL_L 38
+#define TEST_SIGNAL_L 36
 #define OUTPUT_SIGNAL A0
-#define INPUT_VOLTAGE A7
 
 // Pins used in Task MotorSimulator
 #define X0_Y0 7
@@ -270,10 +268,8 @@ void Init_Pins()
   pinMode(TEST_SIGNAL_RANDC2, OUTPUT);
   pinMode(TEST_SIGNAL_RANDC3, OUTPUT);
   pinMode(TEST_SIGNAL_RANDC4, OUTPUT);
-  pinMode(TEST_SIGNAL_RANDC5, OUTPUT);
   pinMode(TEST_SIGNAL_L, OUTPUT);
   pinMode(OUTPUT_SIGNAL, INPUT); // That is, this is the output of the system, which the Arduino is measuring
-  pinMode(INPUT_VOLTAGE, INPUT);
 
   digitalWrite(TASK_1, LOW);
   digitalWrite(TASK_2, LOW);
@@ -301,7 +297,6 @@ void Init_Pins()
   digitalWrite(TEST_SIGNAL_RANDC2, LOW);
   digitalWrite(TEST_SIGNAL_RANDC3, LOW);
   digitalWrite(TEST_SIGNAL_RANDC4, LOW);
-  digitalWrite(TEST_SIGNAL_RANDC5, LOW);
   digitalWrite(TEST_SIGNAL_L, LOW);
 }
 

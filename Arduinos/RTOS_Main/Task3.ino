@@ -8,11 +8,10 @@
  * to make an LED flash three times at a rate of one flash per second.
  */
 
-#define RIN1 5130000.0
-#define RIN2 98290.0
-#define RIN3 11470.0
-#define RIN4 464.6
-#define RIN5 150.0
+#define RIN1 98290.0
+#define RIN2 11470.0
+#define RIN3 464.6
+#define RIN4 150.0
 #define CIN 0.00022 
 #define VIN 5.0
 
@@ -75,48 +74,22 @@ static void MyTask3(void* pvParameters)
             vTaskDelay(1000/portTICK_PERIOD_MS);
 
             float Vout4 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
-            if (Vout4 <= 2.5)
+            if (Vout4 <= 0.1)
             {
-              //Lower the fourth test signal and raise the fifth one
-              digitalWrite(TEST_SIGNAL_RANDC4, LOW);
-              vTaskDelay(1000/portTICK_PERIOD_MS);
-              digitalWrite(TEST_SIGNAL_RANDC5, HIGH);
-              vTaskDelay(1000/portTICK_PERIOD_MS);
+              //Use 1.1V instead of 5V as a reference
+              analogReference(INTERNAL1V1);
+              settleADC();
 
-              float Vout5 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
-              if (Vout5 <= 0.1)
-              {
-                //Use 1.1V instead of 5V as a reference
-                analogReference(INTERNAL1V1);
-                settleADC();
+              int digitalVout = analogRead(OUTPUT_SIGNAL);
+              double Vout5 = ADCToVoltage1V1(digitalVout);
 
-                int digitalVout = analogRead(OUTPUT_SIGNAL);
-                double Vout6 = ADCToVoltage1V1(digitalVout);
+              //Reset ADC reference to 5V
+              analogReference(DEFAULT);
+              settleADC();
 
-                //Reset ADC reference to 5V
-                analogReference(DEFAULT);
-                settleADC();
-
-                //Use Vout6 and RIN5
-                Vout = Vout6;
-                Rin = RIN5;
-              }
-              else
-              {
-                //Use either Vout5 and RIN5 or Vout4 and RIN4, depending on which Voutx is closer to 2.5 V
-                if (Vout5 - 2.5 < 2.5 - Vout4)
-                {
-                  //Use Vout5 and RIN5
-                  Vout = Vout5;
-                  Rin = RIN5;
-                }
-                else
-                {
-                  //Use Vout4 and RIN4
-                  Vout = Vout4;
-                  Rin = RIN4;
-                }
-              }
+              //Use Vout5 and RIN4
+              Vout = Vout5;
+              Rin = RIN4;
             }
             else
             {
@@ -192,11 +165,11 @@ static void MyTask3(void* pvParameters)
       digitalWrite(TEST_SIGNAL_RANDC2, LOW);
       digitalWrite(TEST_SIGNAL_RANDC3, LOW);
       digitalWrite(TEST_SIGNAL_RANDC4, LOW);
-      digitalWrite(TEST_SIGNAL_RANDC5, LOW);
       
       // Wait 1 second
       vTaskDelay(1000/portTICK_PERIOD_MS);
       
+      /*
       // Inductance
       
       // Wait 1 second
@@ -303,12 +276,12 @@ static void MyTask3(void* pvParameters)
       double period = 2.0*timeBetweenPulses/62500.0;
       Serial.println(1.0/period);
       l = 1.0/((2.0*PI*(1.0/period))*(2.0*PI*(1.0/period))*CIN);
-
+      */
       
       if (!rFailed)
       {
-        Serial.print("Resistance: ");
         Serial.print(r);
+        Serial.print(" Ohms");
         Serial.print("\n");  
       }
       else
@@ -317,10 +290,9 @@ static void MyTask3(void* pvParameters)
         Serial.print("\n"); 
       }
 
-      if (!lFailed)
+      /*if (!lFailed)
       {
         float lMilliHenrys = l*1000.0;
-        Serial.print("Inductance: ");
         Serial.print(lMilliHenrys);
         Serial.print(" mH\n");  
       }
@@ -328,10 +300,11 @@ static void MyTask3(void* pvParameters)
       {
         Serial.print("Inductance Measurement Failed");
         Serial.print("\n"); 
-      }
+      }*/
 
       digitalWrite(TEST_SIGNAL_L, LOW);
-
+      digitalWrite(TASK_3,LOW);
+      
       /*digitalWrite(TEST_SIGNAL, HIGH);
       int i;
       int voltagesSize = 1000;

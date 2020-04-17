@@ -6,7 +6,7 @@ static void MyIdleTask(void* pvParameters)
     task = 0;
     digitalWrite(TASK_1,LOW);
     digitalWrite(TASK_2,LOW); 
-    digitalWrite(TASK_3,LOW);
+    //digitalWrite(TASK_3,LOW);
     digitalWrite(TASK_IDLE,HIGH);
     if (askedForReady)
     {
