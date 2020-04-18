@@ -107,7 +107,8 @@ class MainController:
                                            numberWinds,
                                            wireGauge,
                                            wireMaterial,
-                                           distanceBetweenTeeth)
+                                           distanceBetweenTeeth,
+                                           self.arduinoMegaSerial)
 
         # Generate gcode
         self.windingWriter.generatePath("pathFile.txt")

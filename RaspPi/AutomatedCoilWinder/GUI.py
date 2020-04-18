@@ -252,11 +252,11 @@ class GUI:
 
         # Update Messages
         self.resistanceMessage.clear()
-        self.resistanceMessage.append(str(self.mainController.getResistance()) + " Ohms")
+        self.resistanceMessage.append(self.mainController.getResistance())
         self.capacitanceMessage.clear()
-        self.capacitanceMessage.append(str(self.mainController.getCapacitance()) + " F")
+        self.capacitanceMessage.append(self.mainController.getCapacitance())
         self.inductanceMessage.clear()
-        self.inductanceMessage.append(str(self.mainController.getInductance()) + " H")
+        self.inductanceMessage.append(self.mainController.getInductance())
 
         # Disable buttons
         self.parameterButton.disable()

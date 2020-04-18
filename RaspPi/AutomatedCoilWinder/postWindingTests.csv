@@ -1,8 +1,14 @@
-Stator Tooth Length: ,130.0
-Stator Tooth Height: ,25.0
-Stator Tooth Width: ,30.0
-Stator Shoe Width: ,18.0
-Number of Winds: ,2.0
-Wire Gauge: ,18.0
-Wire Material: ,Copper
-Distance Between Teeth: ,11.0
+Stator Tooth Length: ,130.0
+Stator Tooth Height: ,25.0
+Stator Tooth Width: ,30.0
+Stator Shoe Width: ,18.0
+Number of Winds: ,2.0
+Wire Gauge: ,18.0
+Wire Material: ,Copper
+Distance Between Teeth: ,11.0
+Resistance: ,"984.44 Ohms
+"
+Inductance: ,"0 mH
+"
+Capacitance: ,"0 uF
+"
