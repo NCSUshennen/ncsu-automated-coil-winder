@@ -35,17 +35,21 @@ class MainController:
     distanceBetweenTeeth = None
     statorWindWidth = None
     statorDiameter = None
+    wireResistance = None
 
     windingWriter = None
     windingReader = None
     windingTester = None
 
+    mmToFeet = 0.00328084
+
     def __init__(self):
         """Construct a new Main by setting up serial connection
                 """
         # Create serial connection for arduinos
-        # self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
-        # self.arduinoMegaSerial.flushInput()
+        self.arduinoMegaSerial = serial.Serial(self.arduinoMegaPort, self.arduinoMegaRate)
+        self.arduinoMegaSerial.flushInput()
+        self.windingReader = WindingReader(self.arduinoMegaSerial)
         return
 
     def buildGCode(self, statorToothLength,
@@ -94,8 +98,7 @@ class MainController:
                                            numberWinds,
                                            wireGauge,
                                            wireMaterial,
-                                           distanceBetweenTeeth)
-        windingReader = WindingReader(self.arduinoMegaSerial)
+                                           distanceBetweenTeeth, statorWindWidth)
         self.windingTester = WindingTester(statorToothLength,
                                            statorToothHeight,
                                            statorToothWidth,
@@ -104,7 +107,8 @@ class MainController:
                                            numberWinds,
                                            wireGauge,
                                            wireMaterial,
-                                           distanceBetweenTeeth)
+                                           distanceBetweenTeeth,
+                                           self.arduinoMegaSerial)
 
         # Generate gcode
         self.windingWriter.generatePath("pathFile.txt")
@@ -112,7 +116,7 @@ class MainController:
     def startWinding(self):
         """Sends the path with the Arduino with the windingReader
                 """
-        # self.windingReader.sendPath("pathFile.txt")
+        return self.windingReader.sendPath("pathFile.txt")
 
     def startPostWindingTest(self):
         """Starts the post winding test
@@ -135,13 +139,6 @@ class MainController:
         wireArea = 3.14 * (self.windingWriter.getWireDiameter() / 2) * (self.windingWriter.getWireDiameter() / 2) * (
                 2 * self.numberWinds * self.numberStatorTeeth)
         fillFactor = 100 * (wireArea / windLeftoverArea)
-
-        print(str(radius1) + "\n")
-        print(str(radius2) + "\n")
-        print(str(rectangleArea) + "\n")
-        print(str(windTotalArea) + "\n")
-        print(str(windLeftoverArea) + "\n")
-        print(str(wireArea) + "\n")
         return fillFactor
         '''
         numberLayers = 2
@@ -154,8 +151,12 @@ class MainController:
         '''
 
     def getPredictedResistance(self):
-        # TODO: Implement for Beta demo
-        return 0
+        distanceWound = self.windingWriter.getDistanceWoundPerTooth()
+        print(distanceWound)
+        print(self.mmToFeet)
+        print(self.windingWriter.getWireResistance())
+        predictedOhms = distanceWound * self.mmToFeet * self.windingWriter.getWireResistance()
+        return predictedOhms
 
     def getPostWindingResult(self):
         # TODO: Implement to get stuff from winding Tester - Dan
@@ -163,8 +164,8 @@ class MainController:
 
     def sendZeroCommand(self):
         # Send the command for the Arduino to zero the machine
-        self.windingReader.zeroMachine()
-        return
+        errorCode = self.windingReader.zeroMachine()
+        return errorCode
 
     def getResistance(self):
         return self.windingTester.getResistance()
@@ -174,6 +175,13 @@ class MainController:
 
     def getInductance(self):
         return self.windingTester.getInductance()
+
+    def getElongation(self):
+        wireLengthUsed = (self.windingWriter.getDistanceWoundPerTooth() * self.numberStatorTeeth)
+        elongation = float(self.windingReader.getRotaryEncoderLength()) - wireLengthUsed
+        elongationPercentage = elongation/wireLengthUsed * 100
+        return elongationPercentage
+
 
 '''
 # Old main

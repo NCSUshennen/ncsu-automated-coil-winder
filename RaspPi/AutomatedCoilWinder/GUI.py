@@ -1,4 +1,5 @@
 # imports
+from timeit import default_timer as timer
 from guizero import App, Window, Text, TextBox, PushButton, Combo
 from main import *
 
@@ -80,6 +81,9 @@ class GUI:
     windingSafetyMessage = None
     windingSafetyTroubleshootMessage = None
 
+    actualTime = None
+    startWindingButton = None
+
     # --------------------- Functions -------------------------------------------------------------------------------- #
     # Float truncation
     def truncate(self, f, n):
@@ -123,17 +127,119 @@ class GUI:
         self.postWindingButton.disable()
 
         self.parameterErrorMessage.clear()
+        self.windingMessage.clear()
+
+        self.actualTimeMessage.clear()
+        self.actualTimeMessage.append("Actual time: None (wind a coil)")
 
         self.openParameterWindow()
+
+    def getErrorMessage(self, lookupCode):
+        errorMessage = {
+            -1: "ErrorHitOverPositionSwitch\n",
+            -2: "ErrorHitXZeroingSwitch\n",
+            -3: "ErrorHitYZeroingSwitch\n",
+            -4: "ErrorHitZZeroingSwitch\n",
+            -5: "ErrorDestinationOutOfBounds\n",
+            -6: "ErrorAlarmX1\n",
+            -7: "ErrorAlarmX2\n",
+            -8: "ErrorAlarmY\n",
+            -9: "ErrorAlarmY\n",
+            -10: "ErrorFailedToHitXZeroingSwitch\n",
+            -11: "ErrorFailedToHitYZeroingSwitch\n",
+            -12: "ErrorFailedToHitZZeroingSwitch\n",
+            -13: "ErrorBadCommand\n",
+            -14: "ErrorNoWireDetected\n"
+        }
+        return errorMessage.get(lookupCode)
 
     # function for zeroing the machine when the zero button is pressed
     def zeroButtonPressed(self):
         # Have main send the zeroing signal to the arduino
-        self.mainController.sendZeroCommand()
+        errorCode = self.mainController.sendZeroCommand()
+        print("errorCode: " + str(errorCode))
+
+        # Use error code to print error message if needed
+        if (errorCode != 0):
+            safetyMessage = self.getErrorMessage(errorCode)
+
+            # Update message on safety window
+            self.windingSafetyMessage.clear()
+            self.windingSafetyMessage.append(safetyMessage)
+
+            # Display safety screen and lock out everything else
+            self.safetyInterruptWindow.show()
+            self.parameterWindow.hide()
+            self.windingWindow.hide()
+            self.postWindingWindow.hide()
+
+            # Disable buttons
+            self.parameterButton.disable()
+            self.zeroButton.disable()
+            self.windingButton.disable()
+            self.postWindingButton.disable()
+        else:
+            return
+
+    def startWindingButtonPressed(self):
+        # Wind
+        start = timer()
+        errorCode = self.mainController.startWinding()
+
+        # Use error code to print error message
+        if (errorCode != 0):
+            safetyMessage = self.getErrorMessage(errorCode)
+
+            # Update message on safety window
+            self.windingSafetyMessage.clear()
+            self.windingSafetyMessage.append(safetyMessage)
+
+            # Display safety screen and lock out everything else
+            self.safetyInterruptWindow.show()
+            self.parameterWindow.hide()
+            self.windingWindow.hide()
+            self.postWindingWindow.hide()
+
+            # Disable buttons
+            self.parameterButton.disable()
+            self.zeroButton.disable()
+            self.windingButton.disable()
+            self.postWindingButton.disable()
+        else:
+            # End windingTimer
+            end = timer()
+            actualTime = end - start
+
+            # Update actual time message
+            self.actualTimeMessage.clear()
+            timeHours, timeSec = divmod(actualTime, 3600)
+            timeMin, timeSec = divmod(timeSec, 60)
+            self.actualTimeMessage.append(
+                "Actual time: " + str(
+                    str(self.truncate(timeHours, 0)) + " hour " + str(self.truncate(timeMin, 0)) + " min " + str(
+                        self.truncate(timeSec, 3)) + " secs\n"))
+
+            # Update elongation message
+            # TODO: Test with Arduino Mega connected
+            self.elongationMessage.clear()
+            self.elongationMessage.append("Elongation: " + str((self.truncate(self.mainController.getElongation(), 2)) + " %"))
+
+            # Enable buttons after winding is completed
+            self.parameterButton.enable()
+            self.zeroButton.enable()
+            self.windingButton.enable()
+            self.postWindingButton.enable()
+
+            # Close Window
+            self.closeWindingWindow()
+
+        return
 
     # function for opening windingWindow when button pressed and starting winding process
     def windingButtonPressed(self):
         self.openWindingWindow()
+        # self.windingMessage.clear()
+        # self.windingMessage.append("Winding the stator")
 
         # Disable buttons
         self.parameterButton.disable()
@@ -141,28 +247,16 @@ class GUI:
         self.windingButton.disable()
         self.postWindingButton.disable()
 
-        # Wind
-        self.mainController.startWinding()
-
-        # Enable buttons after winding is completed
-        self.parameterButton.enable()
-        self.zeroButton.enable()
-        self.windingButton.enable()
-        self.postWindingButton.enable()
-
-        # Close Window
-        self.closeWindingWindow()
-
     def postWindingButtonPressed(self):
         self.mainController.startPostWindingTest()
 
         # Update Messages
         self.resistanceMessage.clear()
-        self.resistanceMessage.append(str(self.mainController.getResistance()) + " Ohms")
+        self.resistanceMessage.append(self.mainController.getResistance())
         self.capacitanceMessage.clear()
-        self.capacitanceMessage.append(str(self.mainController.getCapacitance()) + " F")
+        self.capacitanceMessage.append(self.mainController.getCapacitance())
         self.inductanceMessage.clear()
-        self.inductanceMessage.append(str(self.mainController.getInductance()) + " H")
+        self.inductanceMessage.append(self.mainController.getInductance())
 
         # Disable buttons
         self.parameterButton.disable()
@@ -201,7 +295,6 @@ class GUI:
             self.wireMaterial = self.enteredWireMaterial.value
 
             # Instantiate Main and call the function for building gcode
-            self.mainController = MainController()
             self.mainController.buildGCode(self.statorToothLength, self.statorToothHeight, self.statorWindHeight,
                                            self.statorToothWidth, self.statorShoeWidth, self.numberStatorTeeth,
                                            self.numberWinds,
@@ -236,12 +329,14 @@ class GUI:
             self.parameterErrorMessage.clear()
             self.parameterErrorMessage.append("Non-valid parameters entered")
             self.parameterButton.enable()
+            self.zeroButton.enable()
 
     # ----------------------- User Interface Creation ---------------------------------------------------------------- #
 
     def __init__(self):
         """Construct a new UserInterface
         """
+        self.mainController = MainController()
         # Creates the GUI named app and appropriate windows
         self.app = App(title="Main window")
         self.parameterWindow = Window(self.app, title="Parameter window", layout="grid")
@@ -269,6 +364,7 @@ class GUI:
                                                       text="Predicted winding resistance: None (enter parameters)")
         self.actualTimeMessage = Text(self.app, text="Actual time: None (wind a coil)")
         self.elongationMessage = Text(self.app, text="Elongation: None (wind a coil)")
+        self.windingMessage = Text(self.app, text="")
 
         # Disable other buttons except enter stator parameters
         self.windingButton.disable()
@@ -343,10 +439,11 @@ class GUI:
 
         # ----------------------- Winding Window Event Loop ---------------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here
-        self.windingStatorMessage = Text(self.windingWindow, text="Winding stator", size=40, font="Times New Roman",
-                                         color="green")
-        self.windingWindowCloseMessage = Text(self.windingWindow, text="Window will close when winding is complete",
-                                              font="Times New Roman")
+        self.windingStatorMessage = Text(self.windingWindow, text="Winding", size=30, color="green")
+        self.windingWindowCloseMessage = Text(self.windingWindow,
+                                              text="Press the button to start winding.\n Window will close when winding is complete.")
+        self.startWindingButton = PushButton(self.windingWindow, command=self.startWindingButtonPressed,
+                                             text="Start winding")
 
         # ----------------------- Post Winding Window Event Loop ----------------------------------------------------- #
         # Event loop - Coil winder GUI Parameter window widget (text, text boxes, buttons, etc) code here

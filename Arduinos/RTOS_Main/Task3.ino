@@ -8,16 +8,21 @@
  * to make an LED flash three times at a rate of one flash per second.
  */
 
-#define RIN 1000.0
+#define RIN1 98290.0
+#define RIN2 11470.0
+#define RIN3 464.6
+#define RIN4 150.0
 #define CIN 0.00022 
 #define VIN 5.0
+
+#define ADC_LOW_THRESHOLD 3
 
 static void MyTask3(void* pvParameters)
 { 
   while(1)
   { 
     if (xSemaphoreTake(xSemaphore3, portMAX_DELAY) == pdTRUE)
-    {
+    { 
       task = 3;
       digitalWrite(TASK_1,LOW);
       digitalWrite(TASK_2,LOW); 
@@ -29,188 +34,254 @@ static void MyTask3(void* pvParameters)
       float l = 0;
       bool lFailed = false;
 
-      digitalWrite(TEST_SIGNAL_RANDC, HIGH);
+      digitalWrite(TEST_SIGNAL_RANDC1, HIGH);
       digitalWrite(TEST_SIGNAL_L, LOW);
 
       // Resistance
       
       // Wait 1 second
       vTaskDelay(1000/portTICK_PERIOD_MS);
+      double Vout = 0.0;
+      float Rin = 0.0;
       
-      // Read voltage measurement and convert to resistance
-      int itWorked = analogRead(OUTPUT_SIGNAL);
-      float Vout = ADCToVoltage(itWorked);
+      // Read voltage measurements using different input resistances until we find one resulting in an output voltage near 2.5V
+      float Vout1 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
 
-      analogReference(INTERNAL1V1);
-      settleADC();
-      
-      int didItWork1V1 = analogRead(OUTPUT_SIGNAL);
-      
-      analogReference(DEFAULT);
-      settleADC();
-      
-      int didItWork5V = analogRead(OUTPUT_SIGNAL);
-      
-      Serial.println(Vout);
-      Serial.println(itWorked);
-      Serial.println(didItWork1V1);
-      Serial.println("Well that was dumb...");
-      Serial.println(didItWork5V);
-      
+      if (Vout1 <= 2.5)
+      {
+        //Lower the first test signal and raise the second one
+        digitalWrite(TEST_SIGNAL_RANDC1, LOW);
+        vTaskDelay(1000/portTICK_PERIOD_MS);
+        digitalWrite(TEST_SIGNAL_RANDC2, HIGH);
+        vTaskDelay(1000/portTICK_PERIOD_MS);
+
+        float Vout2 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
+        if (Vout2 <= 2.5)
+        {
+          //Lower the second test signal and raise the third one
+          digitalWrite(TEST_SIGNAL_RANDC2, LOW);
+          vTaskDelay(1000/portTICK_PERIOD_MS);
+          digitalWrite(TEST_SIGNAL_RANDC3, HIGH);
+          vTaskDelay(1000/portTICK_PERIOD_MS);
+
+          float Vout3 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
+          if (Vout3 <= 2.5)
+          {
+            //Lower the third test signal and raise the fourth one
+            digitalWrite(TEST_SIGNAL_RANDC3, LOW);
+            vTaskDelay(1000/portTICK_PERIOD_MS);
+            digitalWrite(TEST_SIGNAL_RANDC4, HIGH);
+            vTaskDelay(1000/portTICK_PERIOD_MS);
+
+            float Vout4 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
+            if (Vout4 <= 0.1)
+            {
+              //Use 1.1V instead of 5V as a reference
+              analogReference(INTERNAL1V1);
+              settleADC();
+
+              int digitalVout = analogRead(OUTPUT_SIGNAL);
+              double Vout5 = ADCToVoltage1V1(digitalVout);
+
+              //Reset ADC reference to 5V
+              analogReference(DEFAULT);
+              settleADC();
+
+              //Use Vout5 and RIN4
+              Vout = Vout5;
+              Rin = RIN4;
+            }
+            else
+            {
+              //Use either Vout4 and RIN4 or Vout3 and RIN3, depending on which Voutx is closer to 2.5 V
+              if (Vout4 - 2.5 < 2.5 - Vout3)
+              {
+                //Use Vout4 and RIN4
+                Vout = Vout4;
+                Rin = RIN4;
+              }
+              else
+              {
+                //Use Vout3 and RIN3
+                Vout = Vout3;
+                Rin = RIN3;
+              }
+            }
+          }
+          else
+          {
+            //Use either Vout3 and RIN3 or Vout2 and RIN2, depending on which Voutx is closer to 2.5 V
+            if (Vout3 - 2.5 < 2.5 - Vout2)
+            {
+              //Use Vout3 and RIN3
+              Vout = Vout3;
+              Rin = RIN3;
+            }
+            else
+            {
+              //Use Vout2 and RIN2
+              Vout = Vout2;
+              Rin = RIN2;
+            }
+          }
+        }
+        else
+        {
+          //Use either Vout2 and RIN2 or Vout1 and RIN1, depending on which Voutx is closer to 2.5 V
+          if (Vout2 - 2.5 < 2.5 - Vout1)
+          {
+            //Use Vout2 and RIN2
+            Vout = Vout2;
+            Rin = RIN2;
+          }
+          else
+          {
+            //Use Vout1 and RIN1
+            Vout = Vout1;
+            Rin = RIN1;
+          }
+        }
+      }
+      else
+      {
+        //Use Vout1 and RIN1
+        Vout = Vout1;
+        Rin = RIN1;
+      }
+
       if (VIN - Vout > 0)
       {
-        r = Vout*RIN/(VIN-Vout);
+        //Calculate resistance based on Vout and Rin
+        r = Vout*Rin/(VIN-Vout);
       }
       else
       {
+        //Prevent division by 0
         rFailed = true;
       }
-
-      digitalWrite(TEST_SIGNAL_RANDC, LOW);
-
-      // Wait 1 second
-      vTaskDelay(1000/portTICK_PERIOD_MS);
-
-      /*// Resistance
+      
+      // Lower all test signals
+      digitalWrite(TEST_SIGNAL_RANDC1, LOW);
+      digitalWrite(TEST_SIGNAL_RANDC2, LOW);
+      digitalWrite(TEST_SIGNAL_RANDC3, LOW);
+      digitalWrite(TEST_SIGNAL_RANDC4, LOW);
       
       // Wait 1 second
-      TCNT1 = 0;
-      TIMSK1 |= (1<<OCIE1A); //enable timer interrupt A
-      if (xSemaphoreTake(xSemaphoreTimerA, 2000/portTICK_PERIOD_MS) == pdTRUE)
-      {
-        TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A
-
-        // Read voltage measurement and convert to resistance
-        float Vout = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
-        //Serial.println(Vout);
-
-        if (VIN - Vout > 0)
-        {
-          r = Vout*RIN/(VIN-Vout);
-        }
-        else
-        {
-          rFailed = true;
-        }
-
-        digitalWrite(TEST_SIGNAL_RANDC, LOW);
-
-        // Wait 1 second
-        TCNT1 = 0;
-        TIMSK1 |= (1<<OCIE1A); //enable timer interrupt A
-        if (xSemaphoreTake(xSemaphoreTimerA, 2000/portTICK_PERIOD_MS) == pdTRUE)
-        {
-          TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A
-        }
-        else
-        {
-          rFailed = true;
-        }
-      }
-      else
-      {
-        rFailed = true;
-      }*/
-
-      /*// Inductance
-
+      vTaskDelay(1000/portTICK_PERIOD_MS);
+      
+      /*
+      // Inductance
+      
       // Wait 1 second
+      vTaskDelay(1000/portTICK_PERIOD_MS);
+      
+      digitalWrite(TEST_SIGNAL_L, HIGH);
+      
+      unsigned int t1 = 0;
+      unsigned int t2 = 0;
+      
+      int sig = analogRead(OUTPUT_SIGNAL);
+
+      //Serial.println(prevSignal);
+      //Serial.println(sig);
+
       TCNT1 = 0;
-      TIMSK1 |= (1<<OCIE1A); //enable timer interrupt A
-      if (xSemaphoreTake(xSemaphoreTimerA, 2000/portTICK_PERIOD_MS) == pdTRUE)
+      
+      if (sig > ADC_LOW_THRESHOLD)
       {
-        TIMSK1 &= ~(1<<OCIE1A); //disable timer interrupt A
-        digitalWrite(TEST_SIGNAL, HIGH);
-
-        int t1 = 0;
-        int t2 = 0;
-
-        int prevSignal = analogRead(OUTPUT_SIGNAL);
-        int sig = analogRead(OUTPUT_SIGNAL);
-        
-        if (sig-prevSignal > 0)
+        int numTimes = 0;
+        while (sig > ADC_LOW_THRESHOLD)
         {
-          while (sig-prevSignal >= 0)
+          sig = analogRead(OUTPUT_SIGNAL);
+          if (TCNT1 > OCR1A)
           {
-            prevSignal = sig;
-            sig = analogRead(OUTPUT_SIGNAL);
-            if (TCNT1 > OCR1A)
-            {
-              //If one second has passed, abort and give failure signal
-              lFailed = true;
-              break;  
-            }
+            //If one second has passed, abort and give failure signal
+            lFailed = true;
+            break;  
           }
-          t1 = TCNT1;
-          Serial.print("t1 = ");
-          Serial.println(t1);
-          while (sig-prevSignal <= 0)
-          {
-            prevSignal = sig;
-            sig = analogRead(OUTPUT_SIGNAL);
-            if (TCNT1 > OCR1A)
-            {
-              //If one second has passed, abort and give failure signal
-              lFailed = true;
-              break;  
-            }
-          }
-          t2 = TCNT1;
-          Serial.print("t2 = ");
-          Serial.println(t2);
+          numTimes++;
         }
-        else
+        t1 = TCNT1;
+        //Serial.print("The first while loop ran ");
+        //Serial.print(numTimes);
+        //Serial.println(" times.");
+        //Serial.print("t1 = ");
+        //Serial.println(t1);
+        numTimes = 0;
+        while (sig <= ADC_LOW_THRESHOLD)
         {
-          while (sig-prevSignal <= 0)
+          sig = analogRead(OUTPUT_SIGNAL);
+          if (TCNT1 > OCR1A)
           {
-            prevSignal = sig;
-            sig = analogRead(OUTPUT_SIGNAL);
-            if (TCNT1 > OCR1A)
-            {
-              //If one second has passed, abort and give failure signal
-              lFailed = true;
-              break;  
-            }
+            //If one second has passed, abort and give failure signal
+            lFailed = true;
+            break;  
           }
-          t1 = TCNT1;
-          Serial.print("t1 = ");
-          Serial.println(t1);
-          while (sig-prevSignal >= 0)
-          {
-            prevSignal = sig;
-            sig = analogRead(OUTPUT_SIGNAL);
-            if (TCNT1 > OCR1A)
-            {
-              //If one second has passed, abort and give failure signal
-              lFailed = true;
-              break;  
-            }
-          }
-          t2 = TCNT1;
-          Serial.print("t2 = ");
-          Serial.println(t2);
+          numTimes++;
         }
         
-        int timeBetweenPulses = t2-t1;
-        if (timeBetweenPulses <= 0)
-        {
-          timeBetweenPulses += (65535);
-        }
-
-        Serial.println(timeBetweenPulses);
-
-        float period = 2.0*timeBetweenPulses/62500.0;
-        l = 1.0/((2.0*PI*(1.0/period))*(2.0*PI*(1.0/period))*CIN);
+        t2 = TCNT1;
+        Serial.print("The second while loop ran ");
+        Serial.print(numTimes);
+        Serial.println(" times.");
+        Serial.print("t2 = ");
+        Serial.println(t2);
       }
       else
       {
-        lFailed = true;
-      }*/
-
+        int numTimes = 0;
+        while (sig <= ADC_LOW_THRESHOLD)
+        {
+          sig = analogRead(OUTPUT_SIGNAL);
+          if (TCNT1 > OCR1A)
+          {
+            //If one second has passed, abort and give failure signal
+            lFailed = true;
+            break;  
+          }
+          numTimes++;
+        }
+        t1 = TCNT1;
+        //Serial.print("The first while loop ran ");
+        //Serial.print(numTimes);
+        //Serial.println(" times.");
+        //Serial.print("t1 = ");
+        //Serial.println(t1);
+        numTimes = 0;
+        while (sig > ADC_LOW_THRESHOLD)
+        {
+          sig = analogRead(OUTPUT_SIGNAL);
+          if (TCNT1 > OCR1A)
+          {
+            //If one second has passed, abort and give failure signal
+            lFailed = true;
+            break;  
+          }
+          numTimes++;
+        }
+        t2 = TCNT1;
+        Serial.print("The second while loop ran ");
+        Serial.print(numTimes);
+        Serial.println(" times.");
+        Serial.print("t2 = ");
+        Serial.println(t2);
+      }
+        
+      unsigned int timeBetweenPulses = t2-t1;
+      //if (timeBetweenPulses <= 0)
+      //{ 
+        //timeBetweenPulses += (65535);
+      //}
+        
+      double period = 2.0*timeBetweenPulses/62500.0;
+      Serial.println(1.0/period);
+      l = 1.0/((2.0*PI*(1.0/period))*(2.0*PI*(1.0/period))*CIN);
+      */
+      
       if (!rFailed)
       {
-        Serial.print("Resistance: ");
         Serial.print(r);
+        Serial.print(" Ohms");
         Serial.print("\n");  
       }
       else
@@ -219,10 +290,9 @@ static void MyTask3(void* pvParameters)
         Serial.print("\n"); 
       }
 
-      if (!lFailed)
+      /*if (!lFailed)
       {
         float lMilliHenrys = l*1000.0;
-        Serial.print("Inductance: ");
         Serial.print(lMilliHenrys);
         Serial.print(" mH\n");  
       }
@@ -230,11 +300,11 @@ static void MyTask3(void* pvParameters)
       {
         Serial.print("Inductance Measurement Failed");
         Serial.print("\n"); 
-      }
+      }*/
 
-      digitalWrite(TEST_SIGNAL_RANDC, LOW);
       digitalWrite(TEST_SIGNAL_L, LOW);
-
+      digitalWrite(TASK_3,LOW);
+      
       /*digitalWrite(TEST_SIGNAL, HIGH);
       int i;
       int voltagesSize = 1000;

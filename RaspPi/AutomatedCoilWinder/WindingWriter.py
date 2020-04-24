@@ -23,6 +23,7 @@ class WindingWriter:
     wireGauge = None
     wireMaterial = None
     distanceBetweenTeeth = None
+    statorWindWidth = None
 
     # --------------------- Distance traveled/Time measurement values --------------------- #
     totalMillimetersTraveled = None
@@ -45,8 +46,8 @@ class WindingWriter:
 
     # --------------------- Position values --------------------- #
     # TODO: update with actual starting values later
-    startingCornerX = 462.5
-    startingCornerY = 175
+    startingCornerX = 100
+    startingCornerY = 100
     currentCornerX = None
     currentCornerY = None
     currentCornerZ = None
@@ -65,9 +66,9 @@ class WindingWriter:
     ylength = None
     xlength = None
     wireDiameter = None
+    wireResistance = None  # in Ohms/1000ft
     maxNumZWinds = None
     postWindDistance = None
-
     # --------------------- Misc. Post values --------------------- #
     postDiameter = 10
     currentPostCenterX = None
@@ -89,7 +90,7 @@ class WindingWriter:
     def __init__(self, statorToothLength, statorToothHeight, statorWindHeight,
                  statorToothWidth, statorShoeWidth, numberStatorTeeth,
                  numberWinds, wireGauge, wireMaterial,
-                 distanceBetweenTeeth):
+                 distanceBetweenTeeth, statorWindWidth):
         """Construct a new WindingWriter
 
         Keyword arguments:
@@ -113,6 +114,7 @@ class WindingWriter:
         self.wireGauge = wireGauge
         self.wireMaterial = wireMaterial
         self.distanceBetweenTeeth = distanceBetweenTeeth
+        self.statorWindWidth = statorWindWidth
 
         # Starting corner
         self.currentCornerX = float(self.startingCornerX - (0.5 * self.statorToothWidth) + (
@@ -157,6 +159,12 @@ class WindingWriter:
     def getWireDiameter(self):
         return self.wireDiameter
 
+    def getWireResistance(self):
+        return self.wireResistance
+
+    def getDistanceWoundPerTooth(self):
+        return self.numberWinds * (2 * (self.statorToothLength + self.wireDiameter) + 2 * (self.statorWindWidth))
+
     # --------------------- Path generation --------------------- #
 
     def calculateValues(self):
@@ -164,20 +172,30 @@ class WindingWriter:
         self.xlength = float(self.statorShoeWidth + float(2 * self.headClearanceX))
 
         # Resolution is 0.05 mm
-        if self.wireGauge == "18":
+        if self.wireGauge == 18.0:
+            print("Wire gauge 18")
             self.wireDiameter = 1.0
-        elif self.wireGauge == "17":
+            self.wireResistance = 6.385
+        elif self.wireGauge == 17.0:
             self.wireDiameter = 1.15
-        elif self.wireGauge == "16":
+            self.wireResistance = 5.064
+        elif self.wireGauge == 16.0:
             self.wireDiameter = 1.30
-        elif self.wireGauge == "15":
+            self.wireResistance = 4.016
+        elif self.wireGauge == 15.0:
             self.wireDiameter = 1.45
-        elif self.wireGauge == "14":
+            self.wireResistance = 3.184
+        elif self.wireGauge == 14.0:
             self.wireDiameter = 1.6
-        elif self.wireGauge == "13":
+            self.wireResistance = 2.525
+        elif self.wireGauge == 13.0:
             self.wireDiameter = 1.8
+            self.wireResistance = 2.003
         else:
+            print("Wire gauge unknown")
+            print(self.wireGauge)
             self.wireDiameter = 1
+            self.wireResistance = 1
 
         # Number of times to wind in the z
         self.currentZ = float(self.statorWindHeight + (self.wireDiameter * 0.5))
@@ -191,9 +209,9 @@ class WindingWriter:
 
     def createPosts(self):
         # TODO: update with actual post values later
-        self.postXValues = [462, 478, 494, 510, 526, 542, 558, 574, 590, 606, 622, 638, 654, 670, 686, 702, 718, 734,
-                            750, 766, 782, 798, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800,
-                            800, 800, 800, 800, 800, 800]
+        self.postXValues = [100, 118, 136, 154, 172, 190, 208, 226, 244, 262, 280, 298, 316, 334, 352, 370, 388, 406,
+                            424, 442, 460, 478, 496, 514, 532, 550, 568, 586, 604, 622, 640, 658, 676, 694, 712, 730,
+                            748, 766, 784, 802, 820, 838, 856, 874, 892, 910, 928, 946, 964, 982]
         self.currentPost = 0
         return
 
@@ -260,6 +278,7 @@ class WindingWriter:
 
     def windRect(self, pathFile):
         # Go forward in the y direction parameter ylength
+        pathFile.write("(StartEncode)\n")
         pathFile.write("G0 Y" + str(self.currentCornerY + self.ylength) + "\n")
         self.calculateDistanceTraveled(self.prevX, self.currentCornerY + self.ylength, self.prevZ)
         # Go forward in the x direction parameter xlength
@@ -271,6 +290,7 @@ class WindingWriter:
         # Go backwards in the xdirection xlength
         pathFile.write("G0 X" + str(self.currentCornerX) + "\n")
         self.calculateDistanceTraveled(self.currentCornerX, self.prevY, self.prevZ)
+        pathFile.write("(StopEncode)\n")
         return
 
     def generatePath(self, fileName):
@@ -294,6 +314,9 @@ class WindingWriter:
         # Calculate necessary values
         self.calculateValues()
         self.createPosts()
+
+        pathFile.write("G0 Z10.0\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, 10)
 
         # Wind first post
         self.windNextPost(pathFile)
@@ -345,6 +368,8 @@ class WindingWriter:
                 # pathFile.write("G0 Z" + str(self.currentCornerZ) + "\n")
 
         # TODO: Wind the last post and zero without hitting posts
+        pathFile.write("G0 Z50.0\n")
+        self.calculateDistanceTraveled(self.prevX, self.prevY, 50)
         pathFile.write("G0 X15.0\n")
         self.calculateDistanceTraveled(15, self.prevY, self.prevZ)
         pathFile.write("G0 Y0.0\n")
