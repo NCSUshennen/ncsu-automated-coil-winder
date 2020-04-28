@@ -144,7 +144,7 @@ class GUI:
             -6: "ErrorAlarmX1\n",
             -7: "ErrorAlarmX2\n",
             -8: "ErrorAlarmY\n",
-            -9: "ErrorAlarmY\n",
+            -9: "ErrorAlarmZ\n",
             -10: "ErrorFailedToHitXZeroingSwitch\n",
             -11: "ErrorFailedToHitYZeroingSwitch\n",
             -12: "ErrorFailedToHitZZeroingSwitch\n",
