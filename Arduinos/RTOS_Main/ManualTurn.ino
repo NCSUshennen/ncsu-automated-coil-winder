@@ -2,7 +2,7 @@
  * TaskManualTurn
  * 
  * Dan Hayduk
- * December 2, 2019
+ * April 28, 2020
  * 
  * Used for manually turning a given motor a given amount of turns in a given direction. For prototyping, both with the motor simulator and the actual frame.
  */
@@ -17,7 +17,7 @@ static void MyTaskManualTurn(void* pvParameters)
     unsigned long int i; // 4294967295 MAX
     if (xMessageBufferReceive(xMessageBufferManualTurnDirection, &receivedManualTurnDirection, sizeof(receivedManualTurnDirection), portMAX_DELAY) > 0)
     {
-      task = 6;
+      task = 5;
       switch (receivedManualTurnDirection)
       {
         case 0:

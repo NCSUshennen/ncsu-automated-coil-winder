@@ -2,7 +2,7 @@
  * RTOS_Main
  * 
  * Dan Hayduk
- * March 5, 2020
+ * April 28, 2020
  * 
  * This code establishes the RTOS System with working semaphores and message buffers. Tasks MyTask1, MyTask2, and MyTask3 
  * are set up to run the algorithms we originally assigned to Arduino 1, 2, and 3, respectively. An additional task has
@@ -14,11 +14,24 @@
 #include "semphr.h"
 #include "message_buffer.h"
 
+// Used to enable or disable the zeroing switches, over-position switches, alarm detection, and presence detection in the winding algorithm
+// These should all be set to 1 in the final version, but for debugging, they can be set to 0 to avoid having to jump wires when testing other components
+#define ENABLE_OUTOFBOUNDS_DETECTION 1
+#define ENABLE_OVERPOSITION 1
+#define ENABLE_ZEROING 1
+#define ENABLE_ALARMS 1
+#define ENABLE_PRESENCE_DETECTION 1
+
+// Pins for pulse interrupts for the Motor Simulator
+// Turn these off when not using the Motor Simulator
+#define USE_MOTOR_SIMULATOR 0
+#define MOTOR_SIMULATOR_PRINTING 0
+
 // Needed for semaphore configuration
 #define INCLUDE_vTaskSuspend 1
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
 
-// LEDs to indicate which task is currently running
+// Optional LEDs to indicate which task is currently running
 #define TASK_1 8
 #define TASK_2 9
 #define TASK_3 10
@@ -57,33 +70,19 @@
 #define OVER_POSITION5 A14
 #define OVER_POSITION6 A15
 
-// Used to enable or disable the zeroing switches, over-position switches, alarm detection, and presence detection in the winding algorithm
-// These should all be set to 1 in the final version, but for debugging, they can be set to 0 to avoid having to jump wires when testing other components
-#define ENABLE_OUTOFBOUNDS_DETECTION 0
-#define ENABLE_OVERPOSITION 0
-#define ENABLE_ZEROING 0
-#define ENABLE_ALARMS 0
-#define ENABLE_PRESENCE_DETECTION 0
-
-// Pins for pulse interrupts for the Motor Simulator
-// Turn these off when not using the Motor Simulator
-#define USE_MOTOR_SIMULATOR 1
-
 #define X_INTERRUPT 18
 #define Y_INTERRUPT 19
 #define Z_INTERRUPT 20
 #define SIMULATOR_TO_ENCODER 22
 
-// Pins used in Task 2
-#define SENSOR_1 A1
-#define SENSOR_2 A2
-
 // Pins used in Task 3
-#define TEST_SIGNAL_RANDC1 28
-#define TEST_SIGNAL_RANDC2 30
-#define TEST_SIGNAL_RANDC3 32
-#define TEST_SIGNAL_RANDC4 34
-#define TEST_SIGNAL_L 36
+#define TEST_SIGNAL_R1 28
+#define TEST_SIGNAL_R2 30
+#define TEST_SIGNAL_R3 32
+#define TEST_SIGNAL_R4 34
+#define TEST_SIGNAL_COIL 36
+#define TEST_SIGNAL_C1 38
+#define TEST_SIGNAL_C2 40
 #define OUTPUT_SIGNAL A0
 
 // Pins used in Task MotorSimulator
@@ -108,11 +107,8 @@
 #define TASK_1_COMMAND_SIMPLEZR "spinMotorOnceZUp"
 #define TASK_1_COMMAND "beginWindingPath"
 #define TASK_1_BEGIN_G_CODE "%"
-#define TASK_2_COMMAND_ALL "getAllSensorValue"
-#define TASK_2_COMMAND_SENSOR1 "getSensor1SensorValue"
-#define TASK_2_COMMAND_SENSOR2 "getSensor2SensorValue"
+#define TASK_2_COMMAND "beginZeroing"
 #define TASK_3_COMMAND "doPostWindingTest"
-#define TASK_4_COMMAND "beginZeroing"
 
 // Error Messages
 #define BAD_COMMAND_ERROR "ErrorBadCommand\n"
@@ -148,14 +144,10 @@ bool readingGCode = false;
 //Global semaphore variables
 SemaphoreHandle_t xSemaphore1;
 SemaphoreHandle_t xSemaphorePercent;
+SemaphoreHandle_t xSemaphore2;
 SemaphoreHandle_t xSemaphore3;
-SemaphoreHandle_t xSemaphore4;
-SemaphoreHandle_t xSemaphoreTimerA;
-SemaphoreHandle_t xSemaphoreTimerB;
 
 //Global message variables
-MessageBufferHandle_t xMessageBuffer2;
-uint8_t sensorNum; // Indicator for the sensor to read the next time Task 2 runs. If this number is 0, read all the sensors
 MessageBufferHandle_t xMessageBufferM; // Message buffer for the motor simulator, to be updated whenver a pulse is given
 enum {X_FORWARD, X_REVERSE, Y_FORWARD, Y_REVERSE, Z_FORWARD, Z_REVERSE} motorMessage;
 MessageBufferHandle_t xMessageBufferGCode;
@@ -179,6 +171,7 @@ void setup()
   magnitudeString.reserve(20);
   
   Init_Pins();
+  Init_ADC();
   Init_SemaphoresAndMessageBuffers();
   Init_Timers();
   Init_Tasks();
@@ -250,9 +243,6 @@ void Init_Pins()
   pinMode(X0_Y1, OUTPUT);
   pinMode(X1_Y1, OUTPUT);
 
-  pinMode(SENSOR_1, INPUT);
-  pinMode(SENSOR_2, INPUT);
-
   // Rotary encoder setup
   pinMode(WIRE_LENGTH_A, INPUT_PULLUP); // internal pullup input pin 2 
   pinMode(WIRE_LENGTH_B, INPUT_PULLUP); // internal pullup input pin 3
@@ -264,11 +254,13 @@ void Init_Pins()
 
   pinMode(WIRE_PRESENCE, INPUT);
 
-  pinMode(TEST_SIGNAL_RANDC1, OUTPUT);
-  pinMode(TEST_SIGNAL_RANDC2, OUTPUT);
-  pinMode(TEST_SIGNAL_RANDC3, OUTPUT);
-  pinMode(TEST_SIGNAL_RANDC4, OUTPUT);
-  pinMode(TEST_SIGNAL_L, OUTPUT);
+  pinMode(TEST_SIGNAL_R1, OUTPUT);
+  pinMode(TEST_SIGNAL_R2, OUTPUT);
+  pinMode(TEST_SIGNAL_R3, OUTPUT);
+  pinMode(TEST_SIGNAL_R4, OUTPUT);
+  pinMode(TEST_SIGNAL_COIL, OUTPUT);
+  pinMode(TEST_SIGNAL_C1, OUTPUT);
+  pinMode(TEST_SIGNAL_C2, OUTPUT);
   pinMode(OUTPUT_SIGNAL, INPUT); // That is, this is the output of the system, which the Arduino is measuring
 
   digitalWrite(TASK_1, LOW);
@@ -293,11 +285,25 @@ void Init_Pins()
   digitalWrite(MOTOR_X2_PLS, LOW);
   digitalWrite(MOTOR_X2_DIR, LOW);
 
-  digitalWrite(TEST_SIGNAL_RANDC1, LOW);
-  digitalWrite(TEST_SIGNAL_RANDC2, LOW);
-  digitalWrite(TEST_SIGNAL_RANDC3, LOW);
-  digitalWrite(TEST_SIGNAL_RANDC4, LOW);
-  digitalWrite(TEST_SIGNAL_L, LOW);
+  digitalWrite(TEST_SIGNAL_R1, LOW);
+  digitalWrite(TEST_SIGNAL_R2, LOW);
+  digitalWrite(TEST_SIGNAL_R3, LOW);
+  digitalWrite(TEST_SIGNAL_R4, LOW);
+  digitalWrite(TEST_SIGNAL_COIL, LOW);
+  digitalWrite(TEST_SIGNAL_C1, LOW);
+  digitalWrite(TEST_SIGNAL_C2, LOW);
+}
+
+void Init_ADC()
+{
+   /**
+   * Set all the parameters needed for the ADC to convert faster.
+   * 
+   * Returns: nothing
+   */
+
+   ADCSRA = 0;
+   ADCSRA |= (1<<ADEN) | (1<<ADSC) | (1<<ADPS1) | (1<<ADPS0);
 }
 
 void Init_SemaphoresAndMessageBuffers()
@@ -310,12 +316,9 @@ void Init_SemaphoresAndMessageBuffers()
    
   xSemaphore1 = xSemaphoreCreateCounting(10, 0);
   xSemaphorePercent = xSemaphoreCreateCounting(10, 0);
+  xSemaphore2 = xSemaphoreCreateCounting(10, 0);
   xSemaphore3 = xSemaphoreCreateCounting(10, 0);
-  xSemaphore4 = xSemaphoreCreateCounting(10, 0);
-  xSemaphoreTimerA = xSemaphoreCreateCounting(10, 0);
-  xSemaphoreTimerB = xSemaphoreCreateCounting(10, 0);
   
-  xMessageBuffer2 = xMessageBufferCreate(100*sizeof(sensorNum));
   xMessageBufferM = xMessageBufferCreate(100*sizeof(motorMessage));
   xMessageBufferGCode = xMessageBufferCreate(100*sizeof(inChar));
   xMessageBufferManualTurnDirection = xMessageBufferCreate(100*sizeof(manualTurnDirection));
@@ -324,19 +327,20 @@ void Init_SemaphoresAndMessageBuffers()
 void Init_Timers()
 {
   /**  
-   * Set up the timer peripheral and all timers that will be used in the three algorithms.
+   * Set up the timer peripheral. The timer interrupts are currently not used, but the timers are setup with a counting
+   * frequency of 2 MHz (period of 0.5 us) and TCNT1 is used to keep track of time during the post-winding test.
    * 
    * Note: clock frequency is 16 MHz
-   * See Datasheet page 154 and the Youtube tutorial by GreatScott! for details on timer setup
+   * See Datasheet page 154 and https://www.youtube.com/watch?v=IdL0_ZJ7V2s for details on timer setup
    * 
    * Returns: nothing
    */
 
    TCCR1A = 0;
    TCCR1B = 0;
-   OCR1A = 62499; //one-second interrupt
+   OCR1A = 62499; //3.125-ms interrupt
    OCR1B = 1; //one-tick interrupt
-   TCCR1B |= (1<<CS12) | (1<<WGM12); //prescalar 256, CTC mode; each tick is 16 us
+   TCCR1B |= (1<<CS11) | (1<<WGM12); //prescalar 8, CTC mode; each tick is 0.5 us
    TIMSK1 |= (1<<OCIE1A) | (1<<OCIE1B); //enable 2 timer compare interrupts
    TIMSK1 &= ~(1<<OCIE1A); //disable interrupt A
    TIMSK1 &= ~(1<<OCIE1B); //disable interrupt B
@@ -345,22 +349,18 @@ void Init_Timers()
 void Init_Tasks()
 {
   /**
-   * Create tasks with labels Task1, Task2, Task3, Task4, MotorSimulator and TaskManualTurn and assign priorities. 
+   * Create tasks with labels Task1, Task2, Task3, MotorSimulator and TaskManualTurn and assign priorities. 
    * There is another task labeled IdleTask, which has the lowest priority and runs when no task is in operation. 
    * 
    * Returns: nothing
    */
   
-  xTaskCreate(MyTask1, "Task1", 100, NULL, 1, NULL);
-  xTaskCreate(MyTask2, "Task2", 100, NULL, 2, NULL);
-  xTaskCreate(MyTask3, "Task3", 200, NULL, 3, NULL);
-  xTaskCreate(MyTask4, "Task4", 100, NULL, 4, NULL);
-  xTaskCreate(MotorSimulator, "MotorSimulator", 200, NULL, 5, NULL);
-  xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 100, NULL, 6, NULL);
+  xTaskCreate(MyTask1, "Task1", 300, NULL, 1, NULL);
+  xTaskCreate(MyTask2, "Task2", 300, NULL, 2, NULL);
+  xTaskCreate(MyTask3, "Task3", 300, NULL, 3, NULL);
+  xTaskCreate(MotorSimulator, "MotorSimulator", 300, NULL, 4, NULL);
+  xTaskCreate(MyTaskManualTurn, "TaskManualTurn", 300, NULL, 5, NULL);
   xTaskCreate(MyIdleTask, "IdleTask", 100, NULL, 0, NULL);
-
-  
-
 }
 
 float ADCToVoltage(int adcValue)
@@ -469,14 +469,14 @@ void settleADC()
 {
     /**
     * This function is to be called after the ADC reference voltage has been changed in order to allow it
-    * to settle. It does this by performing 50 dummy conversions
+    * to settle. It does this by performing 500 dummy conversions
     * 
     * Returns: nothing
     */
 
     int i;
     int dummyConversionVariable;
-    for (i = 0; i < 50; i++)
+    for (i = 0; i < 500; i++)
     {
       dummyConversionVariable = analogRead(OUTPUT_SIGNAL);
     }
