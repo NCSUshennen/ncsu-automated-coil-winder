@@ -2,27 +2,24 @@
  * Interrupts
  * 
  * Dan Hayduk
- * November 2, 2019
+ * April 28, 2020
  * 
- * This code handles all interrupt and interrupt-like functionality. In the end,
- * this should only entail timer interrupts, a reaction to serial input, 
- * and possibly some abort functionality for safety.
+ * This code handles all interrupt and interrupt-like functionality. This includes timer interrupts, 
+ * a reaction to serial input, and processes for the motor simulator and encoder.
  */
 
 ISR(TIMER1_COMPA_vect)
 {
   /**
-   * This interrupt goes off every half second
+   * This interrupt goes off every 3.125 milliseconds (currently not used)
    */
-   xSemaphoreGiveFromISR(xSemaphoreTimerA, NULL);
 }
 
 ISR(TIMER1_COMPB_vect)
 {
   /**
-   * This interrupt goes off every quarter second (currently not used)
+   * This interrupt goes off every TCNT1 tick (currently not used)
    */
-   xSemaphoreGiveFromISR(xSemaphoreTimerB, NULL);
 }
 
 void serialEvent() 
@@ -111,36 +108,15 @@ void serialEvent()
           // Give a semaphore to begin G Code
           xSemaphoreGive(xSemaphorePercent);
         }
-        else if (inputString.equals(TASK_2_COMMAND_ALL))
+        else if (inputString.equals(TASK_2_COMMAND))
         {
-          sensorNum = 0;
-          //Give a message to Task 2
-          xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
-          //Don't worry for now if the message buffer is full, just ignore this command
-        }
-        else if (inputString.equals(TASK_2_COMMAND_SENSOR1))
-        {
-          sensorNum = 1;
-          //Give a message to Task 2
-          xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
-          //Don't worry for now if the message buffer is full, just ignore this command
-        }
-        else if (inputString.equals(TASK_2_COMMAND_SENSOR2))
-        {
-          sensorNum = 2;
-          //Give a message to Task 2
-          xMessageBufferSend(xMessageBuffer2, &sensorNum, sizeof(sensorNum), 0);
-          //Don't worry for now if the message buffer is full, just ignore this command
+          // Give a semaphore to Task 2
+          xSemaphoreGive(xSemaphore2);
         }
         else if (inputString.equals(TASK_3_COMMAND))
         {
           // Give a semaphore to Task 3
           xSemaphoreGive(xSemaphore3);
-        }
-        else if (inputString.equals(TASK_4_COMMAND))
-        {
-          // Give a semaphore to Task 4
-          xSemaphoreGive(xSemaphore4);
         }
         inputString = "";
       }
@@ -209,7 +185,7 @@ void zMotorISR()
 void ai0()
 {
   /**  
-   * Pulse received on the rotary encoder, update globals accordingly
+   * Pulse received on the rotary encoder, update globals accordingly.
    */
    
   rotaryEncoderMoved = true;

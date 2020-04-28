@@ -2,12 +2,15 @@
  * MotorSimulator
  * 
  * Dan Hayduk
- * December 2, 2019
+ * April 28, 2020
  * 
  * This task is used to help debug the algorithm to read G-Code. Rather than attach the Arduino to the actual
  * motor drivers, this code allows for simulating the position of the head on a 2x2 grid of LEDs, as well as
  * printing the position that would result from running a certain winding algorithm. This not only makes prototyping
  * simpler, but avoids the risk of damaging the motors or their drivers while testing the G-Code algorithm.
+ * 
+ * The rotary encoder can also be simulated by entering in certain dimension specifications ELONGATION_PERCENT, WIND_WIDTH,
+ * WIND_LENGTH, and WIRE_DIAMETER.
  * 
  * Note: To use the simulator, make sure to connect LEDs to pins 4-7 as specified in their macros and use jumper
  * wires to connect pins 37 and 18, 31 and 19, and 25 and 20. To simulate the rotary encoder, connect pin 22 to pin
@@ -52,7 +55,7 @@ static void MotorSimulator(void* pvParameters)
     enum {X_FORWARD, X_REVERSE, Y_FORWARD, Y_REVERSE, Z_FORWARD, Z_REVERSE} receivedMotorMessage;
     if (xMessageBufferReceive(xMessageBufferM, &receivedMotorMessage, sizeof(receivedMotorMessage), portMAX_DELAY) > 0)
     {
-      task = 5;
+      task = 4;
       switch(receivedMotorMessage)
       {
         case X_FORWARD:
@@ -257,13 +260,14 @@ static void MotorSimulator(void* pvParameters)
       if (positionWasUpdated)
       {
         // Calculate the simulator's position in millimeters and print it
-
-        /*Serial.print("Position:  X: ");
+#if MOTOR_SIMULATOR_PRINTING
+        Serial.print("Position:  X: ");
         Serial.print(simulatorPosition[X]/20.0);
         Serial.print(", Y: ");
         Serial.print(simulatorPosition[Y]/20.0);
         Serial.print(", Z: ");
-        Serial.println(simulatorPosition[Z]/20.0);*/
+        Serial.println(simulatorPosition[Z]/20.0);
+#endif
         positionWasUpdated = false;
       }
       

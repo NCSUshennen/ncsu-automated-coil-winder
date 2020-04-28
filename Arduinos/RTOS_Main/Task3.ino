@@ -2,20 +2,27 @@
  * Task3
  * 
  * Dan Hayduk
- * November 16, 2019
+ * April 28, 2020
  * 
- * MyTask3 is currently a demonstration of the timer peripheral. It uses timer interrupts
- * to make an LED flash three times at a rate of one flash per second.
+ * MyTask3 runs the post-winding test. It first runs tests on four reference resistors (RIN1-RIN4) and performs voltage division
+ * to determine the resistance of the coil. It then creates two LC circuits with two separate parallel capacitors and compares their
+ * oscillation frequencies to determine a rough estimate of their inductance and capacitance. Using relays for this as specified in
+ * the hardware specs presents some challenges, but the estimate works for relative comparisons of coils and inductors.
  */
 
 #define RIN1 98290.0
 #define RIN2 11470.0
 #define RIN3 464.6
 #define RIN4 150.0
-#define CIN 0.00022 
+#define CIN1 0.0000001
+#define CIN2 0.00000333
 #define VIN 5.0
 
-#define ADC_LOW_THRESHOLD 3
+#define ADC_LOW_THRESHOLD 10
+#define ADC_READINGS_SIZE 500
+
+unsigned int adcReadings[ADC_READINGS_SIZE] = {0};
+unsigned int adcTimes[ADC_READINGS_SIZE] = {0};
 
 static void MyTask3(void* pvParameters)
 { 
@@ -33,11 +40,14 @@ static void MyTask3(void* pvParameters)
       bool rFailed = false;
       float l = 0;
       bool lFailed = false;
+      float c = 0;
 
-      digitalWrite(TEST_SIGNAL_RANDC1, HIGH);
-      digitalWrite(TEST_SIGNAL_L, LOW);
+      digitalWrite(TEST_SIGNAL_R1, HIGH);
+      digitalWrite(TEST_SIGNAL_COIL, HIGH);
 
+      //
       // Resistance
+      //
       
       // Wait 1 second
       vTaskDelay(1000/portTICK_PERIOD_MS);
@@ -50,27 +60,27 @@ static void MyTask3(void* pvParameters)
       if (Vout1 <= 2.5)
       {
         //Lower the first test signal and raise the second one
-        digitalWrite(TEST_SIGNAL_RANDC1, LOW);
+        digitalWrite(TEST_SIGNAL_R1, LOW);
         vTaskDelay(1000/portTICK_PERIOD_MS);
-        digitalWrite(TEST_SIGNAL_RANDC2, HIGH);
+        digitalWrite(TEST_SIGNAL_R2, HIGH);
         vTaskDelay(1000/portTICK_PERIOD_MS);
 
         float Vout2 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
         if (Vout2 <= 2.5)
         {
           //Lower the second test signal and raise the third one
-          digitalWrite(TEST_SIGNAL_RANDC2, LOW);
+          digitalWrite(TEST_SIGNAL_R2, LOW);
           vTaskDelay(1000/portTICK_PERIOD_MS);
-          digitalWrite(TEST_SIGNAL_RANDC3, HIGH);
+          digitalWrite(TEST_SIGNAL_R3, HIGH);
           vTaskDelay(1000/portTICK_PERIOD_MS);
 
           float Vout3 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
           if (Vout3 <= 2.5)
           {
             //Lower the third test signal and raise the fourth one
-            digitalWrite(TEST_SIGNAL_RANDC3, LOW);
+            digitalWrite(TEST_SIGNAL_R3, LOW);
             vTaskDelay(1000/portTICK_PERIOD_MS);
-            digitalWrite(TEST_SIGNAL_RANDC4, HIGH);
+            digitalWrite(TEST_SIGNAL_R4, HIGH);
             vTaskDelay(1000/portTICK_PERIOD_MS);
 
             float Vout4 = ADCToVoltage(analogRead(OUTPUT_SIGNAL));
@@ -161,123 +171,137 @@ static void MyTask3(void* pvParameters)
       }
       
       // Lower all test signals
-      digitalWrite(TEST_SIGNAL_RANDC1, LOW);
-      digitalWrite(TEST_SIGNAL_RANDC2, LOW);
-      digitalWrite(TEST_SIGNAL_RANDC3, LOW);
-      digitalWrite(TEST_SIGNAL_RANDC4, LOW);
+      digitalWrite(TEST_SIGNAL_R1, LOW);
+      digitalWrite(TEST_SIGNAL_R2, LOW);
+      digitalWrite(TEST_SIGNAL_R3, LOW);
+      digitalWrite(TEST_SIGNAL_R4, LOW);
+      digitalWrite(TEST_SIGNAL_COIL, LOW);
       
       // Wait 1 second
       vTaskDelay(1000/portTICK_PERIOD_MS);
-      
-      /*
-      // Inductance
-      
-      // Wait 1 second
+
+      //
+      // Inductance and Capacitance
+      //
+
+      // Generate a waveform as an array of ints
+      analogReference(INTERNAL1V1);
+      settleADC();
+
+      unsigned int i = 0;
+      digitalWrite(TEST_SIGNAL_R4, HIGH);
+      digitalWrite(TEST_SIGNAL_COIL, HIGH);
+      digitalWrite(TEST_SIGNAL_C1, HIGH);
       vTaskDelay(1000/portTICK_PERIOD_MS);
-      
-      digitalWrite(TEST_SIGNAL_L, HIGH);
-      
-      unsigned int t1 = 0;
-      unsigned int t2 = 0;
-      
-      int sig = analogRead(OUTPUT_SIGNAL);
+      digitalWrite(TEST_SIGNAL_R4, LOW);
 
-      //Serial.println(prevSignal);
-      //Serial.println(sig);
+      // Wait for a value below the threshold, indicating the relay has had time to react
+      unsigned int currentValue = 0;
+      for (i=0; i<ADC_READINGS_SIZE; i++)
+      {
+        currentValue = analogRead(OUTPUT_SIGNAL);
+        if (currentValue <= ADC_LOW_THRESHOLD)
+        {
+          break;  
+        }
+      }
 
+      // THEN start recording data
       TCNT1 = 0;
-      
-      if (sig > ADC_LOW_THRESHOLD)
+      for (i=0; i<ADC_READINGS_SIZE; i++)
       {
-        int numTimes = 0;
-        while (sig > ADC_LOW_THRESHOLD)
-        {
-          sig = analogRead(OUTPUT_SIGNAL);
-          if (TCNT1 > OCR1A)
-          {
-            //If one second has passed, abort and give failure signal
-            lFailed = true;
-            break;  
-          }
-          numTimes++;
-        }
-        t1 = TCNT1;
-        //Serial.print("The first while loop ran ");
-        //Serial.print(numTimes);
-        //Serial.println(" times.");
-        //Serial.print("t1 = ");
-        //Serial.println(t1);
-        numTimes = 0;
-        while (sig <= ADC_LOW_THRESHOLD)
-        {
-          sig = analogRead(OUTPUT_SIGNAL);
-          if (TCNT1 > OCR1A)
-          {
-            //If one second has passed, abort and give failure signal
-            lFailed = true;
-            break;  
-          }
-          numTimes++;
-        }
-        
-        t2 = TCNT1;
-        Serial.print("The second while loop ran ");
-        Serial.print(numTimes);
-        Serial.println(" times.");
-        Serial.print("t2 = ");
-        Serial.println(t2);
+        adcReadings[i] = analogRead(OUTPUT_SIGNAL);
+        adcTimes[i] = TCNT1;  
       }
-      else
-      {
-        int numTimes = 0;
-        while (sig <= ADC_LOW_THRESHOLD)
-        {
-          sig = analogRead(OUTPUT_SIGNAL);
-          if (TCNT1 > OCR1A)
-          {
-            //If one second has passed, abort and give failure signal
-            lFailed = true;
-            break;  
-          }
-          numTimes++;
-        }
-        t1 = TCNT1;
-        //Serial.print("The first while loop ran ");
-        //Serial.print(numTimes);
-        //Serial.println(" times.");
-        //Serial.print("t1 = ");
-        //Serial.println(t1);
-        numTimes = 0;
-        while (sig > ADC_LOW_THRESHOLD)
-        {
-          sig = analogRead(OUTPUT_SIGNAL);
-          if (TCNT1 > OCR1A)
-          {
-            //If one second has passed, abort and give failure signal
-            lFailed = true;
-            break;  
-          }
-          numTimes++;
-        }
-        t2 = TCNT1;
-        Serial.print("The second while loop ran ");
-        Serial.print(numTimes);
-        Serial.println(" times.");
-        Serial.print("t2 = ");
-        Serial.println(t2);
-      }
-        
-      unsigned int timeBetweenPulses = t2-t1;
-      //if (timeBetweenPulses <= 0)
-      //{ 
-        //timeBetweenPulses += (65535);
-      //}
-        
-      double period = 2.0*timeBetweenPulses/62500.0;
-      Serial.println(1.0/period);
-      l = 1.0/((2.0*PI*(1.0/period))*(2.0*PI*(1.0/period))*CIN);
-      */
+
+      analogReference(DEFAULT);
+      settleADC();
       
+      // Look through that array of ints to determine the frequency
+      unsigned int t1 = 0;
+      lFailed = true;
+
+      // Look for the next point that's above the threshold and mark it as t1
+      for(i = 0; i<ADC_READINGS_SIZE; i++)
+      {
+        if (adcReadings[i] > ADC_LOW_THRESHOLD)
+        {
+          t1 = adcTimes[i];
+          lFailed = false;
+          break;  
+        }  
+      }
+
+      double period1 = 2*0.0000005*t1;
+      double f1 = 1.0/period1;
+
+      // Lower all signals and wait one second
+      digitalWrite(TEST_SIGNAL_R1, LOW);
+      digitalWrite(TEST_SIGNAL_R2, LOW);
+      digitalWrite(TEST_SIGNAL_R3, LOW);
+      digitalWrite(TEST_SIGNAL_R4, LOW);
+      digitalWrite(TEST_SIGNAL_COIL, LOW);
+      digitalWrite(TEST_SIGNAL_C1, LOW);
+      digitalWrite(TEST_SIGNAL_C2, LOW);
+      vTaskDelay(1000/portTICK_PERIOD_MS);
+      
+      // Now do it again, calculating f2 using the second parallel capacitance C2
+      analogReference(INTERNAL1V1);
+      settleADC();
+
+      i = 0;
+      digitalWrite(TEST_SIGNAL_R4, HIGH);
+      digitalWrite(TEST_SIGNAL_COIL, HIGH);
+      digitalWrite(TEST_SIGNAL_C2, HIGH);
+      vTaskDelay(1000/portTICK_PERIOD_MS);
+      digitalWrite(TEST_SIGNAL_R4, LOW);
+
+      // Wait for a value below the threshold, indicating the relay has had time to react
+      for (i=0; i<ADC_READINGS_SIZE; i++)
+      {
+        currentValue = analogRead(OUTPUT_SIGNAL);
+        if (currentValue <= ADC_LOW_THRESHOLD)
+        {
+          break;  
+        }
+      }
+
+      // THEN start recording data
+      TCNT1 = 0;
+      for (i=0; i<ADC_READINGS_SIZE; i++)
+      {
+        adcReadings[i] = analogRead(OUTPUT_SIGNAL);
+        adcTimes[i] = TCNT1;  
+      }
+
+      analogReference(DEFAULT);
+      settleADC();
+
+      // Look through that array of ints to determine the frequency
+      unsigned int t2 = 0;
+      lFailed = true;
+
+      // Look for the next point that's above the threshold and mark it as t2
+      for(i=0; i<ADC_READINGS_SIZE; i++)
+      {
+        if (adcReadings[i] > ADC_LOW_THRESHOLD)
+        {
+          t2 = adcTimes[i];
+          lFailed = false;
+          break;
+        }  
+      }
+      
+      // Do math
+      double period2 = 2*0.0000005*t2;
+      double f2 = 1.0/period2;
+
+      // Now use the frequencies to determine l and c
+      l = (1.0-(f2*f2)/(f1*f1))/(4.0*PI*PI*f2*f2*(CIN2-CIN1));
+      c = 1.0/(4.0*PI*PI*f1*f1*l)-CIN1;
+
+      
+      // Print out resistance, inductance and capacitance values
       if (!rFailed)
       {
         Serial.print(r);
@@ -290,36 +314,29 @@ static void MyTask3(void* pvParameters)
         Serial.print("\n"); 
       }
 
-      /*if (!lFailed)
+      if (!lFailed)
       {
         float lMilliHenrys = l*1000.0;
         Serial.print(lMilliHenrys);
-        Serial.print(" mH\n");  
+        Serial.print(" mH\n");
+
+        float cMicroFarads = c*1000000.0;
+        Serial.print(cMicroFarads);
+        Serial.print(" uF\n");
       }
       else
       {
-        Serial.print("Inductance Measurement Failed");
-        Serial.print("\n"); 
-      }*/
+        Serial.print("Inductance Measurement Failed\n");
+        Serial.print("Capacitance Measurement Failed\n"); 
+      }
 
-      digitalWrite(TEST_SIGNAL_L, LOW);
-      digitalWrite(TASK_3,LOW);
-      
-      /*digitalWrite(TEST_SIGNAL, HIGH);
-      int i;
-      int voltagesSize = 1000;
-      for (i=0; i<voltagesSize; i++)
-      {
-        int voltage = analogRead(OUTPUT_SIGNAL);
-        voltages[i] = voltage;
-        delay(1);
-      }
-      
-      for (i=0; i<voltagesSize; i++)
-      {
-        Serial.println(ADCToVoltage(voltages[i]));  
-      }
-      digitalWrite(TEST_SIGNAL, LOW);*/
+      digitalWrite(TEST_SIGNAL_R1, LOW);
+      digitalWrite(TEST_SIGNAL_R2, LOW);
+      digitalWrite(TEST_SIGNAL_R3, LOW);
+      digitalWrite(TEST_SIGNAL_R4, LOW);
+      digitalWrite(TEST_SIGNAL_COIL, LOW);
+      digitalWrite(TEST_SIGNAL_C1, LOW);
+      digitalWrite(TEST_SIGNAL_C2, LOW);
     }
   }
 }

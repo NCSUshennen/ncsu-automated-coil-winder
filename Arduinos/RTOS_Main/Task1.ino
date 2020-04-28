@@ -2,26 +2,24 @@
  * Task1
  * 
  * Dan Hayduk
- * March 5, 2020
+ * April 28, 2020
  * 
  * This task contains an algorithm to read G-Code, line by line, sent by the Raspberry Pi, and send the appropriate signals
  * to the X, Y and Z motors to accomplish movement.
  * 
- * The G-Code is expected to send numerical movement values corresponding to movement distance in millimeters. The ability to read
- * zeroing switches and over-position switches has been implemented in order to prevent the winding head from moving out of bounds.
+ * The G-Code is expected to send numerical movement values corresponding to movement distance in millimeters. The Arduino can preemptively predict 
+ * if a G-Code command is about to send the winding head out of bounds and stop the winding algorithm before it runs the movement. 
+ * However, these bounds need to be updated once exact measurements are taken.
+ * 
+ * The task also reads zeroing switches and over-position switches has been implemented in order to prevent the winding head from moving out of bounds.
  * If an over-position switch is hit, the user will have to manually turn the threaded rods to move the head back to a position away
  * from the switch. If any switch is hit unexpectedly, the Arduino will not have the correct position stored in the currentPosition
  * variable, so the winding head must be zeroed before another winding algorithm can be executed.
  * 
- * There is also functionality to read the alarm signals given by the motor drivers, and send an error to the Pi if any of the drivers
- * indicate a problem.
+ * There is also functionality to read the alarm signals given by the motor drivers, and send an error to the Pi if any of the drivers indicate a problem. 
+ * The algorithm also polls the IR presence sensor during movement and sends an error to the Pi if no wire is detected in the feeding system.
  * 
- * There is now a feature to preemptively predict if a G-Code command is about to send the winding head out of
- * bounds and stop the winding algorithm before it runs the movement. However, this needs to be updated once exact measurements are taken.
- * 
- * The zeroing switch, overposition, alarm, and out-of-bounds detection can all be disabled via the #defines in RTOS_Main.
- * 
- * Code needs to be added to check for wire presence, and stop and send an error if no wire is present.
+ * The out-of-bounds detection, overposition switches, zeroing switches, alarms, and presence detection can all be disabled via the #defines in RTOS_Main.
  * 
  * The following G-Code commands can be entered:
  *  G0 or G00: Set rapid-motion mode off (off by default)
@@ -542,6 +540,14 @@ static void MyTask1(void* pvParameters)
                  overPositionSwitchOpen = true;
                  break;
               }
+              overPositionSwitchOpen = (digitalRead(OVER_POSITION2) == HIGH);
+              if (!overPositionSwitchOpen)
+              {
+                 // Always stop movement if the over-position switch has been hit
+                 hitOverPositionSwitch = true;
+                 overPositionSwitchOpen = true;
+                 break;
+              }
 #endif
 #if ENABLE_ZEROING
               xZeroingSwitchOpen = (digitalRead(ZEROING_X) == HIGH);
@@ -643,7 +649,15 @@ static void MyTask1(void* pvParameters)
             {
               // Poll the overposition and zeroing switches
 #if ENABLE_OVERPOSITION
-              overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+              overPositionSwitchOpen = (digitalRead(OVER_POSITION3) == HIGH);
+              if (!overPositionSwitchOpen)
+              {
+                 // Always stop movement if the over-position switch has been hit
+                 hitOverPositionSwitch = true;
+                 overPositionSwitchOpen = true;
+                 break;
+              }
+              overPositionSwitchOpen = (digitalRead(OVER_POSITION4) == HIGH);
               if (!overPositionSwitchOpen)
               {
                  // Always stop movement if the over-position switch has been hit
@@ -736,7 +750,15 @@ static void MyTask1(void* pvParameters)
             {
                // Poll the overposition and zeroing switches
 #if ENABLE_OVERPOSITION
-              overPositionSwitchOpen = (digitalRead(OVER_POSITION1) == HIGH);
+              overPositionSwitchOpen = (digitalRead(OVER_POSITION5) == HIGH);
+              if (!overPositionSwitchOpen)
+              {
+                 // Always stop movement if the over-position switch has been hit
+                 hitOverPositionSwitch = true;
+                 overPositionSwitchOpen = true;
+                 break;
+              }
+              overPositionSwitchOpen = (digitalRead(OVER_POSITION6) == HIGH);
               if (!overPositionSwitchOpen)
               {
                  // Always stop movement if the over-position switch has been hit
